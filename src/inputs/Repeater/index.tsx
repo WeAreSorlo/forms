@@ -20,7 +20,47 @@ export const description: InputDescription = () => 'Allows a set of fields to be
 export const category: InputCategory = () => 'Layout'
 
 export const schemaFields: InputSchemaFields = () => {
-  return [...baseInputSchemaFields()]
+  return [
+    ...baseInputSchemaFields(),
+    {
+      label: 'Fields',
+      name: 'fields',
+      type: 'schemabuilder',
+    },
+    {
+      label: 'Minimum rows',
+      name: 'minimumRows',
+      type: 'number',
+      required: false,
+      value: 1,
+      min: 0,
+      width: 50,
+    },
+    {
+      label: 'Maximum rows',
+      name: 'maximumRows',
+      type: 'number',
+      required: false,
+      width: 50,
+    },
+    {
+      label: 'Minimum columns',
+      name: 'minimumColumns',
+      type: 'number',
+      required: false,
+      value: 1,
+      min: 0,
+      width: 50,
+    },
+    {
+      label: 'Maximum columns',
+      name: 'maximumColumns',
+      type: 'number',
+      required: false,
+      value: 1,
+      width: 50,
+    },
+  ]
 }
 
 export const validateValue: InputValidateValue = (value, schema) => {
@@ -48,7 +88,11 @@ const Component: InputComponent = memo(function Component() {
     [handleValidation, validateValue],
   )
 
-  return <div className='iight-input__repeater'></div>
+  return (
+    <div className='iight-input__repeater'>
+      <pre>{JSON.stringify(options, null, 2)}</pre>
+    </div>
+  )
 })
 
 export default Component

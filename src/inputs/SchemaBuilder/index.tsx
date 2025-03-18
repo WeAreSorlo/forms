@@ -88,7 +88,8 @@ const SchemaEditor = memo(function SchemaEditor({
         }}
         header={label}
       >
-        <Fieldset schema={schema} inputs={inputs} onValuesChange={setTempSchema} />
+        {/* This condition prevents infinite rendering */}
+        {open && <Fieldset schema={schema} inputs={inputs} onValuesChange={setTempSchema} />}
         <button
           onClick={(event) => {
             event.preventDefault()
