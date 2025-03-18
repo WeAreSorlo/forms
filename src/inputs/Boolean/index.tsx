@@ -10,7 +10,8 @@ import {
   InputValidateValue,
 } from '@/types/inputs'
 import { baseInputSchemaFields, validateSchema } from '@/utils/inputs'
-import { memo } from 'react'
+import { validationError, validationSuccess } from '@/utils/validation'
+import { memo, useCallback } from 'react'
 
 export const name: InputName = () => 'Boolean (True / False)'
 
@@ -36,18 +37,16 @@ export const validateValue: InputValidateValue = (value, schema) => {
   value = ['yes', '1', 'true'].includes(String(value).trim().toLowerCase())
 
   if (schema.required && !value) {
-    return 'This field is required.'
+    return validationError('This field is required.')
   }
 
-  return value
+  return validationSuccess(!!value)
 }
 
 export const formatValue: InputFormatValue = (value, schema) => {
-  if (validateValue(value, schema)) {
-    return value
-  }
-
-  return null
+  schema = validateSchema(schema)
+  const { isValid, validatedValue } = validateValue(value, schema)
+  return isValid ? (validatedValue ? 'TRUE' : 'FALSE') : null
 }
 
 export const renderValue: InputRenderValue = (value, schema) => {
@@ -55,12 +54,14 @@ export const renderValue: InputRenderValue = (value, schema) => {
 }
 
 const Component: InputComponent = memo(function Component() {
-  const { id, schema, required, readonly, disabled, options, value, setValue, handleValidation } = useFieldContext()
+  const { id, schema, required, readonly, disabled, options, value, handleValidation } = useFieldContext()
 
-  const doValidation = (input: any) => {
-    const isValid = handleValidation(validateValue(input, schema))
-    setValue(isValid ? input : !value)
-  }
+  const doValidation = useCallback(
+    (input: any) => {
+      handleValidation(validateValue(input, schema))
+    },
+    [handleValidation, validateValue],
+  )
 
   return (
     <div className='iight-input__boolean'>
@@ -69,7 +70,7 @@ const Component: InputComponent = memo(function Component() {
         id={id}
         type='checkbox'
         defaultChecked={value}
-        onChange={(event) => doValidation(event.target.value)}
+        onChange={(event) => doValidation(event.target.checked)}
         required={required}
         readOnly={readonly}
         disabled={disabled}

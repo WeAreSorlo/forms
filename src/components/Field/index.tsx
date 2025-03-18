@@ -23,7 +23,7 @@ interface Context extends InputSchema {
   setValid: Dispatch<SetStateAction<Context['valid']>>
   setErrors: Dispatch<SetStateAction<Context['errors']>>
 
-  handleValidation: (response: InputValidationResponse) => boolean
+  handleValidation: (response: InputValidationResponse) => void
 }
 
 // Create Field Context
@@ -89,24 +89,12 @@ const Field = memo(function Field({
   }, [name, label, required, instructions, readonly, disabled, width, options])
 
   const handleValidation = useCallback(
-    (response: InputValidationResponse) => {
-      if (typeof response === 'string') {
-        setValid(false)
-        setErrors([response])
-        return false
-      }
-
-      if (Array.isArray(response) && response.length > 0) {
-        setValid(false)
-        setErrors(response)
-        return false
-      }
-
-      setValid(!!response)
-      setErrors([])
-      return !!response
+    ({ isValid, validatedValue, messages }: InputValidationResponse) => {
+      setValid(isValid)
+      setErrors(messages || [])
+      setValue(validatedValue || null)
     },
-    [setValid, setErrors],
+    [setValid, setErrors, setValue],
   )
 
   return (

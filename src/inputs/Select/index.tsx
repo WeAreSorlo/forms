@@ -10,6 +10,7 @@ import {
   InputValidateValue,
 } from '@/types/inputs'
 import { baseInputSchemaFields, validateSchema } from '@/utils/inputs'
+import { validationError, validationSuccess } from '@/utils/validation'
 import { Fragment, memo, useCallback } from 'react'
 
 export const name: InputName = () => 'Select (Dropdown)'
@@ -26,22 +27,20 @@ export const validateValue: InputValidateValue = (value, schema) => {
   schema = validateSchema(schema)
 
   if (schema.required && !value) {
-    return 'This field is required.'
+    return validationError('This field is required.')
   }
 
   if (schema.options.multiple && !value?.length) {
-    return 'At least one selection is required.'
+    return validationError('At least one selection is required.')
   }
 
-  return true
+  return validationSuccess(value)
 }
 
 export const formatValue: InputFormatValue = (value, schema) => {
-  if (validateValue(value, schema)) {
-    return value
-  }
-
-  return null
+  schema = validateSchema(schema)
+  const { isValid, validatedValue } = validateValue(value, schema)
+  return isValid ? validatedValue : null
 }
 
 export const renderValue: InputRenderValue = (value, schema) => {
@@ -49,12 +48,14 @@ export const renderValue: InputRenderValue = (value, schema) => {
 }
 
 const Component: InputComponent = memo(function Component() {
-  const { id, schema, required, readonly, disabled, options, value, setValue, handleValidation } = useFieldContext()
+  const { id, schema, required, readonly, disabled, options, value, handleValidation } = useFieldContext()
 
-  const doValidation = (input: any) => {
-    const isValid = handleValidation(validateValue(input, schema))
-    setValue(isValid ? input : '')
-  }
+  const doValidation = useCallback(
+    (input: any) => {
+      handleValidation(validateValue(input, schema))
+    },
+    [handleValidation, validateValue],
+  )
 
   const handleOnChange = useCallback(
     (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -63,7 +64,7 @@ const Component: InputComponent = memo(function Component() {
         : event.target.value
       doValidation(inputValue)
     },
-    [setValue],
+    [doValidation],
   )
 
   return (

@@ -1,5 +1,6 @@
 import { useFieldContext } from '@/components/Field'
 import Fieldset, { OnValuesChangeCallback } from '@/components/Fieldset'
+import Modal from '@/components/Modal'
 import { useFormContext } from '@/context/FormProvider'
 import { FieldSchema } from '@/types/fields'
 import {
@@ -13,7 +14,8 @@ import {
   InputValidateValue,
 } from '@/types/inputs'
 import { validateSchema } from '@/utils/inputs'
-import { memo, useMemo, useState } from 'react'
+import { validationError, validationSuccess } from '@/utils/validation'
+import { Fragment, memo, useId, useMemo, useState } from 'react'
 
 export const name: InputName = () => 'Schema Builder'
 
@@ -23,62 +25,96 @@ export const category: InputCategory = () => 'Layout'
 
 export const validateValue: InputValidateValue = (value, schema) => {
   schema = validateSchema(schema)
-  return Array.isArray(value)
+
+  if (!Array.isArray(value)) {
+    return validationError('Invalid value.')
+  }
+
+  return validationSuccess(value)
 }
 
 export const formatValue: InputFormatValue = (value, schema) => {
-  if (validateValue(value, schema)) {
-    return value
-  }
-
-  return []
+  schema = validateSchema(schema)
+  const { isValid, validatedValue } = validateValue(value, schema)
+  return isValid ? JSON.stringify(validatedValue, null, 2) : null
 }
 
 export const renderValue: InputRenderValue = (value, schema) => {
   return <>{formatValue(value, schema)}</>
 }
 
-const ValueComponent = memo(function ValueComponent({
-  input,
-  fields,
+const SchemaEditor = memo(function SchemaEditor({
+  label,
+  cancelLabel,
+  saveLabel,
+  schema,
   inputs,
-  onChange,
+  onSave,
+  onCancel,
 }: {
-  input: Input
-  fields: Array<FieldSchema>
+  label: string | React.ReactNode
+  saveLabel?: string | React.ReactNode
+  cancelLabel?: string | React.ReactNode
+  schema: Array<FieldSchema>
   inputs: Record<string, Input>
-  onChange: OnValuesChangeCallback
+  onSave: OnValuesChangeCallback
+  onCancel?: () => void
 }) {
+  const id = useId()
+  const [resetFlag, setResetFlag] = useState(false)
   const [open, setOpen] = useState(false)
+  const [tempSchema, setTempSchema] = useState<null | Partial<FieldSchema>>(schema)
+
+  const closeModal = () => {
+    setOpen(false)
+    setResetFlag((old) => !old)
+  }
+
   return (
-    <div>
+    <Fragment key={`${id}-${String(resetFlag)}`}>
       <button
         onClick={(event) => {
           event.preventDefault()
           setOpen((old) => !old)
         }}
       >
-        {input.name()}
+        {label}
       </button>
-      <div style={{ display: open ? 'block' : 'none' }}>
-        <Fieldset schema={fields} inputs={inputs} onValuesChange={onChange} />
-      </div>
-    </div>
+      <Modal
+        open={open}
+        onClose={() => {
+          closeModal()
+          if (onCancel) onCancel()
+        }}
+        header={label}
+      >
+        <Fieldset schema={schema} inputs={inputs} onValuesChange={setTempSchema} />
+        <button
+          onClick={(event) => {
+            event.preventDefault()
+            closeModal()
+            if (onCancel) onCancel()
+          }}
+        >
+          {cancelLabel || 'Cancel'}
+        </button>
+        <button
+          onClick={(event) => {
+            event.preventDefault()
+            onSave(tempSchema)
+            closeModal()
+          }}
+        >
+          {saveLabel || 'Save'}
+        </button>
+      </Modal>
+    </Fragment>
   )
 })
 
 const Component: InputComponent = memo(function Component() {
   const { inputs } = useFormContext()
-  const { id, schema, required, readonly, disabled, options, value, setValue, handleValidation } = useFieldContext()
-
-  const [addTypeKey, setAddTypeKey] = useState<string | null>(null)
-  const [addTypeInput, setAddTypeInput] = useState<Input | null>(null)
-  const [tempFieldSchema, setTempFieldSchema] = useState<null | Partial<FieldSchema>>(null)
-  const [tempFieldValidity, setTempFieldValidity] = useState<Record<string, boolean>>({})
-
-  const tempFieldIsValid = useMemo(() => {
-    return Object.values(tempFieldValidity).filter((validity) => !validity).length === 0
-  }, [tempFieldValidity])
+  const { schema, value, setValue } = useFieldContext()
 
   const inputEntries = useMemo(() => {
     return Object.entries(inputs).filter(([type, input]) => !!input.schemaFields)
@@ -86,9 +122,9 @@ const Component: InputComponent = memo(function Component() {
 
   return (
     <div className='iight-input__schemabuilder'>
-      {/* Values */}
+      {/* Edit */}
       {Array.isArray(value) && (
-        <div>
+        <div className='iight-fieldset'>
           {value.map((valueSchema: FieldSchema, valueIndex) => {
             const isValidType = valueSchema.type in inputs
             const valueInput = inputs[valueSchema.type]
@@ -96,96 +132,68 @@ const Component: InputComponent = memo(function Component() {
               item.value = valueSchema[item.name]
               return item
             })
+
+            let label = valueSchema.type
+
+            if (valueSchema.name && valueSchema.label) {
+              label = `${valueSchema.label} (${valueSchema.name})`
+            } else if (!valueSchema.name && valueSchema.label) {
+              label = `${valueSchema.label}`
+            }
+
             return (
-              <div key={valueIndex}>
-                {!isValidType && 'Invalid field type'}
-                {isValidType && (
-                  <ValueComponent
-                    inputs={inputs}
-                    input={valueInput}
-                    fields={valueFields}
-                    onChange={(values) => {
-                      setValue((old) => {
-                        const newValue = [...old]
-                        newValue[valueIndex] = { ...values, type: valueSchema.type }
-                        return newValue
-                      })
-                    }}
-                  />
-                )}
-              </div>
+              <Fragment key={valueIndex}>
+                <div style={{ width: valueSchema.width ? `${valueSchema.width}%` : '100%' }}>
+                  {!isValidType && <div>Invalid field type</div>}
+                  {isValidType && (
+                    <SchemaEditor
+                      schema={valueFields}
+                      inputs={inputs}
+                      onSave={(values) => {
+                        setValue((old) => {
+                          const newValue = [...old]
+                          newValue[valueIndex] = { ...values, type: valueSchema.type }
+                          const { isValid, validatedValue } = validateValue(newValue, schema)
+                          return isValid ? validatedValue : old
+                        })
+                      }}
+                      label={label}
+                    />
+                  )}
+                </div>
+              </Fragment>
             )
           })}
         </div>
       )}
 
-      {/* Selector */}
+      {/* Add new */}
       <div>
         {inputEntries.map(([type, input], inputIndex) => {
-          const {
-            name: inputName,
-            description: inputDescription,
-            category: inputCategory,
-            icon: inputIcon,
-            schemaFields: inputSchemaFields,
-          } = input
           return (
-            <div key={inputIndex}>
-              <button
-                onClick={(event) => {
-                  event.preventDefault()
-                  setAddTypeKey(type)
-                  setAddTypeInput(input)
+            <Fragment key={inputIndex}>
+              <SchemaEditor
+                schema={input.schemaFields()}
+                inputs={inputs}
+                onSave={(values) => {
+                  setValue((old) => {
+                    const newValue = old ? [...old] : []
+                    newValue.push({ type, ...values })
+                    return newValue
+                  })
                 }}
-              >
-                <strong>{inputName ? inputName() : type}</strong>
-                <br />
-                <span>{inputDescription ? inputDescription() : null}</span>
-              </button>
-            </div>
+                label={
+                  <>
+                    <strong>{input?.name() || type}</strong>
+                    <br />
+                    <span>{input?.description()}</span>
+                  </>
+                }
+              />
+            </Fragment>
           )
         })}
       </div>
-
-      {/* Modal */}
-      {addTypeKey && addTypeInput && (
-        <div>
-          <h3>Add new {addTypeInput.name ? addTypeInput.name() : ''}</h3>
-          <Fieldset
-            schema={addTypeInput.schemaFields ? addTypeInput.schemaFields() : []}
-            inputs={inputs}
-            onValuesChange={(values) => {
-              setTempFieldSchema({ ...values, type: addTypeKey })
-            }}
-            onValidityChange={setTempFieldValidity}
-          />
-          <button
-            onClick={(event) => {
-              event.preventDefault()
-              setAddTypeKey(null)
-              setAddTypeInput(null)
-              setTempFieldSchema(null)
-            }}
-          >
-            Cancel
-          </button>
-          <button
-            onClick={(event) => {
-              event.preventDefault()
-              setValue((old) => {
-                const newValue = old || []
-                newValue.push(tempFieldSchema)
-                return newValue
-              })
-              setAddTypeKey(null)
-              setAddTypeInput(null)
-              setTempFieldSchema(null)
-            }}
-          >
-            Add
-          </button>
-        </div>
-      )}
     </div>
   )
 })

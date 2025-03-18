@@ -10,8 +10,8 @@ import {
   InputValidateValue,
 } from '@/types/inputs'
 import { baseInputSchemaFields, validateSchema } from '@/utils/inputs'
-import { validateEmail } from '@/utils/validators'
-import { memo } from 'react'
+import { isEmail, validationError, validationSuccess } from '@/utils/validation'
+import { memo, useCallback } from 'react'
 
 export const name: InputName = () => 'Email'
 
@@ -27,32 +27,30 @@ export const validateValue: InputValidateValue = (value, schema) => {
   schema = validateSchema(schema)
 
   if (typeof value !== 'string') {
-    return 'Invalid value.'
+    return validationError('Invalid value.')
   }
 
   if (schema.required && !value) {
-    return 'This field is required.'
+    return validationError('This field is required.')
   }
 
-  if (!schema.options.multiple && !validateEmail(value)) {
-    return 'A valid email address required.'
+  if (!schema.options.multiple && !isEmail(value)) {
+    return validationError('A valid email address required.')
   }
 
   // If input allows for multiple addresses
   // @link https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/email#multiple
-  if (schema.options.multiple && value.split(/[ ,]+/).filter((item) => !validateEmail(item)).length) {
-    return 'One or more email address(es) is invalid.'
+  if (schema.options.multiple && value.split(/[ ,]+/).filter((item) => !isEmail(item)).length) {
+    return validationError('One or more email address(es) is invalid.')
   }
 
-  return true
+  return validationSuccess(value)
 }
 
 export const formatValue: InputFormatValue = (value, schema) => {
-  if (validateValue(value, schema)) {
-    return value
-  }
-
-  return null
+  schema = validateSchema(schema)
+  const { isValid, validatedValue } = validateValue(value, schema)
+  return isValid ? validatedValue : null
 }
 
 export const renderValue: InputRenderValue = (value, schema) => {
@@ -60,12 +58,14 @@ export const renderValue: InputRenderValue = (value, schema) => {
 }
 
 const Component: InputComponent = memo(function Component() {
-  const { id, schema, required, readonly, disabled, options, value, setValue, handleValidation } = useFieldContext()
+  const { id, schema, required, readonly, disabled, options, value, handleValidation } = useFieldContext()
 
-  const doValidation = (input: any) => {
-    const isValid = handleValidation(validateValue(input, schema))
-    setValue(isValid ? input : '')
-  }
+  const doValidation = useCallback(
+    (input: any) => {
+      handleValidation(validateValue(input, schema))
+    },
+    [handleValidation, validateValue],
+  )
 
   return (
     <div className='iight-input__email'>

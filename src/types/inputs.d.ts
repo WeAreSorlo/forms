@@ -1,4 +1,5 @@
 import { FieldSchema } from '@/types/fields'
+import { ValidationResponseError, ValidationResponseSuccess } from '@/utils/validation'
 
 export interface InputSchema {
   name: string
@@ -6,6 +7,7 @@ export interface InputSchema {
   required?: boolean
   instructions?: string
   value?: any
+  defaultValue?: any
   readonly?: boolean
   disabled?: boolean
   width?: number
@@ -13,7 +15,7 @@ export interface InputSchema {
   [key: string]: any
 }
 
-export type InputValidationResponse = string | Array<string> | boolean
+export type InputValidationResponse = ValidationResponseError | ValidationResponseSuccess
 
 export type InputComponent = React.ComponentType<any>
 
@@ -24,7 +26,7 @@ export type InputIcon = () => React.ReactNode
 export type InputSchemaFields = () => Array<FieldSchema>
 
 export type InputValidateValue = (value: any, schema: InputSchema) => InputValidationResponse
-export type InputFormatValue = (value: any, schema: InputSchema) => any
+export type InputFormatValue = (value: any, schema: InputSchema) => string | null
 export type InputRenderValue = (value: any, schema: InputSchema) => React.ReactNode
 
 export interface Input {

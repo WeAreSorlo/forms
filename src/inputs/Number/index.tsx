@@ -10,7 +10,8 @@ import {
   InputValidateValue,
 } from '@/types/inputs'
 import { baseInputSchemaFields, validateSchema } from '@/utils/inputs'
-import { memo } from 'react'
+import { validationError, validationSuccess } from '@/utils/validation'
+import { memo, useCallback } from 'react'
 
 export const name: InputName = () => 'Number'
 
@@ -28,11 +29,11 @@ export const validateValue: InputValidateValue = (value, schema) => {
   if (typeof value !== 'number') value = Number(value)
 
   if (isNaN(value) || !isFinite(value)) {
-    return 'Invalid value.'
+    return validationError('Invalid value.')
   }
 
   if (schema.required && !value) {
-    return 'This field is required.'
+    return validationError('This field is required.')
   }
 
   const min = schema.options.min
@@ -40,21 +41,19 @@ export const validateValue: InputValidateValue = (value, schema) => {
 
   if (value) {
     if (min && value < min) {
-      return `This field requires a minimum value of ${min}.`
+      return validationError(`This field requires a minimum value of ${min}.`)
     } else if (max && value > max) {
-      return `This field requires a maximum value of ${max}.`
+      return validationError(`This field requires a maximum value of ${max}.`)
     }
   }
 
-  return true
+  return validationSuccess(value as number)
 }
 
 export const formatValue: InputFormatValue = (value, schema) => {
-  if (validateValue(value, schema)) {
-    return value
-  }
-
-  return null
+  schema = validateSchema(schema)
+  const { isValid, validatedValue } = validateValue(value, schema)
+  return isValid ? Number(validatedValue).toLocaleString() : null
 }
 
 export const renderValue: InputRenderValue = (value, schema) => {
@@ -62,12 +61,14 @@ export const renderValue: InputRenderValue = (value, schema) => {
 }
 
 const Component: InputComponent = memo(function Component() {
-  const { id, schema, required, readonly, disabled, options, value, setValue, handleValidation } = useFieldContext()
+  const { id, schema, required, readonly, disabled, options, value, handleValidation } = useFieldContext()
 
-  const doValidation = (input: any) => {
-    const isValid = handleValidation(validateValue(input, schema))
-    setValue(isValid ? input : '')
-  }
+  const doValidation = useCallback(
+    (input: any) => {
+      handleValidation(validateValue(input, schema))
+    },
+    [handleValidation, validateValue],
+  )
 
   return (
     <div className='iight-input__number'>

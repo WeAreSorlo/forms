@@ -27,6 +27,7 @@ const App = () => {
             },
           ]}
         />
+        <pre>{JSON.stringify(dynamicSchema, null, 2)}</pre>
       </div>
       <div style={{ maxWidth: 600, width: '100%' }}>
         <pre>{JSON.stringify(dynamicValues, null, 2)}</pre>
