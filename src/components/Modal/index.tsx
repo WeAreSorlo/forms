@@ -38,6 +38,20 @@ export default function Modal({ open, header, footer, closeButton, onOpen, onClo
     )
   }
 
+  // Open dialog with JS api gives us the ::backdrop psuedo element
+  // @link https://developer.mozilla.org/en-US/docs/Web/HTML/Element/dialog#open
+  useEffect(() => {
+    const dialog = dialogRef.current
+    if (dialog) {
+      if (open && !dialog.open) {
+        dialog.showModal()
+      } else if (!open && dialog.open) {
+        dialog.close()
+      }
+    }
+  }, [dialogRef, open])
+
+  // Fire open/close events
   useEffect(() => {
     const dialog = dialogRef.current
     if (dialog) {
@@ -55,7 +69,7 @@ export default function Modal({ open, header, footer, closeButton, onOpen, onClo
   }, [dialogRef, onOpen, onClose])
 
   return (
-    <dialog ref={dialogRef} open={open} className='iight-modal'>
+    <dialog ref={dialogRef} className='iight-modal'>
       {header && (
         <div className='iight-modal__header'>
           {header}
