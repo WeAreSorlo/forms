@@ -1,17 +1,7 @@
 import { FieldErrors } from '@/types/fields'
 import { InputSchema, InputValidationResponse } from '@/types/inputs'
 import { validateSchema } from '@/utils/inputs'
-import {
-  createContext,
-  Dispatch,
-  memo,
-  SetStateAction,
-  useCallback,
-  useContext,
-  useEffect,
-  useId,
-  useState,
-} from 'react'
+import { createContext, Dispatch, memo, SetStateAction, useCallback, useContext, useId, useMemo } from 'react'
 
 interface Context extends InputSchema {
   id: string
@@ -41,25 +31,26 @@ export const useFieldContext = () => {
 export type OnValueChangeCallback = (value: Context['value']) => void
 export type OnErrorsChangeCallback = (errors: Context['errors']) => void
 export type OnValidityChangeCallback = (validity: Context['valid']) => void
-export type OnSchemaChangeCallback = (schema: Omit<InputSchema, 'value'>) => void
 
 export interface FieldProps extends InputSchema {
   children: React.ReactNode
+  value?: any
+  errors?: FieldErrors
+  valid?: boolean
   onValueChange?: OnValueChangeCallback
   onErrorsChange?: OnErrorsChangeCallback
   onValidityChange?: OnValidityChangeCallback
-  onSchemaChange?: OnSchemaChangeCallback
-  debug?: boolean
 }
 
 // Field Provider Component
 const Field = memo(function Field({
+  value,
+  errors = [],
+  valid,
   onValueChange,
   onErrorsChange,
   onValidityChange,
-  onSchemaChange,
   children,
-  debug = false,
   ...schema
 }: FieldProps) {
   schema = validateSchema(schema)
@@ -67,26 +58,27 @@ const Field = memo(function Field({
   const { name, label, required, instructions, value: defaultValue, readonly, disabled, width, options } = schema
 
   const id = useId()
-  const [value, setValue] = useState<Context['value']>(defaultValue)
 
-  const [valid, setValid] = useState<Context['valid']>(null)
-  const [errors, setErrors] = useState<Context['errors']>([])
+  const setValue = useCallback(
+    (newValue: SetStateAction<Context['value']>) => {
+      if (onValueChange) onValueChange(typeof newValue === 'function' ? newValue(value) : newValue)
+    },
+    [onValueChange, value],
+  )
 
-  useEffect(() => {
-    if (onValueChange) onValueChange(value)
-  }, [value])
+  const setErrors = useCallback(
+    (newErrors: SetStateAction<Context['errors']>) => {
+      if (onErrorsChange) onErrorsChange(typeof newErrors === 'function' ? newErrors(errors) : newErrors)
+    },
+    [onErrorsChange, errors],
+  )
 
-  useEffect(() => {
-    if (onErrorsChange) onErrorsChange(errors)
-  }, [errors])
-
-  useEffect(() => {
-    if (onValidityChange) onValidityChange(valid)
-  }, [valid])
-
-  useEffect(() => {
-    if (onSchemaChange) onSchemaChange({ name, label, required, instructions, readonly, disabled, width, options })
-  }, [name, label, required, instructions, readonly, disabled, width, options])
+  const setValid = useCallback(
+    (newValid: SetStateAction<Context['valid']>) => {
+      if (onValidityChange) onValidityChange(typeof newValid === 'function' ? newValid(valid) : newValid)
+    },
+    [onValidityChange, valid],
+  )
 
   const handleValidation = useCallback(
     ({ isValid, validatedValue, messages }: InputValidationResponse) => {
@@ -97,30 +89,56 @@ const Field = memo(function Field({
     [setValid, setErrors, setValue],
   )
 
+  const contextValue = useMemo(() => {
+    return {
+      id,
+      schema,
+      name,
+      label,
+      required,
+      defaultValue,
+      instructions,
+      readonly,
+      disabled,
+      width,
+      options,
+
+      value,
+      errors,
+      valid,
+
+      setValue,
+      setErrors,
+      setValid,
+
+      handleValidation,
+    }
+  }, [
+    id,
+    schema,
+    name,
+    label,
+    required,
+    defaultValue,
+    instructions,
+    readonly,
+    disabled,
+    width,
+    options,
+
+    value,
+    errors,
+    valid,
+
+    setValue,
+    setErrors,
+    setValid,
+
+    handleValidation,
+  ])
+
   return (
-    <FieldContext.Provider
-      value={{
-        id,
-        schema,
-        name,
-        label,
-        required,
-        value,
-        instructions,
-        readonly,
-        disabled,
-        width,
-        options,
-        valid,
-        errors,
-
-        setValue,
-        setValid,
-        setErrors,
-
-        handleValidation,
-      }}
-    >
+    <FieldContext.Provider value={contextValue}>
       <div style={{ width: width ? `${width}%` : '100%' }}>
         <div className='iight-field'>
           <div className='iight-meta'>

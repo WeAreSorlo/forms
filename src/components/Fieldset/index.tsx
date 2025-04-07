@@ -1,15 +1,18 @@
 import Field from '@/components/Field'
 import { FieldErrors, FieldSchema } from '@/types/fields'
 import { Input } from '@/types/inputs'
-import { Fragment, memo, useEffect, useState } from 'react'
+import { Fragment, memo } from 'react'
 
-export type OnValuesChangeCallback = (values: Record<string, any>) => void
-export type OnErrorsChangeCallback = (errors: Record<string, FieldErrors>) => void
-export type OnValidityChangeCallback = (errors: Record<string, boolean>) => void
+export type OnValuesChangeCallback = (field: string, value: any) => void
+export type OnErrorsChangeCallback = (field: string, errors: FieldErrors) => void
+export type OnValidityChangeCallback = (field: string, valid: boolean) => void
 
 export interface FieldsetProps {
   schema: Array<FieldSchema>
   inputs: Record<string, Input>
+  values?: Record<string, any>
+  errors?: Record<string, Array<string>>
+  validity?: Record<string, boolean>
   onValuesChange?: OnValuesChangeCallback
   onErrorsChange?: OnErrorsChangeCallback
   onValidityChange?: OnValidityChangeCallback
@@ -18,26 +21,13 @@ export interface FieldsetProps {
 const Fieldset = memo(function Fieldset({
   schema,
   inputs,
+  values = {},
+  errors = {},
+  validity = {},
   onValuesChange = () => {},
   onErrorsChange = () => {},
   onValidityChange = () => {},
 }: FieldsetProps) {
-  const [fieldsetValues, setFieldsetValues] = useState<Record<string, any>>({})
-  const [fieldsetErrors, setFieldsetErrors] = useState<Record<string, FieldErrors>>({})
-  const [fieldsetValidity, setFieldsetValidity] = useState<Record<string, boolean>>({})
-
-  useEffect(() => {
-    if (onValuesChange) onValuesChange(fieldsetValues)
-  }, [fieldsetValues])
-
-  useEffect(() => {
-    if (onErrorsChange) onErrorsChange(fieldsetErrors)
-  }, [fieldsetErrors])
-
-  useEffect(() => {
-    if (onValidityChange) onValidityChange(fieldsetValidity)
-  }, [fieldsetValidity])
-
   return (
     <div className='iight-fieldset'>
       {schema.map((fieldSchema, fieldIndex) => {
@@ -47,14 +37,17 @@ const Fieldset = memo(function Fieldset({
         return (
           <Fragment key={fieldIndex}>
             <Field
+              value={values[fieldSchema.name]}
+              errors={errors[fieldSchema.name]}
+              valid={validity[fieldSchema.name]}
               onValueChange={(value) => {
-                setFieldsetValues((old) => ({ ...old, [fieldSchema.name]: value }))
+                onValuesChange(fieldSchema.name, value)
               }}
               onErrorsChange={(errors) => {
-                setFieldsetErrors((old) => ({ ...old, [fieldSchema.name]: errors }))
+                onErrorsChange(fieldSchema.name, errors)
               }}
               onValidityChange={(validity) => {
-                setFieldsetValidity((old) => ({ ...old, [fieldSchema.name]: validity }))
+                onValidityChange(fieldSchema.name, validity)
               }}
               {...fieldProps}
             >

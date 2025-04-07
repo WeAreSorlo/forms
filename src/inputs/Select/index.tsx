@@ -48,7 +48,7 @@ export const renderValue: InputRenderValue = (value, schema) => {
 }
 
 const Component: InputComponent = memo(function Component() {
-  const { id, schema, required, readonly, disabled, options, value, handleValidation } = useFieldContext()
+  const { id, schema, required, readonly, disabled, options, value = '', handleValidation } = useFieldContext()
 
   const doValidation = useCallback(
     (input: any) => {
@@ -72,7 +72,7 @@ const Component: InputComponent = memo(function Component() {
       <select
         className='iight-input'
         id={id}
-        defaultValue={options.multiple && !Array.isArray(value) ? [value] : value}
+        value={options.multiple && !Array.isArray(value) ? [value] : value}
         onChange={handleOnChange}
         required={required}
         disabled={disabled}

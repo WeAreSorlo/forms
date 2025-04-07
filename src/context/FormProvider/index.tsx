@@ -9,6 +9,8 @@ export interface Context {
   setValues: Dispatch<SetStateAction<Context['values']>>
   errors: Record<string, any>
   setErrors: Dispatch<SetStateAction<Context['errors']>>
+  validity: Record<string, boolean>
+  setValidity: Dispatch<SetStateAction<Context['validity']>>
   inputs: Record<string, Input>
   setInputs: Dispatch<SetStateAction<Context['inputs']>>
 }
@@ -29,6 +31,7 @@ export interface FormProviderProps {
   schema: Context['schema']
   values?: Context['values']
   errors?: Context['errors']
+  validity?: Context['validity']
   inputs?: Record<string, Input>
   children: React.ReactNode
 }
@@ -37,12 +40,14 @@ export default function FormProvider({
   schema: defaultSchema,
   values: defaultValues,
   errors: defaultErrors,
+  validity: defaultValidity,
   inputs: defaultInputs,
   children,
 }: FormProviderProps) {
   const [schema, setSchema] = useState<Context['schema']>(defaultSchema || [])
   const [values, setValues] = useState<Context['values']>(defaultValues || {})
   const [errors, setErrors] = useState<Context['errors']>(defaultErrors || {})
+  const [validity, setValidity] = useState<Context['validity']>(defaultValidity || {})
   const [inputs, setInputs] = useState<Context['inputs']>(defaultInputs || {})
 
   // Sync schema prop with local state
@@ -60,6 +65,11 @@ export default function FormProvider({
     setErrors(defaultErrors || {})
   }, [defaultErrors])
 
+  // Sync validity prop with local state
+  useEffect(() => {
+    setValidity(defaultValidity || {})
+  }, [defaultValidity])
+
   // Sync inputs prop with local state
   useEffect(() => {
     setInputs(defaultInputs || {})
@@ -74,6 +84,8 @@ export default function FormProvider({
         setValues,
         errors,
         setErrors,
+        validity,
+        setValidity,
         inputs,
         setInputs,
       }}

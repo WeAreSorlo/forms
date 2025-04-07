@@ -1,5 +1,5 @@
 import { useFieldContext } from '@/components/Field'
-import Fieldset, { OnValuesChangeCallback } from '@/components/Fieldset'
+import Fieldset from '@/components/Fieldset'
 import Modal from '@/components/Modal'
 import { useFormContext } from '@/context/FormProvider'
 import { FieldSchema } from '@/types/fields'
@@ -57,17 +57,26 @@ const SchemaEditor = memo(function SchemaEditor({
   cancelLabel?: string | React.ReactNode
   schema: Array<FieldSchema>
   inputs: Record<string, Input>
-  onSave: OnValuesChangeCallback
+  onSave: (value: Record<string, Input>) => void
   onCancel?: () => void
 }) {
   const id = useId()
+
+  const defaultValues = useMemo(() => {
+    return Object.fromEntries(schema.map((field) => [field.name, field.value]))
+  }, [schema])
+
   const [resetFlag, setResetFlag] = useState(false)
   const [open, setOpen] = useState(false)
-  const [tempSchema, setTempSchema] = useState<null | Partial<FieldSchema>>(schema)
+  const [tempValue, setTempValue] = useState<Record<string, any>>(defaultValues)
+
+  const resetModal = () => {
+    setResetFlag((old) => !old)
+    setTempValue(defaultValues)
+  }
 
   const closeModal = () => {
     setOpen(false)
-    setResetFlag((old) => !old)
   }
 
   return (
@@ -84,12 +93,22 @@ const SchemaEditor = memo(function SchemaEditor({
         open={open}
         onClose={() => {
           closeModal()
+          resetModal()
           if (onCancel) onCancel()
         }}
         header={label}
       >
         {/* This condition prevents infinite rendering */}
-        {open && <Fieldset schema={schema} inputs={inputs} onValuesChange={setTempSchema} />}
+        {open && (
+          <Fieldset
+            schema={schema}
+            inputs={inputs}
+            values={tempValue}
+            onValuesChange={(field, value) => {
+              setTempValue((old) => ({ ...old, [field]: value }))
+            }}
+          />
+        )}
         <button
           onClick={(event) => {
             event.preventDefault()
@@ -102,7 +121,7 @@ const SchemaEditor = memo(function SchemaEditor({
         <button
           onClick={(event) => {
             event.preventDefault()
-            onSave(tempSchema)
+            onSave({ ...tempValue })
             closeModal()
           }}
         >
@@ -115,7 +134,7 @@ const SchemaEditor = memo(function SchemaEditor({
 
 const Component: InputComponent = memo(function Component() {
   const { inputs } = useFormContext()
-  const { schema, value, setValue } = useFieldContext()
+  const { schema, value = [], errors, validity, setValue, setErrors, setValidity } = useFieldContext()
 
   const inputEntries = useMemo(() => {
     return Object.entries(inputs).filter(([type, input]) => !!input.schemaFields)
@@ -124,14 +143,13 @@ const Component: InputComponent = memo(function Component() {
   return (
     <div className='iight-input__schemabuilder'>
       {/* Edit */}
-      {Array.isArray(value) && (
+      {Array.isArray(value) && value.length > 0 && (
         <div className='iight-fieldset'>
           {value.map((valueSchema: FieldSchema, valueIndex) => {
             const isValidType = valueSchema.type in inputs
             const valueInput = inputs[valueSchema.type]
             const valueFields = (valueInput && valueInput.schemaFields ? valueInput.schemaFields() : []).map((item) => {
-              item.value = valueSchema[item.name]
-              return item
+              return { ...item, value: valueSchema[item.name] ?? item.value }
             })
 
             let label = valueSchema.type
@@ -150,12 +168,11 @@ const Component: InputComponent = memo(function Component() {
                     <SchemaEditor
                       schema={valueFields}
                       inputs={inputs}
-                      onSave={(values) => {
-                        setValue((old) => {
+                      onSave={(editorValues) => {
+                        setValue((old = []) => {
                           const newValue = [...old]
-                          newValue[valueIndex] = { ...values, type: valueSchema.type }
-                          const { isValid, validatedValue } = validateValue(newValue, schema)
-                          return isValid ? validatedValue : old
+                          newValue[valueIndex] = { ...editorValues, type: valueSchema.type }
+                          return newValue
                         })
                       }}
                       label={label}
@@ -176,10 +193,10 @@ const Component: InputComponent = memo(function Component() {
               <SchemaEditor
                 schema={input.schemaFields()}
                 inputs={inputs}
-                onSave={(values) => {
-                  setValue((old) => {
-                    const newValue = old ? [...old] : []
-                    newValue.push({ type, ...values })
+                onSave={(editorValues) => {
+                  setValue((old = []) => {
+                    const newValue = [...old]
+                    newValue.push({ ...editorValues, type })
                     return newValue
                   })
                 }}

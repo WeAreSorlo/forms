@@ -14,7 +14,7 @@ export interface FormProps {
 }
 
 function FormInner({ onChange }: { onChange?: (values: Record<string, any>) => void }) {
-  const { schema, values, inputs, setValues, setErrors } = useFormContext()
+  const { inputs, schema, values, errors, validity, setValues, setErrors, setValidity } = useFormContext()
 
   useEffect(() => {
     if (onChange) onChange(values)
@@ -22,7 +22,22 @@ function FormInner({ onChange }: { onChange?: (values: Record<string, any>) => v
 
   return (
     <form className='iight-form'>
-      <Fieldset schema={schema} inputs={inputs} onValuesChange={setValues} onErrorsChange={setErrors} />
+      <Fieldset
+        inputs={inputs}
+        schema={schema}
+        values={values}
+        errors={errors}
+        validity={validity}
+        onValuesChange={(field, value) => {
+          setValues((old) => ({ ...old, [field]: value }))
+        }}
+        onErrorsChange={(field, errors) => {
+          setErrors((old) => ({ ...old, [field]: errors }))
+        }}
+        onValidityChange={(field, validity) => {
+          setValidity((old) => ({ ...old, [field]: validity }))
+        }}
+      />
     </form>
   )
 }
