@@ -4,4 +4,4 @@ export interface FieldSchema extends InputSchema {
   type: string
 }
 
-export type FieldErrors = Array<string>
+export type FieldMessages = Array<string>

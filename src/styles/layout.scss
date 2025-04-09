@@ -1,0 +1,39 @@
+.iight-form {
+  &, *, *:before, *:after {
+    box-sizing: border-box;
+  }
+}
+
+.iight-fieldset {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  margin: calc(0px - var(--iight-fieldset-gap));
+
+  > div {
+    padding: var(--iight-fieldset-gap);
+    box-sizing: border-box;
+  }
+}
+
+.iight-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.iight-label {
+
+}
+
+.iight-instructions {
+
+}
+
+.iight-messages {
+
+}
+
+.iight-input {
+  width: 100%;
+  display: block;
+}

@@ -1,12 +1,11 @@
 import { FieldSchema } from '@/types/fields'
-import { ValidationResponseError, ValidationResponseSuccess } from '@/utils/validation'
+import { ValidationResponse } from '@/utils/validation'
 
 export interface InputSchema {
   name: string
   label?: string
   required?: boolean
   instructions?: string
-  value?: any
   defaultValue?: any
   readonly?: boolean
   disabled?: boolean
@@ -15,7 +14,7 @@ export interface InputSchema {
   [key: string]: any
 }
 
-export type InputValidationResponse = ValidationResponseError | ValidationResponseSuccess
+export type InputValidationResponse = ValidationResponse
 
 export type InputComponent = React.ComponentType<any>
 

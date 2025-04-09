@@ -1,0 +1,81 @@
+:root {
+  --iight-font-family: inherit, sans-serif;
+  --iight-font-size: inherit;
+  --iight-line-height: inherit;
+
+  /* Sizing utilities */
+  --iight-size-px: 1px;
+  --iight-size-0\.5: 0.125rem; // 2px
+  --iight-size-1: 0.25rem; // 4px
+  --iight-size-1\.5: 0.375rem; // 6px
+  --iight-size-2: 0.5rem; // 8px
+  --iight-size-2\.5: 0.625rem; // 10px
+  --iight-size-3: 0.75rem; // 12px
+  --iight-size-3\.5: 0.875rem; // 14px
+  --iight-size-4: 1rem; // 16px
+
+  /* Weights */
+  --iight-font-weight-normal: inherit;
+  --iight-font-weight-bold: 600;
+
+  /* Color utilities */
+  --iight-color-base: inherit;
+  --iight-color-background: #fff;
+  --iight-color-border: #666;
+  --iight-color-error: #ff0000;
+  --iight-color-success: #00ff00;
+
+  /* Fieldset */
+  --iight-fieldset-gap: var(--iight-size-2);
+
+  /* Fields (input, label, validation container) */
+  --iight-field-font-family: inherit;
+  --iight-field-font-size: inherit;
+  --iight-field-font-weight: inherit;
+  --iight-field-line-height: inherit;
+  --iight-field-color: inherit;
+  --iight-field-background: transparent;
+  --iight-field-border: none;
+  --iight-field-border-radius: 0;
+  --iight-field-padding: 0;
+  --iight-field-margin: 0;
+  --iight-field-gap: var(--iight-size-2);
+
+  /* Labels */
+  --iight-label-font-family: inherit;
+  --iight-label-font-size: inherit;
+  --iight-label-font-weight: var(--iight-font-weight-bold);
+  --iight-label-line-height: inherit;
+  --iight-label-color: inherit;
+
+  /* Instructions */
+  --iight-instructions-font-family: inherit;
+  --iight-instructions-font-size: var(--iight-size-3\.5);
+  --iight-instructions-font-weight: inherit;
+  --iight-instructions-line-height: inherit;
+  --iight-instructions-color: inherit;
+
+  /* Inputs */
+  --iight-input-font-family: inherit;
+  --iight-input-font-size: inherit;
+  --iight-input-font-weight: inherit;
+  --iight-input-line-height: inherit;
+  --iight-input-color: inherit;
+  --iight-input-background: var(--iight-color-background);
+  --iight-input-border: var(--iight-size-px) solid var(--iight-color-border);
+  --iight-input-border-radius: var(--iight-size-1);
+  --iight-input-padding: var(--iight-size-1) var(--iight-size-2);
+  --iight-input-margin: 0;
+
+  /* Messages list */
+  --iight-messages-font-family: inherit;
+  --iight-messages-font-size: inherit;
+  --iight-messages-font-weight: inherit;
+  --iight-messages-line-height: inherit;
+  --iight-messages-color: var(--iight-color-base);
+  --iight-messages-background: transparent;
+  --iight-messages-border: none;
+  --iight-messages-border-radius: var(--iight-size-1);
+  --iight-messages-padding: var(--iight-size-1) var(--iight-size-2);
+  --iight-messages-margin: 0;
+}

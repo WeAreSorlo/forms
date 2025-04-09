@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "types": ["react/next", "react-dom/next"],
+    "types": ["react", "react-dom"],
     "outDir": "dist",
     "declaration": true,
     "declarationMap": true,

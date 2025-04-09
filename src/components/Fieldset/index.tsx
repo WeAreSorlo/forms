@@ -1,31 +1,30 @@
 import Field from '@/components/Field'
-import { FieldErrors, FieldSchema } from '@/types/fields'
+import { FieldMessages, FieldSchema } from '@/types/fields'
 import { Input } from '@/types/inputs'
-import { Fragment, memo } from 'react'
 
 export type OnValuesChangeCallback = (field: string, value: any) => void
-export type OnErrorsChangeCallback = (field: string, errors: FieldErrors) => void
+export type OnMessagesChangeCallback = (field: string, messages: FieldMessages) => void
 export type OnValidityChangeCallback = (field: string, valid: boolean) => void
 
 export interface FieldsetProps {
   schema: Array<FieldSchema>
   inputs: Record<string, Input>
   values?: Record<string, any>
-  errors?: Record<string, Array<string>>
+  messages?: Record<string, FieldMessages>
   validity?: Record<string, boolean>
   onValuesChange?: OnValuesChangeCallback
-  onErrorsChange?: OnErrorsChangeCallback
+  onMessagesChange?: OnMessagesChangeCallback
   onValidityChange?: OnValidityChangeCallback
 }
 
-const Fieldset = memo(function Fieldset({
+export default function Fieldset({
   schema,
   inputs,
   values = {},
-  errors = {},
+  messages = {},
   validity = {},
   onValuesChange = () => {},
-  onErrorsChange = () => {},
+  onMessagesChange = () => {},
   onValidityChange = () => {},
 }: FieldsetProps) {
   return (
@@ -35,30 +34,27 @@ const Fieldset = memo(function Fieldset({
         const input = inputs?.[type]
         const InputCompontent = input?.default
         return (
-          <Fragment key={fieldIndex}>
-            <Field
-              value={values[fieldSchema.name]}
-              errors={errors[fieldSchema.name]}
-              valid={validity[fieldSchema.name]}
-              onValueChange={(value) => {
-                onValuesChange(fieldSchema.name, value)
-              }}
-              onErrorsChange={(errors) => {
-                onErrorsChange(fieldSchema.name, errors)
-              }}
-              onValidityChange={(validity) => {
-                onValidityChange(fieldSchema.name, validity)
-              }}
-              {...fieldProps}
-            >
-              {InputCompontent && <InputCompontent />}
-              {!InputCompontent && 'Invalid input type.'}
-            </Field>
-          </Fragment>
+          <Field
+            key={fieldIndex}
+            value={values[fieldSchema.name]}
+            messages={messages[fieldSchema.name]}
+            valid={validity[fieldSchema.name]}
+            onValueChange={(value) => {
+              onValuesChange(fieldSchema.name, value)
+            }}
+            onMessagesChange={(messages) => {
+              onMessagesChange(fieldSchema.name, messages)
+            }}
+            onValidityChange={(validity) => {
+              onValidityChange(fieldSchema.name, validity)
+            }}
+            {...fieldProps}
+          >
+            {InputCompontent && <InputCompontent />}
+            {!InputCompontent && 'Invalid input type.'}
+          </Field>
         )
       })}
     </div>
   )
-})
-
-export default Fieldset
+}

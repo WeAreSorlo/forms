@@ -8,13 +8,13 @@ import { useEffect, useMemo } from 'react'
 export interface FormProps {
   schema: Context['schema']
   values?: Context['values']
-  errors?: Context['errors']
+  messages?: Context['messages']
   inputs?: Record<string, Input>
   onChange?: (values: Record<string, any>) => void
 }
 
 function FormInner({ onChange }: { onChange?: (values: Record<string, any>) => void }) {
-  const { inputs, schema, values, errors, validity, setValues, setErrors, setValidity } = useFormContext()
+  const { inputs, schema, values, messages, validity, setValues, setMessages, setValidity } = useFormContext()
 
   useEffect(() => {
     if (onChange) onChange(values)
@@ -26,13 +26,13 @@ function FormInner({ onChange }: { onChange?: (values: Record<string, any>) => v
         inputs={inputs}
         schema={schema}
         values={values}
-        errors={errors}
+        messages={messages}
         validity={validity}
         onValuesChange={(field, value) => {
           setValues((old) => ({ ...old, [field]: value }))
         }}
-        onErrorsChange={(field, errors) => {
-          setErrors((old) => ({ ...old, [field]: errors }))
+        onMessagesChange={(field, messages) => {
+          setMessages((old) => ({ ...old, [field]: messages }))
         }}
         onValidityChange={(field, validity) => {
           setValidity((old) => ({ ...old, [field]: validity }))
@@ -45,7 +45,7 @@ function FormInner({ onChange }: { onChange?: (values: Record<string, any>) => v
 export default function Form({
   schema: defaultSchema,
   values: defaultValues,
-  errors: defaultErrors,
+  messages: defaultMessages,
   inputs: defaultInputs,
   onChange,
 }: FormProps) {
@@ -59,7 +59,7 @@ export default function Form({
 
   return (
     <TranslationProvider>
-      <FormProvider schema={defaultSchema} values={defaultValues} errors={defaultErrors} inputs={mergedInputs}>
+      <FormProvider schema={defaultSchema} values={defaultValues} messages={defaultMessages} inputs={mergedInputs}>
         <FormInner onChange={onChange} />
       </FormProvider>
     </TranslationProvider>

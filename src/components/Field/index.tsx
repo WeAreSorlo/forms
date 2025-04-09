@@ -1,17 +1,28 @@
-import { FieldErrors } from '@/types/fields'
+import { FieldMessages } from '@/types/fields'
 import { InputSchema, InputValidationResponse } from '@/types/inputs'
 import { validateSchema } from '@/utils/inputs'
-import { createContext, Dispatch, memo, SetStateAction, useCallback, useContext, useId, useMemo } from 'react'
+import { createContext, Dispatch, SetStateAction, useCallback, useContext, useId, useMemo } from 'react'
 
-interface Context extends InputSchema {
+interface Context {
   id: string
   schema: InputSchema
-  valid: boolean | null
-  errors: FieldErrors
+  name: InputSchema['name']
+  label: InputSchema['label']
+  required: InputSchema['required']
+  instructions: InputSchema['instructions']
+  defaultValue: InputSchema['defaultValue']
+  readonly: InputSchema['readonly']
+  disabled: InputSchema['disabled']
+  width: InputSchema['width']
+  options: InputSchema['options']
+
+  value: any
+  messages: FieldMessages
+  valid: boolean | undefined
 
   setValue: Dispatch<SetStateAction<Context['value']>>
+  setMessages: Dispatch<SetStateAction<Context['messages']>>
   setValid: Dispatch<SetStateAction<Context['valid']>>
-  setErrors: Dispatch<SetStateAction<Context['errors']>>
 
   handleValidation: (response: InputValidationResponse) => void
 }
@@ -29,33 +40,33 @@ export const useFieldContext = () => {
 }
 
 export type OnValueChangeCallback = (value: Context['value']) => void
-export type OnErrorsChangeCallback = (errors: Context['errors']) => void
+export type OnMessagesChangeCallback = (messages: Context['messages']) => void
 export type OnValidityChangeCallback = (validity: Context['valid']) => void
 
 export interface FieldProps extends InputSchema {
   children: React.ReactNode
   value?: any
-  errors?: FieldErrors
+  messages?: FieldMessages
   valid?: boolean
-  onValueChange?: OnValueChangeCallback
-  onErrorsChange?: OnErrorsChangeCallback
-  onValidityChange?: OnValidityChangeCallback
+  onValueChange: OnValueChangeCallback
+  onMessagesChange: OnMessagesChangeCallback
+  onValidityChange: OnValidityChangeCallback
 }
 
 // Field Provider Component
-const Field = memo(function Field({
+export default function Field({
   value,
-  errors = [],
+  messages = [],
   valid,
   onValueChange,
-  onErrorsChange,
+  onMessagesChange,
   onValidityChange,
   children,
   ...schema
 }: FieldProps) {
   schema = validateSchema(schema)
 
-  const { name, label, required, instructions, value: defaultValue, readonly, disabled, width, options } = schema
+  const { name, label, required, instructions, defaultValue, readonly, disabled, width, options } = schema
 
   const id = useId()
 
@@ -66,11 +77,11 @@ const Field = memo(function Field({
     [onValueChange, value],
   )
 
-  const setErrors = useCallback(
-    (newErrors: SetStateAction<Context['errors']>) => {
-      if (onErrorsChange) onErrorsChange(typeof newErrors === 'function' ? newErrors(errors) : newErrors)
+  const setMessages = useCallback(
+    (newMessages: SetStateAction<Context['messages']>) => {
+      if (onMessagesChange) onMessagesChange(typeof newMessages === 'function' ? newMessages(messages) : newMessages)
     },
-    [onErrorsChange, errors],
+    [onMessagesChange, messages],
   )
 
   const setValid = useCallback(
@@ -81,12 +92,12 @@ const Field = memo(function Field({
   )
 
   const handleValidation = useCallback(
-    ({ isValid, validatedValue, messages }: InputValidationResponse) => {
+    ({ isValid, value, messages }: InputValidationResponse) => {
       setValid(isValid)
-      setErrors(messages || [])
-      setValue(validatedValue || null)
+      setMessages(messages)
+      setValue(value)
     },
-    [setValid, setErrors, setValue],
+    [setValue, setMessages, setValid],
   )
 
   const contextValue = useMemo(() => {
@@ -96,19 +107,19 @@ const Field = memo(function Field({
       name,
       label,
       required,
-      defaultValue,
       instructions,
+      defaultValue,
       readonly,
       disabled,
       width,
       options,
 
       value,
-      errors,
+      messages,
       valid,
 
       setValue,
-      setErrors,
+      setMessages,
       setValid,
 
       handleValidation,
@@ -119,28 +130,31 @@ const Field = memo(function Field({
     name,
     label,
     required,
-    defaultValue,
     instructions,
+    defaultValue,
     readonly,
     disabled,
     width,
     options,
 
     value,
-    errors,
+    messages,
     valid,
 
     setValue,
-    setErrors,
+    setMessages,
     setValid,
 
     handleValidation,
   ])
 
+  const isValid = valid === true
+  const isInvalid = valid === false
+
   return (
     <FieldContext.Provider value={contextValue}>
       <div style={{ width: width ? `${width}%` : '100%' }}>
-        <div className='iight-field'>
+        <div className={`iight-field${isValid ? ' iight-valid' : ''}${isInvalid ? ' iight-invalid' : ''}`}>
           <div className='iight-meta'>
             {label && (
               <label className='iight-label' htmlFor={id}>
@@ -150,10 +164,10 @@ const Field = memo(function Field({
             )}
             {instructions && <div className='iight-instructions'>{instructions}</div>}
           </div>
-          {errors.length > 0 && (
-            <ul className='iight-errors'>
-              {errors.map((error, errorIndex) => {
-                return <li key={errorIndex}>{error}</li>
+          {messages.length > 0 && (
+            <ul className='iight-messages'>
+              {messages.map((message, messageIndex) => {
+                return <li key={messageIndex}>{message}</li>
               })}
             </ul>
           )}
@@ -162,6 +176,4 @@ const Field = memo(function Field({
       </div>
     </FieldContext.Provider>
   )
-})
-
-export default Field
+}

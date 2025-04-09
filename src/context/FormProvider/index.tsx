@@ -7,8 +7,8 @@ export interface Context {
   setSchema: Dispatch<SetStateAction<Context['schema']>>
   values: Record<string, any>
   setValues: Dispatch<SetStateAction<Context['values']>>
-  errors: Record<string, any>
-  setErrors: Dispatch<SetStateAction<Context['errors']>>
+  messages: Record<string, any>
+  setMessages: Dispatch<SetStateAction<Context['messages']>>
   validity: Record<string, boolean>
   setValidity: Dispatch<SetStateAction<Context['validity']>>
   inputs: Record<string, Input>
@@ -30,7 +30,7 @@ export const useFormContext = () => {
 export interface FormProviderProps {
   schema: Context['schema']
   values?: Context['values']
-  errors?: Context['errors']
+  messages?: Context['messages']
   validity?: Context['validity']
   inputs?: Record<string, Input>
   children: React.ReactNode
@@ -39,14 +39,14 @@ export interface FormProviderProps {
 export default function FormProvider({
   schema: defaultSchema,
   values: defaultValues,
-  errors: defaultErrors,
+  messages: defaultMessages,
   validity: defaultValidity,
   inputs: defaultInputs,
   children,
 }: FormProviderProps) {
   const [schema, setSchema] = useState<Context['schema']>(defaultSchema || [])
   const [values, setValues] = useState<Context['values']>(defaultValues || {})
-  const [errors, setErrors] = useState<Context['errors']>(defaultErrors || {})
+  const [messages, setMessages] = useState<Context['messages']>(defaultMessages || {})
   const [validity, setValidity] = useState<Context['validity']>(defaultValidity || {})
   const [inputs, setInputs] = useState<Context['inputs']>(defaultInputs || {})
 
@@ -60,10 +60,10 @@ export default function FormProvider({
     setValues(defaultValues || {})
   }, [defaultValues])
 
-  // Sync errors prop with local state
+  // Sync messages prop with local state
   useEffect(() => {
-    setErrors(defaultErrors || {})
-  }, [defaultErrors])
+    setMessages(defaultMessages || {})
+  }, [defaultMessages])
 
   // Sync validity prop with local state
   useEffect(() => {
@@ -82,8 +82,8 @@ export default function FormProvider({
         setSchema,
         values,
         setValues,
-        errors,
-        setErrors,
+        messages,
+        setMessages,
         validity,
         setValidity,
         inputs,

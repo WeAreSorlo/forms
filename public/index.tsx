@@ -1,5 +1,7 @@
 import Form from '../src'
 import '../src/styles/base.scss'
+import '../src/styles/layout.scss'
+import '../src/styles/variables.scss'
 import React, { useCallback, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 

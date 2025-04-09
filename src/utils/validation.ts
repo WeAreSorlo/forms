@@ -1,37 +1,43 @@
-export interface ValidationResponseError {
-  isValid: false
+export interface ValidationResponse {
+  isValid: boolean
   messages: Array<string>
-  validatedValue: never
+  value: any
 }
 
-export interface ValidationResponseSuccess {
+export interface ValidationResponseReset extends ValidationResponse {
+  isValid: undefined
+}
+
+export interface ValidationResponseError extends ValidationResponse {
+  isValid: false
+}
+
+export interface ValidationResponseSuccess extends ValidationResponse {
   isValid: true
-  messages: never
-  validatedValue: any
 }
 
-export function validationResponse<
-  IsValid extends boolean, // Ensures proper type inference for `isValid`
-  T extends Record<string, any>,
->(isValid: IsValid, data: T): { isValid: IsValid } & T {
+export function validationReset(value: any, message: string | Array<string>): ValidationResponseReset {
   return {
-    isValid,
-    ...data,
+    isValid: undefined,
+    messages: Array.isArray(message) ? message : message ? [message] : [],
+    value: value,
   }
 }
 
-export function validationError(message?: string | Array<string>): ValidationResponseError {
-  return validationResponse(false, {
+export function validationError(value: any, message: string | Array<string>): ValidationResponseError {
+  return {
+    isValid: false,
     messages: Array.isArray(message) ? message : message ? [message] : [],
-    validatedValue: undefined as never,
-  })
+    value: value,
+  }
 }
 
-export function validationSuccess(value: any): ValidationResponseSuccess {
-  return validationResponse(true, {
-    messages: undefined as never,
-    validatedValue: value,
-  })
+export function validationSuccess(value: any, message?: string | Array<string>): ValidationResponseSuccess {
+  return {
+    isValid: true,
+    messages: Array.isArray(message) ? message : message ? [message] : [],
+    value: value,
+  }
 }
 
 export function isEmail(email: string) {

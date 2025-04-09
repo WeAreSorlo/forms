@@ -11,7 +11,7 @@ import {
 } from '@/types/inputs'
 import { baseInputSchemaFields, validateSchema } from '@/utils/inputs'
 import { isEmail, validationError, validationSuccess } from '@/utils/validation'
-import { memo, useCallback } from 'react'
+import { useCallback } from 'react'
 
 export const name: InputName = () => 'Email'
 
@@ -27,21 +27,21 @@ export const validateValue: InputValidateValue = (value, schema) => {
   schema = validateSchema(schema)
 
   if (typeof value !== 'string') {
-    return validationError('Invalid value.')
+    return validationError(value, 'Invalid value.')
   }
 
   if (schema.required && !value) {
-    return validationError('This field is required.')
+    return validationError(value, 'This field is required.')
   }
 
   if (!schema.options.multiple && !isEmail(value)) {
-    return validationError('A valid email address required.')
+    return validationError(value, 'A valid email address required.')
   }
 
   // If input allows for multiple addresses
   // @link https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/email#multiple
   if (schema.options.multiple && value.split(/[ ,]+/).filter((item) => !isEmail(item)).length) {
-    return validationError('One or more email address(es) is invalid.')
+    return validationError(value, 'One or more email address(es) is invalid.')
   }
 
   return validationSuccess(value)
@@ -49,22 +49,22 @@ export const validateValue: InputValidateValue = (value, schema) => {
 
 export const formatValue: InputFormatValue = (value, schema) => {
   schema = validateSchema(schema)
-  const { isValid, validatedValue } = validateValue(value, schema)
-  return isValid ? validatedValue : null
+  const validation = validateValue(value, schema)
+  return validation.isValid ? validation.value : null
 }
 
 export const renderValue: InputRenderValue = (value, schema) => {
   return <>{formatValue(value, schema)}</>
 }
 
-const Component: InputComponent = memo(function Component() {
+const Component: InputComponent = function () {
   const { id, schema, required, readonly, disabled, options, value = '', handleValidation } = useFieldContext()
 
   const doValidation = useCallback(
     (input: any) => {
       handleValidation(validateValue(input, schema))
     },
-    [handleValidation, validateValue],
+    [handleValidation, validateValue, schema],
   )
 
   return (
@@ -85,6 +85,6 @@ const Component: InputComponent = memo(function Component() {
       />
     </div>
   )
-})
+}
 
 export default Component

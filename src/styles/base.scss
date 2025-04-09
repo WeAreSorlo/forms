@@ -1,164 +1,73 @@
-@layer base {
-  :root {
-    --iight-font-family: inherit, sans-serif;
-    --iight-font-size: inherit;
-    --iight-line-height: inherit;
+.iight-form {
+  font-family: var(--iight-font-famil);
+  font-size: var(--iight-font-size);
+  line-height: var(--iight-line-height);
+}
 
-    /* Sizing utilities */
-    --iight-size-px: 1px;
-    --iight-size-0\.5: 0.125rem; // 2px
-    --iight-size-1: 0.25rem; // 4px
-    --iight-size-1\.5: 0.375rem; // 6px
-    --iight-size-2: 0.5rem; // 8px
-    --iight-size-2\.5: 0.625rem; // 10px
-    --iight-size-3: 0.75rem; // 12px
-    --iight-size-3\.5: 0.875rem; // 14px
-    --iight-size-4: 1rem; // 16px
+.iight-fieldset {
 
-    /* Weights */
-    --iight-font-weight-normal: inherit;
-    --iight-font-weight-bold: 600;
+}
 
-    /* Color utilities */
-    --iight-color-background: #fff;
-    --iight-color-border: #666;
-    --iight-color-error: #ff0000;
+.iight-field {
+  font-family: var(--iight-field-font-family);
+  font-size: var(--iight-field-font-size);
+  font-weight: var(--iight-field-font-weight);
+  line-height: var(--iight-field-line-height);
+  color: var(--iight-field-color);
+  background: var(--iight-field-background);
+  border: var(--iight-field-border);
+  border-radius: var(--iight-field-border-radius);
+  padding: var(--iight-field-padding);
+  margin: var(--iight-field-margin);
+  gap: var(--iight-field-gap);
 
-    /* Fieldset */
-    --iight-fieldset-gap: var(--iight-size-2);
-
-    /* Fields (input, label, validation container) */
-    --iight-field-font-family: inherit;
-    --iight-field-font-size: inherit;
-    --iight-field-font-weight: inherit;
-    --iight-field-line-height: inherit;
-    --iight-field-color: inherit;
-    --iight-field-background: transparent;
-    --iight-field-border: none;
-    --iight-field-border-radius: 0;
-    --iight-field-padding: 0;
-    --iight-field-margin: 0;
-    --iight-field-gap: var(--iight-size-2);
-
-    /* Labels */
-    --iight-label-font-family: inherit;
-    --iight-label-font-size: inherit;
-    --iight-label-font-weight: var(--iight-font-weight-bold);
-    --iight-label-line-height: inherit;
-    --iight-label-color: inherit;
-
-    /* Instructions */
-    --iight-instructions-font-family: inherit;
-    --iight-instructions-font-size: var(--iight-size-3\.5);
-    --iight-instructions-font-weight: inherit;
-    --iight-instructions-line-height: inherit;
-    --iight-instructions-color: inherit;
-
-    /* Inputs */
-    --iight-input-font-family: inherit;
-    --iight-input-font-size: inherit;
-    --iight-input-font-weight: inherit;
-    --iight-input-line-height: inherit;
-    --iight-input-color: inherit;
-    --iight-input-background: var(--iight-color-background);
-    --iight-input-border: var(--iight-size-px) solid var(--iight-color-border);
-    --iight-input-border-radius: var(--iight-size-1);
-    --iight-input-padding: var(--iight-size-1) var(--iight-size-2);
-    --iight-input-margin: 0;
-
-    /* Errors list */
-    --iight-errors-font-family: inherit;
-    --iight-errors-font-size: inherit;
-    --iight-errors-font-weight: inherit;
-    --iight-errors-line-height: inherit;
-    --iight-errors-color: var(--iight-color-error);
-    --iight-errors-background: transparent;
-    --iight-errors-border: none;
-    --iight-errors-border-radius: var(--iight-size-1);
-    --iight-errors-padding: var(--iight-size-1) var(--iight-size-2);
-    --iight-errors-margin: 0;
-
+  &.iight-invalid {
+    --iight-messages-color: var(--iight-color-error);
   }
 
-  .iight-form {
-    font-family: var(--iight-font-famil);
-    font-size: var(--iight-font-size);
-    line-height: var(--iight-line-height);
-
-    &, *, *:before, *:after {
-      box-sizing: border-box;
-    }
+  &.iight-valid {
+    --iight-messages-color: var(--iight-color-success);
   }
+}
 
-  .iight-fieldset {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    margin: calc(0px - var(--iight-fieldset-gap));
+.iight-label {
+  font-family: var(--iight-label-font-family);
+  font-size: var(--iight-label-font-size);
+  font-weight: var(--iight-label-font-weight);
+  line-height: var(--iight-label-line-height);
+  color: var(--iight-label-color);
+}
 
-    > div {
-      padding: var(--iight-fieldset-gap);
-      box-sizing: border-box;
-    }
-  }
+.iight-instructions {
+  font-family: var(--iight-instructions-font-family);
+  font-size: var(--iight-instructions-font-size);
+  font-weight: var(--iight-instructions-font-weight);
+  line-height: var(--iight-instructions-line-height);
+  color: var(--iight-instructions-color);
+}
 
-  .iight-field {
-    font-family: var(--iight-field-font-family);
-    font-size: var(--iight-field-font-size);
-    font-weight: var(--iight-field-font-weight);
-    line-height: var(--iight-field-line-height);
-    color: var(--iight-field-color);
-    background: var(--iight-field-background);
-    border: var(--iight-field-border);
-    border-radius: var(--iight-field-border-radius);
-    padding: var(--iight-field-padding);
-    margin: var(--iight-field-margin);
-    gap: var(--iight-field-gap);
-    display: flex;
-    flex-direction: column;
-  }
+.iight-messages {
+  font-family: var(--iight-messages-font-family);
+  font-size: var(--iight-messages-font-size);
+  font-weight: var(--iight-messages-font-weight);
+  line-height: var(--iight-messages-line-height);
+  color: var(--iight-messages-color);
+  background: var(--iight-messages-background);
+  border: var(--iight-messages-border);
+  border-radius: var(--iight-messages-border-radius);
+  padding: var(--iight-messages-padding);
+  margin: var(--iight-messages-margin);
+}
 
-  .iight-label {
-    font-family: var(--iight-label-font-family);
-    font-size: var(--iight-label-font-size);
-    font-weight: var(--iight-label-font-weight);
-    line-height: var(--iight-label-line-height);
-    color: var(--iight-label-color);
-  }
-
-  .iight-instructions {
-    font-family: var(--iight-instructions-font-family);
-    font-size: var(--iight-instructions-font-size);
-    font-weight: var(--iight-instructions-font-weight);
-    line-height: var(--iight-instructions-line-height);
-    color: var(--iight-instructions-color);
-  }
-
-  .iight-errors {
-    font-family: var(--iight-errors-font-family);
-    font-size: var(--iight-errors-font-size);
-    font-weight: var(--iight-errors-font-weight);
-    line-height: var(--iight-errors-line-height);
-    color: var(--iight-errors-color);
-    background: var(--iight-errors-background);
-    border: var(--iight-errors-border);
-    border-radius: var(--iight-errors-border-radius);
-    padding: var(--iight-errors-padding);
-    margin: var(--iight-errors-margin);
-  }
-
-  .iight-input {
-    font-family: var(--iight-input-font-family);
-    font-size: var(--iight-input-font-size);
-    font-weight: var(--iight-input-font-weight);
-    line-height: var(--iight-input-line-height);
-    color: var(--iight-input-color);
-    background: var(--iight-input-background);
-    border: var(--iight-input-border);
-    border-radius: var(--iight-input-border-radius);
-    padding: var(--iight-input-padding);
-    margin: var(--iight-input-margin);
-    width: 100%;
-    display: block;
-  }
+.iight-input {
+  font-family: var(--iight-input-font-family);
+  font-size: var(--iight-input-font-size);
+  font-weight: var(--iight-input-font-weight);
+  line-height: var(--iight-input-line-height);
+  color: var(--iight-input-color);
+  background: var(--iight-input-background);
+  border: var(--iight-input-border);
+  border-radius: var(--iight-input-border-radius);
+  padding: var(--iight-input-padding);
+  margin: var(--iight-input-margin);
 }

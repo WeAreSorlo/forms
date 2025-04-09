@@ -13,7 +13,7 @@ import {
 } from '@/types/inputs'
 import { baseInputSchemaFields, validateSchema } from '@/utils/inputs'
 import { validationSuccess } from '@/utils/validation'
-import { memo, useCallback, useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 
 type Column = Record<string, any>
 type Row = Array<Column>
@@ -38,8 +38,8 @@ export const schemaFields: InputSchemaFields = () => {
       name: 'minimumRows',
       type: 'number',
       required: false,
-      value: 1,
-      min: 0,
+      defaultValue: 1,
+      min: 1,
       width: 50,
     },
     {
@@ -47,6 +47,7 @@ export const schemaFields: InputSchemaFields = () => {
       name: 'maximumRows',
       type: 'number',
       required: false,
+      min: 1,
       width: 50,
     },
     {
@@ -54,8 +55,8 @@ export const schemaFields: InputSchemaFields = () => {
       name: 'minimumColumns',
       type: 'number',
       required: false,
-      value: 1,
-      min: 0,
+      defaultValue: 1,
+      min: 1,
       width: 50,
     },
     {
@@ -63,7 +64,8 @@ export const schemaFields: InputSchemaFields = () => {
       name: 'maximumColumns',
       type: 'number',
       required: false,
-      value: 1,
+      defaultValue: 1,
+      min: 1,
       width: 50,
     },
   ]
@@ -76,15 +78,15 @@ export const validateValue: InputValidateValue = (value, schema) => {
 
 export const formatValue: InputFormatValue = (value, schema) => {
   schema = validateSchema(schema)
-  const { isValid, validatedValue } = validateValue(value, schema)
-  return isValid ? JSON.stringify(validatedValue, null, 2) : null
+  const validation = validateValue(value, schema)
+  return validation.isValid ? JSON.stringify(validation.value, null, 2) : null
 }
 
 export const renderValue: InputRenderValue = (value, schema) => {
   return <>{formatValue(value, schema)}</>
 }
 
-const Component: InputComponent = memo(function Component() {
+const Component: InputComponent = function () {
   const { inputs } = useFormContext()
   const { id, schema, required, readonly, disabled, options, value, setValue, handleValidation } = useFieldContext()
 
@@ -390,6 +392,6 @@ const Component: InputComponent = memo(function Component() {
       <pre>{JSON.stringify(options, null, 2)}</pre>
     </div>
   )
-})
+}
 
 export default Component

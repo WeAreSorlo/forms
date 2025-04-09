@@ -2,7 +2,7 @@ import { useFieldContext } from '@/components/Field'
 import Fieldset from '@/components/Fieldset'
 import Modal from '@/components/Modal'
 import { useFormContext } from '@/context/FormProvider'
-import { FieldSchema } from '@/types/fields'
+import { FieldMessages, FieldSchema } from '@/types/fields'
 import {
   Input,
   InputCategory,
@@ -15,7 +15,7 @@ import {
 } from '@/types/inputs'
 import { validateSchema } from '@/utils/inputs'
 import { validationError, validationSuccess } from '@/utils/validation'
-import { Fragment, memo, useId, useMemo, useState } from 'react'
+import { Fragment, useId, useMemo, useState } from 'react'
 
 export const name: InputName = () => 'Schema Builder'
 
@@ -27,7 +27,7 @@ export const validateValue: InputValidateValue = (value, schema) => {
   schema = validateSchema(schema)
 
   if (!Array.isArray(value)) {
-    return validationError('Invalid value.')
+    return validationError(value, 'Invalid value.')
   }
 
   return validationSuccess(value)
@@ -35,20 +35,21 @@ export const validateValue: InputValidateValue = (value, schema) => {
 
 export const formatValue: InputFormatValue = (value, schema) => {
   schema = validateSchema(schema)
-  const { isValid, validatedValue } = validateValue(value, schema)
-  return isValid ? JSON.stringify(validatedValue, null, 2) : null
+  const validation = validateValue(value, schema)
+  return validation.isValid ? JSON.stringify(validation.value, null, 2) : null
 }
 
 export const renderValue: InputRenderValue = (value, schema) => {
   return <>{formatValue(value, schema)}</>
 }
 
-const SchemaEditor = memo(function SchemaEditor({
+const SchemaEditor = function ({
   label,
   cancelLabel,
   saveLabel,
   schema,
   inputs,
+  values = {},
   onSave,
   onCancel,
 }: {
@@ -57,25 +58,22 @@ const SchemaEditor = memo(function SchemaEditor({
   cancelLabel?: string | React.ReactNode
   schema: Array<FieldSchema>
   inputs: Record<string, Input>
+  values?: Record<string, any>
   onSave: (value: Record<string, Input>) => void
   onCancel?: () => void
 }) {
   const id = useId()
 
-  const defaultValues = useMemo(() => {
-    return Object.fromEntries(schema.map((field) => [field.name, field.value]))
-  }, [schema])
-
   const [resetFlag, setResetFlag] = useState(false)
   const [open, setOpen] = useState(false)
-  const [tempValue, setTempValue] = useState<Record<string, any>>(defaultValues)
-
-  const resetModal = () => {
-    setResetFlag((old) => !old)
-    setTempValue(defaultValues)
-  }
+  const [tempValue, setTempValue] = useState<Record<string, any>>(values)
+  const [tempMessages, setTempMessages] = useState<Record<string, FieldMessages>>({})
+  const [tempValidity, setTempValidity] = useState<Record<string, boolean>>({})
 
   const closeModal = () => {
+    setResetFlag((old) => !old)
+    setTempValue(values)
+    setTempMessages({})
     setOpen(false)
   }
 
@@ -93,7 +91,6 @@ const SchemaEditor = memo(function SchemaEditor({
         open={open}
         onClose={() => {
           closeModal()
-          resetModal()
           if (onCancel) onCancel()
         }}
         header={label}
@@ -104,8 +101,16 @@ const SchemaEditor = memo(function SchemaEditor({
             schema={schema}
             inputs={inputs}
             values={tempValue}
+            messages={tempMessages}
+            validity={tempValidity}
             onValuesChange={(field, value) => {
               setTempValue((old) => ({ ...old, [field]: value }))
+            }}
+            onMessagesChange={(field, messages) => {
+              setTempMessages((old) => ({ ...old, [field]: messages }))
+            }}
+            onValidityChange={(field, valid) => {
+              setTempValidity((old) => ({ ...old, [field]: valid }))
             }}
           />
         )}
@@ -130,11 +135,11 @@ const SchemaEditor = memo(function SchemaEditor({
       </Modal>
     </Fragment>
   )
-})
+}
 
-const Component: InputComponent = memo(function Component() {
+const Component: InputComponent = function () {
   const { inputs } = useFormContext()
-  const { schema, value = [], errors, validity, setValue, setErrors, setValidity } = useFieldContext()
+  const { value = [], setValue } = useFieldContext()
 
   const inputEntries = useMemo(() => {
     return Object.entries(inputs).filter(([type, input]) => !!input.schemaFields)
@@ -148,9 +153,12 @@ const Component: InputComponent = memo(function Component() {
           {value.map((valueSchema: FieldSchema, valueIndex) => {
             const isValidType = valueSchema.type in inputs
             const valueInput = inputs[valueSchema.type]
-            const valueFields = (valueInput && valueInput.schemaFields ? valueInput.schemaFields() : []).map((item) => {
-              return { ...item, value: valueSchema[item.name] ?? item.value }
-            })
+
+            const values = Object.fromEntries(
+              (valueInput && valueInput.schemaFields ? valueInput.schemaFields() : []).map((item) => {
+                return [item.name, valueSchema[item.name] ?? item.value]
+              }),
+            )
 
             let label = valueSchema.type
 
@@ -158,6 +166,8 @@ const Component: InputComponent = memo(function Component() {
               label = `${valueSchema.label} (${valueSchema.name})`
             } else if (!valueSchema.name && valueSchema.label) {
               label = `${valueSchema.label}`
+            } else if (valueSchema.name && !valueSchema.label) {
+              label = `${valueSchema.name}`
             }
 
             return (
@@ -166,8 +176,9 @@ const Component: InputComponent = memo(function Component() {
                   {!isValidType && <div>Invalid field type</div>}
                   {isValidType && (
                     <SchemaEditor
-                      schema={valueFields}
+                      schema={valueInput.schemaFields()}
                       inputs={inputs}
+                      values={values}
                       onSave={(editorValues) => {
                         setValue((old = []) => {
                           const newValue = [...old]
@@ -214,6 +225,6 @@ const Component: InputComponent = memo(function Component() {
       </div>
     </div>
   )
-})
+}
 
 export default Component

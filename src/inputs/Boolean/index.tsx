@@ -11,7 +11,7 @@ import {
 } from '@/types/inputs'
 import { baseInputSchemaFields, validateSchema } from '@/utils/inputs'
 import { validationError, validationSuccess } from '@/utils/validation'
-import { memo, useCallback } from 'react'
+import { useCallback } from 'react'
 
 export const name: InputName = () => 'Boolean (True / False)'
 
@@ -37,7 +37,7 @@ export const validateValue: InputValidateValue = (value, schema) => {
   value = ['yes', '1', 'true'].includes(String(value).trim().toLowerCase())
 
   if (schema.required && !value) {
-    return validationError('This field is required.')
+    return validationError(value, 'This field is required.')
   }
 
   return validationSuccess(!!value)
@@ -45,22 +45,22 @@ export const validateValue: InputValidateValue = (value, schema) => {
 
 export const formatValue: InputFormatValue = (value, schema) => {
   schema = validateSchema(schema)
-  const { isValid, validatedValue } = validateValue(value, schema)
-  return isValid ? (validatedValue ? 'TRUE' : 'FALSE') : null
+  const validation = validateValue(value, schema)
+  return validation.isValid ? (validation.value ? 'TRUE' : 'FALSE') : null
 }
 
 export const renderValue: InputRenderValue = (value, schema) => {
   return <>{formatValue(value, schema)}</>
 }
 
-const Component: InputComponent = memo(function Component() {
+const Component: InputComponent = function () {
   const { id, schema, required, readonly, disabled, options, value = '', handleValidation } = useFieldContext()
 
   const doValidation = useCallback(
     (input: any) => {
       handleValidation(validateValue(input, schema))
     },
-    [handleValidation, validateValue],
+    [handleValidation, validateValue, schema],
   )
 
   return (
@@ -78,6 +78,6 @@ const Component: InputComponent = memo(function Component() {
       <label htmlFor={id}>{options?.message}</label>
     </div>
   )
-})
+}
 
 export default Component
