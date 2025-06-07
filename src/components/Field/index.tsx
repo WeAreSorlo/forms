@@ -66,7 +66,7 @@ export default function Field({
 }: FieldProps) {
   schema = validateSchema(schema)
 
-  const { name, label, required, instructions, defaultValue, readonly, disabled, width, options } = schema
+  const { name, label, required, instructions, defaultValue, readonly, disabled, width, options = {} } = schema
 
   const id = useId()
 

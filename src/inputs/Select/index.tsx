@@ -5,11 +5,11 @@ import {
   InputDescription,
   InputFormatValue,
   InputName,
+  InputOptionFields,
   InputRenderValue,
-  InputSchemaFields,
   InputValidateValue,
 } from '@/types/inputs'
-import { baseInputSchemaFields, validateSchema } from '@/utils/inputs'
+import { validateSchema } from '@/utils/inputs'
 import { validationError, validationSuccess } from '@/utils/validation'
 import { Fragment, useCallback } from 'react'
 
@@ -19,8 +19,8 @@ export const description: InputDescription = () => 'A dropdown list with a selec
 
 export const category: InputCategory = () => 'Choice'
 
-export const schemaFields: InputSchemaFields = () => {
-  return baseInputSchemaFields()
+export const optionFields: InputOptionFields = () => {
+  return []
 }
 
 export const validateValue: InputValidateValue = (value, schema) => {
@@ -30,7 +30,7 @@ export const validateValue: InputValidateValue = (value, schema) => {
     return validationError(value, 'This field is required.')
   }
 
-  if (schema.options.multiple && !value?.length) {
+  if (schema.options?.multiple && !value?.length) {
     return validationError(value, 'At least one selection is required.')
   }
 
@@ -59,7 +59,7 @@ const Component: InputComponent = function () {
 
   const handleOnChange = useCallback(
     (event: React.ChangeEvent<HTMLSelectElement>) => {
-      const inputValue = schema.options.multiple
+      const inputValue = schema.options?.multiple
         ? Array.from(event.target.selectedOptions).map((option) => option.value)
         : event.target.value
       doValidation(inputValue)

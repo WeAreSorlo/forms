@@ -11,7 +11,6 @@ export interface InputSchema {
   disabled?: boolean
   width?: number
   options?: Record<string, any>
-  [key: string]: any
 }
 
 export type InputValidationResponse = ValidationResponse
@@ -22,7 +21,8 @@ export type InputName = () => string
 export type InputDescription = () => string
 export type InputCategory = () => string
 export type InputIcon = () => React.ReactNode
-export type InputSchemaFields = () => Array<FieldSchema>
+export type InputCoreFields = () => Array<FieldSchema>
+export type InputOptionFields = () => Array<FieldSchema>
 
 export type InputValidateValue = (value: any, schema: InputSchema) => InputValidationResponse
 export type InputFormatValue = (value: any, schema: InputSchema) => string | null
@@ -34,7 +34,8 @@ export interface Input {
   description?: InputDescription
   category?: InputCategory
   icon?: InputIcon
-  schemaFields?: InputSchemaFields
+  coreFields?: InputCoreFields
+  optionFields?: InputOptionFields
   validateValue?: InputValidateValue
   formatValue?: InputFormatValue
   renderValue?: InputRenderValue

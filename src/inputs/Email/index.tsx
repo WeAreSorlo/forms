@@ -5,11 +5,11 @@ import {
   InputDescription,
   InputFormatValue,
   InputName,
+  InputOptionFields,
   InputRenderValue,
-  InputSchemaFields,
   InputValidateValue,
 } from '@/types/inputs'
-import { baseInputSchemaFields, validateSchema } from '@/utils/inputs'
+import { validateSchema } from '@/utils/inputs'
 import { isEmail, validationError, validationSuccess } from '@/utils/validation'
 import { useCallback } from 'react'
 
@@ -19,8 +19,8 @@ export const description: InputDescription = () => 'A text input specifically de
 
 export const category: InputCategory = () => 'Standard'
 
-export const schemaFields: InputSchemaFields = () => {
-  return baseInputSchemaFields()
+export const optionFields: InputOptionFields = () => {
+  return []
 }
 
 export const validateValue: InputValidateValue = (value, schema) => {
@@ -34,13 +34,13 @@ export const validateValue: InputValidateValue = (value, schema) => {
     return validationError(value, 'This field is required.')
   }
 
-  if (!schema.options.multiple && !isEmail(value)) {
+  if (!schema.options?.multiple && !isEmail(value)) {
     return validationError(value, 'A valid email address required.')
   }
 
   // If input allows for multiple addresses
   // @link https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/email#multiple
-  if (schema.options.multiple && value.split(/[ ,]+/).filter((item) => !isEmail(item)).length) {
+  if (schema.options?.multiple && value.split(/[ ,]+/).filter((item) => !isEmail(item)).length) {
     return validationError(value, 'One or more email address(es) is invalid.')
   }
 

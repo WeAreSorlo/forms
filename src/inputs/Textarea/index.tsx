@@ -5,11 +5,11 @@ import {
   InputDescription,
   InputFormatValue,
   InputName,
+  InputOptionFields,
   InputRenderValue,
-  InputSchemaFields,
   InputValidateValue,
 } from '@/types/inputs'
-import { baseInputSchemaFields, validateSchema } from '@/utils/inputs'
+import { validateSchema } from '@/utils/inputs'
 import { validationError, validationSuccess } from '@/utils/validation'
 import { useCallback } from 'react'
 
@@ -19,8 +19,8 @@ export const description: InputDescription = () => 'A basic textarea input for s
 
 export const category: InputCategory = () => 'Standard'
 
-export const schemaFields: InputSchemaFields = () => {
-  return baseInputSchemaFields()
+export const optionFields: InputOptionFields = () => {
+  return []
 }
 
 export const validateValue: InputValidateValue = (value, schema) => {
@@ -35,13 +35,13 @@ export const validateValue: InputValidateValue = (value, schema) => {
   }
 
   // Validate the minimum value length
-  const min = schema.options.minLength
+  const min = schema.options?.minLength
   if (typeof min === 'number' && value.length < min) {
     return validationError(value, `This field requires a minimum of ${min} character(s).`)
   }
 
   // Validate the maximum value length
-  const max = schema.options.maxLength
+  const max = schema.options?.maxLength
   if (typeof max === 'number' && value.length > max) {
     return validationError(value, `This field requires a maximum of ${max} character(s).`)
   }

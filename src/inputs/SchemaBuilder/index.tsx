@@ -7,21 +7,26 @@ import {
   Input,
   InputCategory,
   InputComponent,
+  InputCoreFields,
   InputDescription,
   InputFormatValue,
   InputName,
   InputRenderValue,
   InputValidateValue,
 } from '@/types/inputs'
-import { validateSchema } from '@/utils/inputs'
+import { validateInputSchemaFields, validateSchema } from '@/utils/inputs'
 import { validationError, validationSuccess } from '@/utils/validation'
-import { Fragment, useId, useMemo, useState } from 'react'
+import { Fragment, useCallback, useId, useMemo, useState } from 'react'
 
 export const name: InputName = () => 'Schema Builder'
 
 export const description: InputDescription = () => 'An intuative interface for building form schemas.'
 
 export const category: InputCategory = () => 'Layout'
+
+export const coreFields: InputCoreFields = () => {
+  return []
+}
 
 export const validateValue: InputValidateValue = (value, schema) => {
   schema = validateSchema(schema)
@@ -64,21 +69,20 @@ const SchemaEditor = function ({
 }) {
   const id = useId()
 
-  const [resetFlag, setResetFlag] = useState(false)
+  const [resetCounter, setResetCounter] = useState(0)
   const [open, setOpen] = useState(false)
-  const [tempValue, setTempValue] = useState<Record<string, any>>(values)
+  const [tempValue, setTempValue] = useState<Record<string, any>>(values ? { ...values } : {})
   const [tempMessages, setTempMessages] = useState<Record<string, FieldMessages>>({})
   const [tempValidity, setTempValidity] = useState<Record<string, boolean>>({})
 
-  const closeModal = () => {
-    setResetFlag((old) => !old)
-    setTempValue(values)
+  const closeModal = useCallback(() => {
+    setResetCounter((old) => old + 1)
     setTempMessages({})
     setOpen(false)
-  }
+  }, [values, setResetCounter, setTempValue, setTempMessages, setOpen])
 
   return (
-    <Fragment key={`${id}-${String(resetFlag)}`}>
+    <Fragment key={`${id}-${resetCounter}`}>
       <button
         onClick={(event) => {
           event.preventDefault()
@@ -142,7 +146,11 @@ const Component: InputComponent = function () {
   const { value = [], setValue } = useFieldContext()
 
   const inputEntries = useMemo(() => {
-    return Object.entries(inputs).filter(([type, input]) => !!input.schemaFields)
+    return Object.entries(inputs).filter(([type, input]) => {
+      const validCore = !input?.coreFields || input.coreFields()?.length
+      const validOptions = input?.optionFields && input.optionFields()?.length
+      return validCore || validOptions
+    })
   }, [inputs])
 
   return (
@@ -154,9 +162,11 @@ const Component: InputComponent = function () {
             const isValidType = valueSchema.type in inputs
             const valueInput = inputs[valueSchema.type]
 
+            const schema = validateInputSchemaFields(valueInput)
+
             const values = Object.fromEntries(
-              (valueInput && valueInput.schemaFields ? valueInput.schemaFields() : []).map((item) => {
-                return [item.name, valueSchema[item.name] ?? item.value]
+              schema.map((item) => {
+                return [item.name, valueSchema[item.name] ?? item.defaultValue]
               }),
             )
 
@@ -176,13 +186,13 @@ const Component: InputComponent = function () {
                   {!isValidType && <div>Invalid field type</div>}
                   {isValidType && (
                     <SchemaEditor
-                      schema={valueInput.schemaFields()}
+                      schema={schema}
                       inputs={inputs}
                       values={values}
                       onSave={(editorValues) => {
                         setValue((old = []) => {
                           const newValue = [...old]
-                          newValue[valueIndex] = { ...editorValues, type: valueSchema.type }
+                          newValue[valueIndex] = { type: valueSchema.type, ...editorValues }
                           return newValue
                         })
                       }}
@@ -202,12 +212,12 @@ const Component: InputComponent = function () {
           return (
             <Fragment key={inputIndex}>
               <SchemaEditor
-                schema={input.schemaFields()}
+                schema={validateInputSchemaFields(input)}
                 inputs={inputs}
                 onSave={(editorValues) => {
                   setValue((old = []) => {
                     const newValue = [...old]
-                    newValue.push({ ...editorValues, type })
+                    newValue.push({ type, ...editorValues })
                     return newValue
                   })
                 }}

@@ -1,4 +1,4 @@
-import { InputSchema, InputSchemaFields } from '@/types/inputs'
+import { Input, InputCoreFields, InputOptionFields, InputSchema } from '@/types/inputs'
 
 export function validateSchema({
   name,
@@ -10,7 +10,6 @@ export function validateSchema({
   disabled,
   width,
   options,
-  ...additionals
 }: InputSchema) {
   return {
     name,
@@ -21,11 +20,27 @@ export function validateSchema({
     readonly,
     disabled,
     width,
-    options: { ...additionals, ...options },
+    options,
   }
 }
 
-export const baseInputSchemaFields: InputSchemaFields = () => {
+export function validateInputSchemaFields(input: Input) {
+  const schema = [...(input?.coreFields ? input.coreFields() : baseInputSchemaFields())]
+
+  if (input?.optionFields && input?.optionFields()?.length) {
+    schema.push({
+      name: 'options',
+      type: 'group',
+      options: {
+        fields: input.optionFields(),
+      },
+    })
+  }
+
+  return schema
+}
+
+export const baseInputSchemaFields: InputCoreFields & InputOptionFields = () => {
   return [
     {
       name: 'name',

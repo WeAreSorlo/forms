@@ -5,11 +5,11 @@ import {
   InputDescription,
   InputFormatValue,
   InputName,
+  InputOptionFields,
   InputRenderValue,
-  InputSchemaFields,
   InputValidateValue,
 } from '@/types/inputs'
-import { baseInputSchemaFields, validateSchema } from '@/utils/inputs'
+import { validateSchema } from '@/utils/inputs'
 import { validationError, validationSuccess } from '@/utils/validation'
 import { useCallback } from 'react'
 
@@ -19,8 +19,30 @@ export const description: InputDescription = () => 'An input limited to numerica
 
 export const category: InputCategory = () => 'Standard'
 
-export const schemaFields: InputSchemaFields = () => {
-  return baseInputSchemaFields()
+export const optionFields: InputOptionFields = () => {
+  return [
+    {
+      label: 'Minimum',
+      name: 'min',
+      type: 'number',
+      required: false,
+      defaultValue: 1,
+      width: 50,
+      options: {
+        min: 0,
+      },
+    },
+    {
+      label: 'Maximum',
+      name: 'max',
+      type: 'number',
+      required: false,
+      width: 50,
+      options: {
+        min: 0,
+      },
+    },
+  ]
 }
 
 export const validateValue: InputValidateValue = (value, schema) => {
@@ -45,13 +67,13 @@ export const validateValue: InputValidateValue = (value, schema) => {
   }
 
   // Validate minimum value
-  const min = schema.options.min
+  const min = schema.options?.min
   if (typeof min === 'number' && value < min) {
     return validationError(value, `This field requires a minimum value of ${min}.`)
   }
 
   // Validate maximum value
-  const max = schema.options.max
+  const max = schema.options?.max
   if (typeof max === 'number' && value > max) {
     return validationError(value, `This field requires a maximum value of ${max}.`)
   }

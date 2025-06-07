@@ -5,11 +5,11 @@ import {
   InputDescription,
   InputFormatValue,
   InputName,
+  InputOptionFields,
   InputRenderValue,
-  InputSchemaFields,
   InputValidateValue,
 } from '@/types/inputs'
-import { baseInputSchemaFields, validateSchema } from '@/utils/inputs'
+import { validateSchema } from '@/utils/inputs'
 import { validationError, validationSuccess } from '@/utils/validation'
 import { useCallback } from 'react'
 
@@ -19,14 +19,13 @@ export const description: InputDescription = () => 'A toggle that allows you to 
 
 export const category: InputCategory = () => 'Choice'
 
-export const schemaFields: InputSchemaFields = () => {
+export const optionFields: InputOptionFields = () => {
   return [
-    ...baseInputSchemaFields(),
     {
       name: 'message',
       label: 'Message',
       type: 'text',
-      required: false,
+      required: true,
     },
   ]
 }
