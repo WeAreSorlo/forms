@@ -39,7 +39,7 @@ export const schemaFields: InputSchemaFields = () => {
       type: 'number',
       required: false,
       defaultValue: 1,
-      min: 1,
+      min: 0,
       width: 50,
     },
     {
@@ -47,7 +47,7 @@ export const schemaFields: InputSchemaFields = () => {
       name: 'maximumRows',
       type: 'number',
       required: false,
-      min: 1,
+      min: 0,
       width: 50,
     },
     {
@@ -56,7 +56,7 @@ export const schemaFields: InputSchemaFields = () => {
       type: 'number',
       required: false,
       defaultValue: 1,
-      min: 1,
+      min: 0,
       width: 50,
     },
     {
@@ -65,7 +65,7 @@ export const schemaFields: InputSchemaFields = () => {
       type: 'number',
       required: false,
       defaultValue: 1,
-      min: 1,
+      min: 0,
       width: 50,
     },
   ]
@@ -130,8 +130,8 @@ const Component: InputComponent = function () {
     return 0
   }, [options])
 
-  const totalRows = useMemo(() => value?.length || 0, [value])
-  const totalColumns = useMemo(() => value?.[0]?.length || 0, [value])
+  const totalRows = useMemo(() => Number(value?.length) || 0, [value])
+  const totalColumns = useMemo(() => Number(value?.[0]?.length) || 0, [value])
 
   const canAddRow = totalRows < maxRows
   const canAddColumn = totalColumns < maxColumns
@@ -304,15 +304,17 @@ const Component: InputComponent = function () {
               return (
                 <th key={columnIndex}>
                   <span>{columnIndex + 1}</span>
-                  <button
-                    type='button'
-                    onClick={(event) => {
-                      event.preventDefault()
-                      removeColumn(columnIndex)
-                    }}
-                  >
-                    Remove column
-                  </button>
+                  {canRemoveColumn && (
+                    <button
+                      type='button'
+                      onClick={(event) => {
+                        event.preventDefault()
+                        removeColumn(columnIndex)
+                      }}
+                    >
+                      Remove column
+                    </button>
+                  )}
                 </th>
               )
             })}
@@ -320,13 +322,13 @@ const Component: InputComponent = function () {
           </tr>
         </thead>
         <tbody>
-          {canAddColumn && (
-            <tr>
-              <td></td>
-              {(value?.[0] || []).map((column, columnIndex) => {
-                return <td key={columnIndex}></td>
-              })}
-              <td rowSpan={totalRows + 1}>
+          <tr>
+            <td></td>
+            {(value?.[0] || []).map((column, columnIndex) => {
+              return <td key={columnIndex}></td>
+            })}
+            <td rowSpan={totalRows + 1}>
+              {canAddColumn && totalRows && (
                 <button
                   type='button'
                   onClick={(event) => {
@@ -336,23 +338,25 @@ const Component: InputComponent = function () {
                 >
                   Add column
                 </button>
-              </td>
-            </tr>
-          )}
+              )}
+            </td>
+          </tr>
           {(value || []).map((row, rowIndex) => {
             return (
               <tr key={rowIndex}>
                 <th>
                   {rowIndex + 1}
-                  <button
-                    type='button'
-                    onClick={(event) => {
-                      event.preventDefault()
-                      removeRow(rowIndex)
-                    }}
-                  >
-                    Remove row
-                  </button>
+                  {canRemoveRow && (
+                    <button
+                      type='button'
+                      onClick={(event) => {
+                        event.preventDefault()
+                        removeRow(rowIndex)
+                      }}
+                    >
+                      Remove row
+                    </button>
+                  )}
                 </th>
                 {row.map((column, columnIndex) => {
                   return (
