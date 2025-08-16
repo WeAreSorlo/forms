@@ -83,21 +83,21 @@ export default function Form({
 
   const onFieldsetValuesChange: OnValuesChangeCallback = useCallback((field, value) => {
     setValues((old) => {
-      if (Object.is(old[field], value)) return old
+      if (Object.is(old?.[field], value)) return old
       return { ...old, [field]: value }
     })
   }, [])
 
   const onFieldsetMessagesChange: OnMessagesChangeCallback = useCallback((field, messages) => {
     setMessages((old) => {
-      if (Object.is(old[field], messages)) return old
+      if (Object.is(old?.[field], messages)) return old
       return { ...old, [field]: messages }
     })
   }, [])
 
   const onFieldsetValidityChange: OnValidityChangeCallback = useCallback((field, validity) => {
     setValidity((old) => {
-      if (Object.is(old[field], validity)) return old
+      if (Object.is(old?.[field], validity)) return old
       return { ...old, [field]: validity }
     })
   }, [])
