@@ -1,4 +1,5 @@
-import { Input, InputCoreFields, InputOptionFields, InputSchema } from '@/types/inputs'
+import { FieldSchema } from '@/types/fields'
+import { Input, InputSchema } from '@/types/inputs'
 
 export function validateSchema({
   name,
@@ -25,14 +26,17 @@ export function validateSchema({
 }
 
 export function validateInputSchemaFields(input: Input) {
-  const schema = [...(input?.coreFields ? input.coreFields() : baseInputSchemaFields())]
+  const baseFields = baseInputSchemaFields()
+  const schema = [...(input?.coreFields ? input.coreFields(baseFields) : baseFields)]
 
-  if (input?.optionFields && input?.optionFields()?.length) {
+  const optionFields = input?.optionFields ? input?.optionFields([]) : []
+
+  if (optionFields.length >= 1) {
     schema.push({
       name: 'options',
       type: 'group',
       options: {
-        fields: input.optionFields(),
+        fields: optionFields,
       },
     })
   }
@@ -40,7 +44,7 @@ export function validateInputSchemaFields(input: Input) {
   return schema
 }
 
-export const baseInputSchemaFields: InputCoreFields & InputOptionFields = () => {
+export const baseInputSchemaFields = (): Array<FieldSchema & { [key: string]: any }> => {
   return [
     {
       name: 'name',

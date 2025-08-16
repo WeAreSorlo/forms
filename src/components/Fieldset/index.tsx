@@ -1,6 +1,11 @@
-import Field from '@/components/Field'
+import Field, {
+  OnMessagesChangeCallback as OnFieldMessagesChangeCallback,
+  OnValidityChangeCallback as OnFieldValidityChangeCallback,
+  OnValueChangeCallback as OnFieldValueChangeCallback,
+} from '@/components/Field'
+import { useFormContext } from '@/context/FormProvider'
 import { FieldMessages, FieldSchema } from '@/types/fields'
-import { Input } from '@/types/inputs'
+import { useCallback } from 'react'
 
 export type OnValuesChangeCallback = (field: string, value: any) => void
 export type OnMessagesChangeCallback = (field: string, messages: FieldMessages) => void
@@ -8,7 +13,6 @@ export type OnValidityChangeCallback = (field: string, valid: boolean) => void
 
 export interface FieldsetProps {
   schema: Array<FieldSchema>
-  inputs: Record<string, Input>
   values?: Record<string, any>
   messages?: Record<string, FieldMessages>
   validity?: Record<string, boolean>
@@ -19,7 +23,6 @@ export interface FieldsetProps {
 
 export default function Fieldset({
   schema,
-  inputs,
   values = {},
   messages = {},
   validity = {},
@@ -30,31 +33,78 @@ export default function Fieldset({
   return (
     <div className='iight-fieldset'>
       {schema.map((fieldSchema, fieldIndex) => {
-        const { type, ...fieldProps } = fieldSchema
-        const input = inputs?.[type]
-        const InputCompontent = input?.default
         return (
-          <Field
+          <FieldsetItem
             key={fieldIndex}
-            value={values[fieldSchema.name]}
-            messages={messages[fieldSchema.name]}
-            valid={validity[fieldSchema.name]}
-            onValueChange={(value) => {
-              onValuesChange(fieldSchema.name, value)
-            }}
-            onMessagesChange={(messages) => {
-              onMessagesChange(fieldSchema.name, messages)
-            }}
-            onValidityChange={(validity) => {
-              onValidityChange(fieldSchema.name, validity)
-            }}
-            {...fieldProps}
-          >
-            {InputCompontent && <InputCompontent />}
-            {!InputCompontent && 'Invalid input type.'}
-          </Field>
+            schema={fieldSchema}
+            values={values}
+            messages={messages}
+            validity={validity}
+            onValuesChange={onValuesChange}
+            onMessagesChange={onMessagesChange}
+            onValidityChange={onValidityChange}
+          />
         )
       })}
     </div>
+  )
+}
+
+function FieldsetItem({
+  schema,
+  values = {},
+  messages = {},
+  validity = {},
+  onValuesChange = () => {},
+  onMessagesChange = () => {},
+  onValidityChange = () => {},
+}: {
+  schema: FieldSchema
+  values?: Record<string, any>
+  messages?: Record<string, FieldMessages>
+  validity?: Record<string, boolean>
+  onValuesChange?: OnValuesChangeCallback
+  onMessagesChange?: OnMessagesChangeCallback
+  onValidityChange?: OnValidityChangeCallback
+}) {
+  const { inputs } = useFormContext()
+  const { type, ...fieldProps } = schema
+  const input = inputs?.[type]
+  const InputCompontent = input?.default
+
+  const onValuesChangeHandler: OnFieldValueChangeCallback = useCallback(
+    (value) => {
+      onValuesChange(schema.name, value)
+    },
+    [onValuesChange],
+  )
+
+  const onMessagesChangeHandler: OnFieldMessagesChangeCallback = useCallback(
+    (messages) => {
+      onMessagesChange(schema.name, messages)
+    },
+    [onMessagesChange],
+  )
+
+  const onValidityChangeHandler: OnFieldValidityChangeCallback = useCallback(
+    (validity) => {
+      onValidityChange(schema.name, validity)
+    },
+    [onValidityChange],
+  )
+
+  return (
+    <Field
+      value={values[schema.name]}
+      messages={messages[schema.name]}
+      valid={validity[schema.name]}
+      onValueChange={onValuesChangeHandler}
+      onMessagesChange={onMessagesChangeHandler}
+      onValidityChange={onValidityChangeHandler}
+      {...fieldProps}
+    >
+      {InputCompontent && <InputCompontent />}
+      {!InputCompontent && 'Invalid input type.'}
+    </Field>
   )
 }

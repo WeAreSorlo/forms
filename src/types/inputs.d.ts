@@ -21,8 +21,8 @@ export type InputName = () => string
 export type InputDescription = () => string
 export type InputCategory = () => string
 export type InputIcon = () => React.ReactNode
-export type InputCoreFields = () => Array<FieldSchema>
-export type InputOptionFields = () => Array<FieldSchema>
+export type InputCoreFields = (defaultFields: Array<FieldSchema>) => Array<FieldSchema>
+export type InputOptionFields = (defaultFields: Array<FieldSchema>) => Array<FieldSchema>
 
 export type InputValidateValue = (value: any, schema: InputSchema) => InputValidationResponse
 export type InputFormatValue = (value: any, schema: InputSchema) => string | null

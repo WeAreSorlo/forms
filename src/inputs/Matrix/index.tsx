@@ -392,7 +392,7 @@ const Component: InputComponent = function () {
                   type='button'
                   onClick={(event) => {
                     event.preventDefault()
-                    addRow([{}])
+                    addRow([])
                   }}
                 >
                   Add row

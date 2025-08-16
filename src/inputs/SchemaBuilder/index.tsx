@@ -1,5 +1,9 @@
 import { useFieldContext } from '@/components/Field'
-import Fieldset from '@/components/Fieldset'
+import Fieldset, {
+  OnMessagesChangeCallback,
+  OnValidityChangeCallback,
+  OnValuesChangeCallback,
+} from '@/components/Fieldset'
 import Modal from '@/components/Modal'
 import { useFormContext } from '@/context/FormProvider'
 import { FieldMessages, FieldSchema } from '@/types/fields'
@@ -16,7 +20,7 @@ import {
 } from '@/types/inputs'
 import { validateInputSchemaFields, validateSchema } from '@/utils/inputs'
 import { validationError, validationSuccess } from '@/utils/validation'
-import { Fragment, useCallback, useId, useMemo, useState } from 'react'
+import { Dispatch, Fragment, useCallback, useEffect, useId, useMemo, useState } from 'react'
 
 export const name: InputName = () => 'Schema Builder'
 
@@ -25,7 +29,7 @@ export const description: InputDescription = () => 'An intuative interface for b
 export const category: InputCategory = () => 'Layout'
 
 export const coreFields: InputCoreFields = () => {
-  return []
+  return [] // Prevent's its self from appearing in fields list
 }
 
 export const validateValue: InputValidateValue = (value, schema) => {
@@ -48,108 +52,13 @@ export const renderValue: InputRenderValue = (value, schema) => {
   return <>{formatValue(value, schema)}</>
 }
 
-const SchemaEditor = function ({
-  label,
-  cancelLabel,
-  saveLabel,
-  schema,
-  inputs,
-  values = {},
-  onSave,
-  onCancel,
-}: {
-  label: string | React.ReactNode
-  saveLabel?: string | React.ReactNode
-  cancelLabel?: string | React.ReactNode
-  schema: Array<FieldSchema>
-  inputs: Record<string, Input>
-  values?: Record<string, any>
-  onSave: (value: Record<string, Input>) => void
-  onCancel?: () => void
-}) {
-  const id = useId()
-
-  const [resetCounter, setResetCounter] = useState(0)
-  const [open, setOpen] = useState(false)
-  const [tempValue, setTempValue] = useState<Record<string, any>>(values ? { ...values } : {})
-  const [tempMessages, setTempMessages] = useState<Record<string, FieldMessages>>({})
-  const [tempValidity, setTempValidity] = useState<Record<string, boolean>>({})
-
-  const closeModal = useCallback(() => {
-    setResetCounter((old) => old + 1)
-    setTempMessages({})
-    setOpen(false)
-  }, [values, setResetCounter, setTempValue, setTempMessages, setOpen])
-
-  return (
-    <Fragment key={`${id}-${resetCounter}`}>
-      <button
-        onClick={(event) => {
-          event.preventDefault()
-          setOpen((old) => !old)
-        }}
-      >
-        {label}
-      </button>
-      <Modal
-        open={open}
-        onClose={() => {
-          closeModal()
-          if (onCancel) onCancel()
-        }}
-        header={label}
-      >
-        {/* This condition prevents infinite rendering */}
-        {open && (
-          <Fieldset
-            schema={schema}
-            inputs={inputs}
-            values={tempValue}
-            messages={tempMessages}
-            validity={tempValidity}
-            onValuesChange={(field, value) => {
-              setTempValue((old) => ({ ...old, [field]: value }))
-            }}
-            onMessagesChange={(field, messages) => {
-              setTempMessages((old) => ({ ...old, [field]: messages }))
-            }}
-            onValidityChange={(field, valid) => {
-              setTempValidity((old) => ({ ...old, [field]: valid }))
-            }}
-          />
-        )}
-        <button
-          onClick={(event) => {
-            event.preventDefault()
-            closeModal()
-            if (onCancel) onCancel()
-          }}
-        >
-          {cancelLabel || 'Cancel'}
-        </button>
-        <button
-          onClick={(event) => {
-            event.preventDefault()
-            onSave({ ...tempValue })
-            closeModal()
-          }}
-        >
-          {saveLabel || 'Save'}
-        </button>
-      </Modal>
-    </Fragment>
-  )
-}
-
 const Component: InputComponent = function () {
   const { inputs } = useFormContext()
   const { value = [], setValue } = useFieldContext()
 
   const inputEntries = useMemo(() => {
     return Object.entries(inputs).filter(([type, input]) => {
-      const validCore = !input?.coreFields || input.coreFields()?.length
-      const validOptions = input?.optionFields && input.optionFields()?.length
-      return validCore || validOptions
+      return validateInputSchemaFields(input).length >= 1
     })
   }, [inputs])
 
@@ -162,42 +71,12 @@ const Component: InputComponent = function () {
             const isValidType = valueSchema.type in inputs
             const valueInput = inputs[valueSchema.type]
 
-            const schema = validateInputSchemaFields(valueInput)
-
-            const values = Object.fromEntries(
-              schema.map((item) => {
-                return [item.name, valueSchema[item.name] ?? item.defaultValue]
-              }),
-            )
-
-            let label = valueSchema.type
-
-            if (valueSchema.name && valueSchema.label) {
-              label = `${valueSchema.label} (${valueSchema.name})`
-            } else if (!valueSchema.name && valueSchema.label) {
-              label = `${valueSchema.label}`
-            } else if (valueSchema.name && !valueSchema.label) {
-              label = `${valueSchema.name}`
-            }
-
             return (
               <Fragment key={valueIndex}>
                 <div style={{ width: valueSchema.width ? `${valueSchema.width}%` : '100%' }}>
                   {!isValidType && <div>Invalid field type</div>}
                   {isValidType && (
-                    <SchemaEditor
-                      schema={schema}
-                      inputs={inputs}
-                      values={values}
-                      onSave={(editorValues) => {
-                        setValue((old = []) => {
-                          const newValue = [...old]
-                          newValue[valueIndex] = { type: valueSchema.type, ...editorValues }
-                          return newValue
-                        })
-                      }}
-                      label={label}
-                    />
+                    <EditValueItem index={valueIndex} input={valueInput} value={valueSchema} setValue={setValue} />
                   )}
                 </div>
               </Fragment>
@@ -209,31 +88,183 @@ const Component: InputComponent = function () {
       {/* Add new */}
       <div>
         {inputEntries.map(([type, input], inputIndex) => {
-          return (
-            <Fragment key={inputIndex}>
-              <SchemaEditor
-                schema={validateInputSchemaFields(input)}
-                inputs={inputs}
-                onSave={(editorValues) => {
-                  setValue((old = []) => {
-                    const newValue = [...old]
-                    newValue.push({ type, ...editorValues })
-                    return newValue
-                  })
-                }}
-                label={
-                  <>
-                    <strong>{input?.name() || type}</strong>
-                    <br />
-                    <span>{input?.description()}</span>
-                  </>
-                }
-              />
-            </Fragment>
-          )
+          return <CreateValueItem key={inputIndex} type={type} input={input} setValue={setValue} />
         })}
       </div>
     </div>
+  )
+}
+
+function CreateValueItem({ type, input, setValue }: { type: string; input: Input; setValue: Dispatch<any> }) {
+  const schema = validateInputSchemaFields(input)
+
+  const onSave = useCallback(
+    (editorValues: Record<string, Input>) => {
+      setValue((old) => [...(old || []), { type, ...editorValues }])
+    },
+    [setValue],
+  )
+
+  return (
+    <SchemaEditor
+      schema={schema}
+      onSave={onSave}
+      label={
+        <>
+          <strong>{input?.name() || type}</strong>
+          <br />
+          <span>{input?.description()}</span>
+        </>
+      }
+    />
+  )
+}
+
+function EditValueItem({
+  index,
+  value,
+  input,
+  setValue,
+}: {
+  index: number
+  value: FieldSchema
+  input: Input
+  setValue: Dispatch<any>
+}) {
+  const schema = validateInputSchemaFields(input)
+
+  const values = Object.fromEntries(
+    schema.map((item) => {
+      return [item.name, value[item.name] ?? item.defaultValue]
+    }),
+  )
+
+  const label = useMemo(() => {
+    if (value.name && value.label) {
+      return `${value.label} (${value.name})`
+    } else if (!value.name && value.label) {
+      return value.label
+    } else if (value.name && !value.label) {
+      return value.name
+    }
+
+    return value.type
+  }, [value.name, value.label, value.type])
+
+  const onSave = useCallback(
+    (editorValues: Record<string, Input>) => {
+      setValue((old) => {
+        const newValue = [...(old || [])]
+        newValue[index] = { type: value.type, ...editorValues }
+        if (Object.is(newValue, old)) return old
+        return newValue
+      })
+    },
+    [setValue, index],
+  )
+
+  return <SchemaEditor schema={schema} values={values} onSave={onSave} label={label} />
+}
+
+function SchemaEditor({
+  label,
+  cancelLabel,
+  saveLabel,
+  schema,
+  values,
+  onSave,
+  onCancel,
+}: {
+  label: string | React.ReactNode
+  saveLabel?: string | React.ReactNode
+  cancelLabel?: string | React.ReactNode
+  schema: Array<FieldSchema>
+  values?: Record<string, any>
+  onSave: (value: Record<string, Input>) => void
+  onCancel?: () => void
+}) {
+  const id = useId()
+
+  const [resetCounter, setResetCounter] = useState(0)
+  const [open, setOpen] = useState(false)
+  const [tempValue, setTempValue] = useState<Record<string, any>>(values || {})
+  const [tempMessages, setTempMessages] = useState<Record<string, FieldMessages>>({})
+  const [tempValidity, setTempValidity] = useState<Record<string, boolean>>({})
+
+  const closeModal = () => {
+    setResetCounter((old) => old + 1)
+    setTempMessages({})
+    setOpen(false)
+    setTempValue(values)
+  }
+
+  useEffect(() => {
+    setTempValue((old) => {
+      if (Object.is(values, old)) return old
+      return values
+    })
+  }, [values])
+
+  const handleCancel = (event?: React.MouseEvent<HTMLElement, MouseEvent>) => {
+    if (event) event.preventDefault()
+    closeModal()
+    if (onCancel) onCancel()
+  }
+
+  const handleSave = (event?: React.MouseEvent<HTMLElement, MouseEvent>) => {
+    if (event) event.preventDefault()
+    onSave({ ...tempValue })
+    closeModal()
+  }
+
+  const handleValuesChange: OnValuesChangeCallback = useCallback((field, value) => {
+    setTempValue((old) => {
+      if (Object.is(value, old)) return old
+      return { ...old, [field]: value }
+    })
+  }, [])
+
+  const handleMessagesChange: OnMessagesChangeCallback = useCallback((field, messages) => {
+    setTempMessages((old) => {
+      if (Object.is(messages, old)) return old
+      return { ...old, [field]: messages }
+    })
+  }, [])
+
+  const handleValidityChange: OnValidityChangeCallback = useCallback((field, valid) => {
+    setTempValidity((old) => {
+      if (Object.is(valid, old)) return old
+      return { ...old, [field]: valid }
+    })
+  }, [])
+
+  return (
+    <Fragment key={`${id}-${resetCounter}`}>
+      <button
+        onClick={(event) => {
+          event.preventDefault()
+          setOpen((old) => !old)
+        }}
+      >
+        {label}
+      </button>
+      <Modal open={open} onClose={handleCancel} header={label}>
+        {/* This condition prevents infinite rendering */}
+        {open && (
+          <Fieldset
+            schema={schema}
+            values={tempValue}
+            messages={tempMessages}
+            validity={tempValidity}
+            onValuesChange={handleValuesChange}
+            onMessagesChange={handleMessagesChange}
+            onValidityChange={handleValidityChange}
+          />
+        )}
+        <button onClick={handleCancel}>{cancelLabel || 'Cancel'}</button>
+        <button onClick={handleSave}>{saveLabel || 'Save'}</button>
+      </Modal>
+    </Fragment>
   )
 }
 

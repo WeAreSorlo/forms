@@ -5,6 +5,7 @@ import { FieldMessages } from '@/types/fields'
 import {
   InputCategory,
   InputComponent,
+  InputCoreFields,
   InputDescription,
   InputFormatValue,
   InputName,
@@ -25,6 +26,10 @@ export const name: InputName = () => 'Group'
 export const description: InputDescription = () => 'Group your fields.'
 
 export const category: InputCategory = () => 'Layout'
+
+export const coreFields: InputCoreFields = (defaultFields) => {
+  return defaultFields.filter(({ name }) => name !== 'required')
+}
 
 export const optionFields: InputOptionFields = () => {
   return [
