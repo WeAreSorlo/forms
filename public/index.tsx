@@ -288,12 +288,127 @@ const App = () => {
         },
       },
       {
+        type: 'content',
+        name: 'contact_section',
+        label: 'Getting in touch',
+        options: {
+          content: 'A read only content block, useful for splitting long forms into sections.',
+        },
+      },
+      {
+        type: 'url',
+        name: 'website',
+        label: 'Website',
+        width: 50,
+        options: {
+          placeholder: 'e.g. https://example.com',
+        },
+      },
+      {
+        type: 'tel',
+        name: 'phone',
+        label: 'Phone number',
+        width: 50,
+        options: {
+          placeholder: 'e.g. +44 7700 900123',
+        },
+      },
+      {
+        type: 'date',
+        name: 'start_date',
+        label: 'Start date',
+        required: true,
+        width: 50,
+        options: {
+          min: '2026-01-01',
+        },
+      },
+      {
+        type: 'time',
+        name: 'best_time',
+        label: 'Best time to call',
+        width: 50,
+        options: {
+          min: '09:00',
+          max: '17:00',
+        },
+      },
+      {
+        type: 'radio',
+        name: 'contact_method',
+        label: 'Preferred contact method',
+        required: true,
+        width: 50,
+        options: {
+          choices: [
+            {
+              value: 'email',
+              label: 'Email',
+            },
+            {
+              value: 'phone',
+              label: 'Phone',
+            },
+            {
+              value: 'post',
+              label: 'Post',
+            },
+          ],
+        },
+      },
+      {
+        type: 'checkbox',
+        name: 'newsletter_topics',
+        label: 'Newsletter topics',
+        width: 50,
+        options: {
+          choices: [
+            {
+              value: 'releases',
+              label: 'New releases',
+            },
+            {
+              value: 'tutorials',
+              label: 'Tutorials',
+            },
+            {
+              value: 'events',
+              label: 'Events',
+            },
+          ],
+        },
+      },
+      {
+        type: 'range',
+        name: 'satisfaction',
+        label: 'Satisfaction',
+        width: 50,
+        options: {
+          min: 0,
+          max: 10,
+          step: 1,
+        },
+      },
+      {
+        type: 'color',
+        name: 'theme_color',
+        label: 'Theme color',
+        width: 50,
+      },
+      {
         type: 'text',
         name: 'reference',
         label: 'Reference code',
         instructions: 'Read only, populated from the schema default value.',
         readonly: true,
         defaultValue: 'IIGHT-0001',
+      },
+      {
+        type: 'hidden',
+        name: 'source',
+        options: {
+          value: 'demo',
+        },
       },
     ],
   })

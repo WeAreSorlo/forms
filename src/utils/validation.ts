@@ -46,6 +46,22 @@ export function isEmptyValue(value: any) {
   return value === '' || value === null || value === undefined
 }
 
+// Check whether a value is a valid http(s) URL
+export function isUrl(url: string) {
+  try {
+    const parsed = new URL(url)
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
+// Check whether a value looks like a phone number, allowing common formatting
+export function isTel(tel: string) {
+  const digits = tel.replace(/[\s().-]/g, '')
+  return /^\+?\d{5,15}$/.test(digits)
+}
+
 export function isEmail(email: string) {
   const pattern =
     /^[-!#$%&'*+\/0-9=?A-Z^_a-z`{|}~](\.?[-!#$%&'*+\/0-9=?A-Z^_a-z`{|}~])*@[a-zA-Z0-9](-*\.?[a-zA-Z0-9])*\.[a-zA-Z](-?[a-zA-Z0-9])+$/

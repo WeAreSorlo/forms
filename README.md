@@ -65,13 +65,25 @@ Every field supports `name` (required), `label`, `required`, `instructions`, `de
 | --------------- | --------------------------------------------------------------------------- |
 | `text`          | `placeholder`, `minLength`, `maxLength`                                      |
 | `textarea`      | `placeholder`, `rows`, `minLength`, `maxLength`                              |
+| `password`      | `placeholder`, `minLength`, `maxLength` — formatting masks the value         |
 | `number`        | `placeholder`, `min`, `max`                                                  |
+| `range`         | `min`, `max`, `step`                                                         |
 | `email`         | `placeholder`, `multiple`, `minLength`, `maxLength`                          |
+| `url`           | `placeholder` — http(s) addresses only                                       |
+| `tel`           | `placeholder` — loose phone number validation                                |
+| `date`          | `min`, `max` — value is an ISO date, e.g. `2026-01-15`                       |
+| `time`          | `min`, `max` — value is a 24 hour time, e.g. `13:30`                         |
+| `datetime`      | `min`, `max` — value is a local ISO datetime, e.g. `2026-01-15T13:30`        |
+| `color`         | none — value is a hex color, e.g. `#ff0000`                                  |
+| `hidden`        | `value` — carried into the form's values without any visible UI              |
 | `boolean`       | `message` (the checkbox label)                                               |
 | `select`        | `choices` (`{ value, label }` items), `placeholder`, `multiple`              |
+| `radio`         | `choices` — single choice without a dropdown                                 |
+| `checkbox`      | `choices` — multiple choice, value is an array                               |
 | `group`         | `fields` (nested field schemas)                                              |
 | `repeater`      | `fields`, `minimum`, `maximum`, `direction` (`y` vertical / `x` horizontal)  |
 | `matrix`        | `fields`, `minimumRows`, `maximumRows`, `minimumColumns`, `maximumColumns`   |
+| `content`       | `content` — a read only block with no value, for headings and instructions   |
 | `schemabuilder` | none — its value is an array of field schemas                                |
 
 Groups nest their values under the group's name, repeaters produce an array of objects, and matrices an array of rows of objects. All three can be nested inside each other without limit.
