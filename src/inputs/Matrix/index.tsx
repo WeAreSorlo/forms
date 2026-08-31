@@ -14,6 +14,7 @@ import {
   InputFormatValue,
   InputName,
   InputOptionFields,
+  InputPickValue,
   InputRenderValue,
   InputValidateChildren,
   InputValidateValue,
@@ -136,6 +137,14 @@ export const validateChildren: InputValidateChildren = (value, schema, validateF
   const rows: Matrix = Array.isArray(value) ? value : []
   return rows.map((row) => {
     return (Array.isArray(row) ? row : []).map((column) => validateFields(schema.options?.fields || [], column || {}))
+  })
+}
+
+// Pick only the nested fields' values for every column of every row
+export const pickValue: InputPickValue = (value, schema, pickFields) => {
+  if (!Array.isArray(value)) return undefined
+  return value.map((row) => {
+    return (Array.isArray(row) ? row : []).map((column) => pickFields(schema.options?.fields || [], column || {}))
   })
 }
 

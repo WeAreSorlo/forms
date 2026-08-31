@@ -102,9 +102,30 @@ Container fields aggregate: a group, repeater or matrix is marked invalid while 
 
 The form's `messages` and `validity` maps are keyed by path, so nested fields report alongside top-level ones — `address.town`, `pets.0.petname`, `grid.0.1.amount` — which makes error summaries a simple iteration. Entries are removed when a field unmounts, for example when a repeater row is deleted. A custom container input can join in by consuming `FieldReportContext` and providing a wrapped report to its children that prefixes their position, exactly as the matrix does for its cells; the schema builder instead provides `undefined` to keep its temporary editor state out of the maps.
 
+## Server side validation
+
+The same schema validates a request body on a server. `pickValues` reduces the posted values to only the fields the schema defines (nested fields included, with hidden fields forced back to their fixed values), and `validateServerValues` returns the same `ValidationReport` shape as the client:
+
+```ts
+import { inputs, pickValues, validateServerValues } from 'iight'
+
+app.post('/submit', async (request, response) => {
+  const values = pickValues(schema, request.body, inputs)
+  const report = await validateServerValues(schema, values, inputs)
+
+  if (!report.isValid) {
+    return response.status(422).json(report)
+  }
+
+  // The values are validated and contain only schema defined fields
+})
+```
+
+An input's `validateValue` is the shared source of truth, and the optional `validateClientValue` and `validateServerValue` take priority in their own environment — the client resolves `validateClientValue ?? validateValue` and the server resolves `validateServerValue ?? validateValue`, so a client only validator can never weaken the server's checks. Server validators may be asynchronous (for example a database uniqueness check), which is why `validateServerValues` returns a promise; the synchronous `validateValues` accepts an `{ environment }` option for fully synchronous setups and throws if a validator returns a promise.
+
 ## Custom inputs
 
-An input is a module implementing the `Input` interface: a default React component plus optional metadata (`name`, `description`, `category`), `validateValue`, `formatValue`, `renderValue`, and `coreFields`/`optionFields` describing how the schema builder should configure it. The component reads everything it needs from `useFieldContext()`:
+An input is a module implementing the `Input` interface: a default React component plus optional metadata (`name`, `description`, `category`), `validateValue` (with optional `validateClientValue`/`validateServerValue` overrides), `pickValue`, `formatValue`, `renderValue`, and `coreFields`/`optionFields` describing how the schema builder should configure it. The component reads everything it needs from `useFieldContext()`:
 
 ```tsx
 import { useFieldContext, validationSuccess } from 'iight'
@@ -120,7 +141,7 @@ export default function Component() {
 
 Register it per form: `<Form inputs={{ shout: shoutModule }} ... />`. Custom types are then available to schemas and appear in the schema builder.
 
-A custom input that nests other fields can also export `validateChildren(value, schema, validateFields)` — this is how `validateValues` and `validate()` walk into it, and it is exactly what the core group, repeater and matrix inputs do; nothing about containers is special-cased.
+A custom input that nests other fields can also export `validateChildren(value, schema, validateFields)` — this is how `validateValues` and `validate()` walk into it, and it is exactly what the core group, repeater and matrix inputs do; nothing about containers is special-cased. Return the results of `validateFields` without inspecting them, as they may be promises during server validation. The matching `pickValue(value, schema, pickFields)` lets a container recurse for `pickValues` in the same way.
 
 ## Styling and theming
 

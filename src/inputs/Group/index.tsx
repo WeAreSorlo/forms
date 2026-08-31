@@ -13,6 +13,7 @@ import {
   InputFormatValue,
   InputName,
   InputOptionFields,
+  InputPickValue,
   InputRenderValue,
   InputValidateChildren,
   InputValidateValue,
@@ -49,6 +50,12 @@ export const validateValue: InputValidateValue = (value, schema) => {
 // Validate the nested fields against the group's value
 export const validateChildren: InputValidateChildren = (value, schema, validateFields) => {
   return validateFields(schema.options?.fields || [], value || {})
+}
+
+// Pick only the nested fields' values
+export const pickValue: InputPickValue = (value, schema, pickFields) => {
+  if (value === undefined) return undefined
+  return pickFields(schema.options?.fields || [], value || {})
 }
 
 export const formatValue: InputFormatValue = (value, schema) => {

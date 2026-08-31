@@ -293,7 +293,7 @@ function SchemaEditor({
     if (event) event.preventDefault()
 
     // Validate every field, including nested fields, and block the save while any are invalid
-    const report = validateValues(schema, tempValue, inputs)
+    const report = validateValues(schema, tempValue, inputs, { environment: 'client' })
 
     if (!report.isValid) {
       const newMessages: Record<string, FieldMessages> = {}

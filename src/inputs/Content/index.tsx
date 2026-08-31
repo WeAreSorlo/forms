@@ -6,6 +6,7 @@ import {
   InputDescription,
   InputName,
   InputOptionFields,
+  InputPickValue,
 } from '@/types/inputs'
 
 export const name: InputName = () => 'Content'
@@ -29,7 +30,9 @@ export const optionFields: InputOptionFields = () => {
   ]
 }
 
-// Content has no value, so there is nothing to validate, format or render
+// Content has no value, so there is nothing to validate, format or render,
+// and any posted value is dropped when picking
+export const pickValue: InputPickValue = () => undefined
 
 const Component: InputComponent = function () {
   const { options } = useFieldContext()

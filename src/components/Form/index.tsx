@@ -161,7 +161,7 @@ export default function Form({
   // field to re-run its own validation so all messages are displayed
   const validate = useCallback(() => {
     setValidationCounter((old) => old + 1)
-    return validateValues(schema, values, mergedInputs)
+    return validateValues(schema, values, mergedInputs, { environment: 'client' })
   }, [schema, values, mergedInputs])
 
   useImperativeHandle(ref, () => ({ validate }), [validate])

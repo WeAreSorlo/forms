@@ -21,7 +21,7 @@ export interface FieldValidationReport {
   children?: ValidationReportChildren
 }
 
-export type ValidationReportChildren = ValidationReport | Array<ValidationReportChildren>
+export type ValidationReportChildren = ValidationReport | Promise<ValidationReport> | Array<ValidationReportChildren>
 
 export interface ValidationReport {
   isValid: boolean
@@ -37,16 +37,31 @@ export type InputIcon = () => React.ReactNode
 export type InputCoreFields = (defaultFields: Array<FieldSchema>) => Array<FieldSchema>
 export type InputOptionFields = (defaultFields: Array<FieldSchema>) => Array<FieldSchema>
 
+export type ValidationEnvironment = 'client' | 'server'
+
 export type InputValidateValue = (value: any, schema: InputSchema) => InputValidationResponse
+export type InputValidateClientValue = InputValidateValue
+export type InputValidateServerValue = (
+  value: any,
+  schema: InputSchema,
+) => InputValidationResponse | Promise<InputValidationResponse>
 export type InputFormatValue = (value: any, schema: InputSchema) => string | null
 export type InputRenderValue = (value: any, schema: InputSchema) => React.ReactNode
 
-export type InputValidateFields = (schema: Array<FieldSchema>, values: Record<string, any>) => ValidationReport
+// On the server validateFields may return a promise, so implementations must
+// return its results without inspecting them
+export type InputValidateFields = (
+  schema: Array<FieldSchema>,
+  values: Record<string, any>,
+) => ValidationReport | Promise<ValidationReport>
 export type InputValidateChildren = (
   value: any,
   schema: InputSchema,
   validateFields: InputValidateFields,
 ) => ValidationReportChildren
+
+export type InputPickFields = (schema: Array<FieldSchema>, values: Record<string, any>) => Record<string, any>
+export type InputPickValue = (value: any, schema: InputSchema, pickFields: InputPickFields) => any
 
 export interface Input {
   default: InputComponent
@@ -57,7 +72,10 @@ export interface Input {
   coreFields?: InputCoreFields
   optionFields?: InputOptionFields
   validateValue?: InputValidateValue
+  validateClientValue?: InputValidateClientValue
+  validateServerValue?: InputValidateServerValue
   validateChildren?: InputValidateChildren
+  pickValue?: InputPickValue
   formatValue?: InputFormatValue
   renderValue?: InputRenderValue
 }

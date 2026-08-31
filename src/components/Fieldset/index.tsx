@@ -6,6 +6,7 @@ import Field, {
 import { useFormStaticContext } from '@/context/FormProvider'
 import { FieldMessages, FieldSchema } from '@/types/fields'
 import { InputComponent, InputValidateValue } from '@/types/inputs'
+import { resolveValidateValue } from '@/utils/inputs'
 import { memo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -42,7 +43,7 @@ export default function Fieldset({
             key={fieldSchema.name ?? fieldIndex}
             schema={fieldSchema}
             component={inputs?.[fieldSchema.type]?.default}
-            validate={inputs?.[fieldSchema.type]?.validateValue}
+            validate={resolveValidateValue(inputs?.[fieldSchema.type], 'client')}
             value={values[fieldSchema.name]}
             messages={messages[fieldSchema.name]}
             valid={validity[fieldSchema.name]}
