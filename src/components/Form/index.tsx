@@ -3,7 +3,7 @@ import Fieldset, {
   OnValidityChangeCallback,
   OnValuesChangeCallback,
 } from '@/components/Fieldset'
-import { Context, FormContext, FormStaticContext } from '@/context/FormProvider'
+import { Context, FieldReportContext, FieldStateReport, FormContext, FormStaticContext } from '@/context/FormProvider'
 import i18n from '@/i18n'
 import * as coreInputs from '@/inputs'
 import { Input, ValidationReport } from '@/types/inputs'
@@ -106,6 +106,43 @@ export default function Form({
     })
   }, [])
 
+  // Collect every field's messages and validity into path keyed maps, so
+  // nested fields appear as e.g. 'address.town' or 'pets.0.petname'
+  const onFieldReport: FieldStateReport = useCallback((path, patch) => {
+    const key = path.join('.')
+
+    // An undefined patch removes the field's entries entirely
+    if (patch === undefined) {
+      setMessages((old) => {
+        if (!(key in old)) return old
+        const { [key]: removed, ...rest } = old
+        return rest
+      })
+
+      setValidity((old) => {
+        if (!(key in old)) return old
+        const { [key]: removed, ...rest } = old
+        return rest
+      })
+
+      return
+    }
+
+    if ('messages' in patch) {
+      setMessages((old) => {
+        if (Object.is(old?.[key], patch.messages)) return old
+        return { ...old, [key]: patch.messages }
+      })
+    }
+
+    if ('valid' in patch) {
+      setValidity((old) => {
+        if (Object.is(old?.[key], patch.valid)) return old
+        return { ...old, [key]: patch.valid }
+      })
+    }
+  }, [])
+
   useEffect(() => {
     if (onValuesChange) onValuesChange(values)
   }, [values, onValuesChange])
@@ -127,45 +164,45 @@ export default function Form({
 
   useImperativeHandle(ref, () => ({ validate }), [validate])
 
-  const contextValue = useMemo(() => {
+  const dataContextValue = useMemo(() => {
     return {
       schema,
-      setSchema,
       values,
-      setValues,
       messages,
-      setMessages,
       validity,
-      setValidity,
-
-      // Static
-      inputs: mergedInputs,
     }
-  }, [schema, values, messages, validity, mergedInputs])
+  }, [schema, values, messages, validity])
 
   const staticContextValue = useMemo(() => {
     return {
       inputs: mergedInputs,
       validationCounter,
+
+      setSchema,
+      setValues,
+      setMessages,
+      setValidity,
     }
   }, [mergedInputs, validationCounter])
 
   return (
     <I18nextProvider i18n={i18n}>
-      <FormContext.Provider value={contextValue}>
+      <FormContext.Provider value={dataContextValue}>
         <FormStaticContext.Provider value={staticContextValue}>
-          {/* Prevent implicit submissions from reloading the page */}
-          <form className='iight-form' onSubmit={(event) => event.preventDefault()}>
-            <Fieldset
-              schema={schema}
-              values={values}
-              messages={messages}
-              validity={validity}
-              onValuesChange={onFieldsetValuesChange}
-              onMessagesChange={onFieldsetMessagesChange}
-              onValidityChange={onFieldsetValidityChange}
-            />
-          </form>
+          <FieldReportContext.Provider value={onFieldReport}>
+            {/* Prevent implicit submissions from reloading the page */}
+            <form className='iight-form' onSubmit={(event) => event.preventDefault()}>
+              <Fieldset
+                schema={schema}
+                values={values}
+                messages={messages}
+                validity={validity}
+                onValuesChange={onFieldsetValuesChange}
+                onMessagesChange={onFieldsetMessagesChange}
+                onValidityChange={onFieldsetValidityChange}
+              />
+            </form>
+          </FieldReportContext.Provider>
         </FormStaticContext.Provider>
       </FormContext.Provider>
     </I18nextProvider>

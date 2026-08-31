@@ -3,7 +3,13 @@ import Form from '@/components/Form'
 export { default as Field, useFieldContext } from '@/components/Field'
 export { default as Fieldset } from '@/components/Fieldset'
 export { default as Modal } from '@/components/Modal'
-export { FormContext, FormStaticContext, useFormContext, useFormStaticContext } from '@/context/FormProvider'
+export {
+  FieldReportContext,
+  FormContext,
+  FormStaticContext,
+  useFormContext,
+  useFormStaticContext,
+} from '@/context/FormProvider'
 export * as inputs from '@/inputs'
 export { baseInputSchemaFields, validateInputSchemaFields, validateSchema, validateValues } from '@/utils/inputs'
 export { isEmail, isEmptyValue, validationError, validationReset, validationSuccess } from '@/utils/validation'
@@ -17,7 +23,14 @@ export type {
 } from '@/components/Fieldset'
 export type { FormHandle, FormProps } from '@/components/Form'
 export type { ModalProps } from '@/components/Modal'
-export type { Context, StaticContext } from '@/context/FormProvider'
+export type {
+  Context,
+  DataContext,
+  FieldPath,
+  FieldStatePatch,
+  FieldStateReport,
+  StaticContext,
+} from '@/context/FormProvider'
 export type { FieldMessages, FieldSchema } from '@/types/fields'
 export type {
   FieldValidationReport,

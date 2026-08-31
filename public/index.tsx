@@ -75,7 +75,7 @@ const App = () => {
         name: 'marketing',
         label: 'Marketing opt-in',
         options: {
-          message: 'Yes, I agree to recieve marketing emails',
+          message: 'Yes, I agree to receive marketing emails',
         },
       },
       {
@@ -107,6 +107,193 @@ const App = () => {
             },
           ],
         },
+      },
+      {
+        type: 'textarea',
+        name: 'bio',
+        label: 'Bio',
+        instructions: 'A few sentences about yourself.',
+        options: {
+          placeholder: 'e.g. Painter of happy little trees',
+          rows: 4,
+          maxLength: 500,
+        },
+      },
+      {
+        type: 'number',
+        name: 'age',
+        label: 'Age',
+        required: true,
+        width: 50,
+        options: {
+          min: 18,
+          max: 120,
+          placeholder: 'e.g. 42',
+        },
+      },
+      {
+        type: 'select',
+        name: 'favourite_colour',
+        label: 'Favourite colour',
+        width: 50,
+        options: {
+          placeholder: 'Pick a colour',
+          choices: [
+            {
+              value: 'red',
+              label: 'Red',
+            },
+            {
+              value: 'green',
+              label: 'Green',
+            },
+            {
+              value: 'blue',
+              label: 'Blue',
+            },
+            {
+              value: 'greyscale',
+              label: 'Greyscale',
+              choices: [
+                {
+                  value: 'black',
+                  label: 'Black',
+                },
+                {
+                  value: 'white',
+                  label: 'White',
+                },
+              ],
+            },
+          ],
+        },
+      },
+      {
+        type: 'select',
+        name: 'interests',
+        label: 'Interests',
+        required: true,
+        instructions: 'Select one or more.',
+        options: {
+          multiple: true,
+          choices: [
+            {
+              value: 'painting',
+              label: 'Painting',
+            },
+            {
+              value: 'hiking',
+              label: 'Hiking',
+            },
+            {
+              value: 'cooking',
+              label: 'Cooking',
+            },
+            {
+              value: 'music',
+              label: 'Music',
+            },
+          ],
+        },
+      },
+      {
+        type: 'repeater',
+        name: 'pets',
+        label: 'Pets',
+        instructions: 'Repeats a set of fields vertically, seeded with one item.',
+        options: {
+          minimum: 1,
+          maximum: 5,
+          fields: [
+            {
+              type: 'text',
+              name: 'petname',
+              label: 'Name',
+              required: true,
+              width: 50,
+            },
+            {
+              type: 'select',
+              name: 'species',
+              label: 'Species',
+              required: true,
+              width: 50,
+              options: {
+                placeholder: 'Pick a species',
+                choices: [
+                  {
+                    value: 'dog',
+                    label: 'Dog',
+                  },
+                  {
+                    value: 'cat',
+                    label: 'Cat',
+                  },
+                  {
+                    value: 'other',
+                    label: 'Other',
+                  },
+                ],
+              },
+            },
+            {
+              type: 'boolean',
+              name: 'vaccinated',
+              label: 'Vaccinated',
+              options: {
+                message: 'Yes',
+              },
+            },
+          ],
+        },
+      },
+      {
+        type: 'repeater',
+        name: 'nicknames',
+        label: 'Nicknames',
+        instructions: 'Repeats a single field horizontally, up to three times.',
+        options: {
+          direction: 'x',
+          maximum: 3,
+          fields: [
+            {
+              type: 'text',
+              name: 'nickname',
+              label: 'Nickname',
+            },
+          ],
+        },
+      },
+      {
+        type: 'matrix',
+        name: 'scores',
+        label: 'Scores',
+        instructions: 'A table of numbers, repeatable in both directions.',
+        options: {
+          minimumRows: 1,
+          maximumRows: 4,
+          minimumColumns: 1,
+          maximumColumns: 4,
+          fields: [
+            {
+              type: 'number',
+              name: 'score',
+              label: 'Score',
+              options: {
+                min: 0,
+                max: 10,
+              },
+            },
+          ],
+        },
+      },
+      {
+        type: 'text',
+        name: 'reference',
+        label: 'Reference code',
+        instructions: 'Read only, populated from the schema default value.',
+        readonly: true,
+        defaultValue: 'IIGHT-0001',
       },
     ],
   })

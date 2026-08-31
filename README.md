@@ -88,6 +88,8 @@ const report = validateValues(schema, values, inputs)
 
 Container fields aggregate: a group, repeater or matrix is marked invalid while any nested field is invalid, and repeaters/matrices also validate their own item, row and column bounds.
 
+The form's `messages` and `validity` maps are keyed by path, so nested fields report alongside top-level ones — `address.town`, `pets.0.petname`, `grid.0.1.amount` — which makes error summaries a simple iteration. Entries are removed when a field unmounts, for example when a repeater row is deleted. A custom container input can join in by consuming `FieldReportContext` and providing a wrapped report to its children that prefixes their position, exactly as the matrix does for its cells; the schema builder instead provides `undefined` to keep its temporary editor state out of the maps.
+
 ## Custom inputs
 
 An input is a module implementing the `Input` interface: a default React component plus optional metadata (`name`, `description`, `category`), `validateValue`, `formatValue`, `renderValue`, and `coreFields`/`optionFields` describing how the schema builder should configure it. The component reads everything it needs from `useFieldContext()`:

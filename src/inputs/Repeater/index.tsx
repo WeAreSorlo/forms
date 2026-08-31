@@ -1,5 +1,6 @@
 import { useFieldContext } from '@/components/Field'
 import Fieldset, { OnValidityChangeCallback, OnValuesChangeCallback } from '@/components/Fieldset'
+import { FieldReportContext, FieldStateReport } from '@/context/FormProvider'
 import i18n from '@/i18n'
 import { FieldSchema } from '@/types/fields'
 import {
@@ -15,7 +16,7 @@ import {
 } from '@/types/inputs'
 import { validateSchema } from '@/utils/inputs'
 import { isEmptyValue, validationError, validationSuccess } from '@/utils/validation'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
 type Column = Record<string, any>
 type Row = Array<Column>
@@ -170,6 +171,29 @@ const Component: InputComponent = function () {
     setChildValid(valid)
   }, [])
 
+  // Rewrite the internal matrix's report paths so nested fields appear as
+  // e.g. 'pets.0.petname' rather than 'pets.value.0.0.petname'
+  const parentReport = useContext(FieldReportContext)
+
+  const childReport = useMemo<FieldStateReport | undefined>(() => {
+    if (!parentReport) return undefined
+
+    const report: FieldStateReport = (path, patch) => {
+      const [name, row, column, ...rest] = path
+
+      // Anything not from the internal matrix passes through untouched
+      if (name !== 'value') return parentReport(path, patch)
+
+      // The matrix's own state is already reported by the repeater itself
+      if (rest.length === 0) return
+
+      const index = isHorizontal ? column : row
+      parentReport([index, ...rest], patch)
+    }
+
+    return report
+  }, [parentReport, isHorizontal])
+
   // Validate the item bounds and aggregate the nested matrix's validity
   const validation = useMemo(() => (value !== undefined ? validateValue(value, schema) : null), [value, schema])
 
@@ -186,12 +210,14 @@ const Component: InputComponent = function () {
   }, [validation, childValid, setMessages, setValid])
 
   return (
-    <Fieldset
-      schema={matrixSchema}
-      values={matrixValues}
-      onValuesChange={onValuesChange}
-      onValidityChange={onValidityChange}
-    />
+    <FieldReportContext.Provider value={childReport}>
+      <Fieldset
+        schema={matrixSchema}
+        values={matrixValues}
+        onValuesChange={onValuesChange}
+        onValidityChange={onValidityChange}
+      />
+    </FieldReportContext.Provider>
   )
 }
 

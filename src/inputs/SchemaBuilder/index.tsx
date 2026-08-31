@@ -5,7 +5,7 @@ import Fieldset, {
   OnValuesChangeCallback,
 } from '@/components/Fieldset'
 import Modal from '@/components/Modal'
-import { useFormStaticContext } from '@/context/FormProvider'
+import { FieldReportContext, useFormStaticContext } from '@/context/FormProvider'
 import i18n from '@/i18n'
 import { FieldMessages, FieldSchema } from '@/types/fields'
 import {
@@ -347,15 +347,18 @@ function SchemaEditor({
       <Modal open={open} onClose={handleCancel} header={label}>
         {/* This condition prevents infinite rendering */}
         {open && (
-          <Fieldset
-            schema={schema}
-            values={tempValue}
-            messages={tempMessages}
-            validity={tempValidity}
-            onValuesChange={handleValuesChange}
-            onMessagesChange={handleMessagesChange}
-            onValidityChange={handleValidityChange}
-          />
+          /* The editor's state is temporary, so keep its reports out of the form's messages */
+          <FieldReportContext.Provider value={undefined}>
+            <Fieldset
+              schema={schema}
+              values={tempValue}
+              messages={tempMessages}
+              validity={tempValidity}
+              onValuesChange={handleValuesChange}
+              onMessagesChange={handleMessagesChange}
+              onValidityChange={handleValidityChange}
+            />
+          </FieldReportContext.Provider>
         )}
         <button type='button' onClick={handleCancel}>
           {cancelLabel || t('ui.cancel')}

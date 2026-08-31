@@ -1,9 +1,9 @@
-import { FormStaticContext } from '@/context/FormProvider'
+import { FieldReportContext, FieldStateReport, FormStaticContext } from '@/context/FormProvider'
 import { FieldMessages } from '@/types/fields'
 import { InputSchema, InputValidateValue, InputValidationResponse } from '@/types/inputs'
 import { validateSchema } from '@/utils/inputs'
 import { isEqual } from 'lodash'
-import { SetStateAction, createContext, useCallback, useContext, useEffect, useId, useMemo } from 'react'
+import { SetStateAction, createContext, useCallback, useContext, useEffect, useId, useMemo, useRef } from 'react'
 
 interface Context {
   id: string
@@ -82,6 +82,9 @@ export default function Field({
 
   const id = useId()
 
+  // Report state changes to the form's path keyed maps
+  const parentReport = useContext(FieldReportContext)
+
   const setValue = useCallback(
     (newValue: SetStateAction<Context['value']>) => {
       if (typeof newValue === 'function') newValue = newValue(value)
@@ -95,21 +98,23 @@ export default function Field({
   const setMessages = useCallback(
     (newMessages: SetStateAction<Context['messages']>) => {
       if (typeof newMessages === 'function') newMessages = newMessages(messages)
-      if (onMessagesChange && !isEqual(messages, newMessages)) {
-        onMessagesChange(newMessages)
+      if (!isEqual(messages, newMessages)) {
+        if (onMessagesChange) onMessagesChange(newMessages)
+        if (parentReport) parentReport([name], { messages: newMessages })
       }
     },
-    [messages, onMessagesChange],
+    [messages, onMessagesChange, parentReport, name],
   )
 
   const setValid = useCallback(
     (newValid: SetStateAction<Context['valid']>) => {
       if (typeof newValid === 'function') newValid = newValid(valid)
-      if (onValidityChange && !isEqual(valid, newValid)) {
-        onValidityChange(newValid)
+      if (!isEqual(valid, newValid)) {
+        if (onValidityChange) onValidityChange(newValid)
+        if (parentReport) parentReport([name], { valid: newValid })
       }
     },
-    [valid, onValidityChange],
+    [valid, onValidityChange, parentReport, name],
   )
 
   const handleValidation = useCallback(
@@ -121,16 +126,34 @@ export default function Field({
     [setValue, setMessages, setValid],
   )
 
-  // Re-validate whenever a form wide validation pass is requested, and eagerly
-  // on any change after the first pass
+  // Re-validate exactly once per form wide validation pass, reading the
+  // latest state from a ref so container inputs that aggregate their own
+  // validity afterwards are not overwritten
   const staticContext = useContext(FormStaticContext)
   const validationCounter = staticContext?.validationCounter || 0
 
+  const latest = useRef({ value, schema, validate, handleValidation })
+  latest.current = { value, schema, validate, handleValidation }
+
   useEffect(() => {
+    const { value, schema, validate, handleValidation } = latest.current
     if (validationCounter >= 1 && validate) {
       handleValidation(validate(value, schema))
     }
-  }, [validationCounter, validate, value, schema, handleValidation])
+  }, [validationCounter])
+
+  // Remove the field's entries from the form's path keyed maps when it
+  // unmounts or its path changes
+  useEffect(() => {
+    if (!parentReport) return
+    return () => parentReport([name], undefined)
+  }, [parentReport, name])
+
+  // Nest children's reports under this field's name
+  const childReport = useMemo<FieldStateReport | undefined>(() => {
+    if (!parentReport) return undefined
+    return (path, patch) => parentReport([name, ...path], patch)
+  }, [parentReport, name])
 
   const contextValue = useMemo(() => {
     return {
@@ -163,27 +186,29 @@ export default function Field({
 
   return (
     <FieldContext.Provider value={contextValue}>
-      <div style={{ width: width ? `${width}%` : '100%' }}>
-        <div className={`iight-field${isValid ? ' iight-valid' : ''}${isInvalid ? ' iight-invalid' : ''}`}>
-          <div className='iight-meta'>
-            {label && (
-              <label className='iight-label' htmlFor={id}>
-                {label}
-                {required && <span>*</span>}
-              </label>
+      <FieldReportContext.Provider value={childReport}>
+        <div style={{ width: width ? `${width}%` : '100%' }}>
+          <div className={`iight-field${isValid ? ' iight-valid' : ''}${isInvalid ? ' iight-invalid' : ''}`}>
+            <div className='iight-meta'>
+              {label && (
+                <label className='iight-label' htmlFor={id}>
+                  {label}
+                  {required && <span>*</span>}
+                </label>
+              )}
+              {instructions && <div className='iight-instructions'>{instructions}</div>}
+            </div>
+            {messages.length > 0 && (
+              <ul className='iight-messages'>
+                {messages.map((message, messageIndex) => {
+                  return <li key={messageIndex}>{message}</li>
+                })}
+              </ul>
             )}
-            {instructions && <div className='iight-instructions'>{instructions}</div>}
+            {children}
           </div>
-          {messages.length > 0 && (
-            <ul className='iight-messages'>
-              {messages.map((message, messageIndex) => {
-                return <li key={messageIndex}>{message}</li>
-              })}
-            </ul>
-          )}
-          {children}
         </div>
-      </div>
+      </FieldReportContext.Provider>
     </FieldContext.Provider>
   )
 }

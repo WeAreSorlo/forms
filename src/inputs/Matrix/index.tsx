@@ -1,7 +1,12 @@
 import { useFieldContext } from '@/components/Field'
-import Fieldset from '@/components/Fieldset'
+import Fieldset, {
+  OnMessagesChangeCallback,
+  OnValidityChangeCallback,
+  OnValuesChangeCallback,
+} from '@/components/Fieldset'
+import { FieldReportContext, FieldStateReport } from '@/context/FormProvider'
 import i18n from '@/i18n'
-import { FieldMessages } from '@/types/fields'
+import { FieldMessages, FieldSchema } from '@/types/fields'
 import {
   InputCategory,
   InputComponent,
@@ -15,7 +20,7 @@ import {
 } from '@/types/inputs'
 import { validateSchema } from '@/utils/inputs'
 import { isEmptyValue, validationError, validationSuccess } from '@/utils/validation'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 type Column = Record<string, any>
@@ -142,6 +147,72 @@ export const formatValue: InputFormatValue = (value, schema) => {
 
 export const renderValue: InputRenderValue = (value, schema) => {
   return <>{formatValue(value, schema)}</>
+}
+
+// A single cell of the matrix, nesting its fields' reports under the cell's
+// row and column indexes
+function MatrixCell({
+  rowIndex,
+  columnIndex,
+  fields,
+  column,
+  messages,
+  validity,
+  setColumnValue,
+  setColumnMessages,
+  setColumnValidity,
+}: {
+  rowIndex: number
+  columnIndex: number
+  fields: Array<FieldSchema>
+  column: Column
+  messages?: Record<string, FieldMessages>
+  validity?: Record<string, boolean | undefined>
+  setColumnValue: (row: number, column: number, field: string, value: any) => void
+  setColumnMessages: (row: number, column: number, field: string, messages: FieldMessages) => void
+  setColumnValidity: (row: number, column: number, field: string, valid: boolean | undefined) => void
+}) {
+  const parentReport = useContext(FieldReportContext)
+
+  const cellReport = useMemo<FieldStateReport | undefined>(() => {
+    if (!parentReport) return undefined
+    return (path, patch) => parentReport([rowIndex, columnIndex, ...path], patch)
+  }, [parentReport, rowIndex, columnIndex])
+
+  const onValuesChange: OnValuesChangeCallback = useCallback(
+    (field, fieldValue) => {
+      setColumnValue(rowIndex, columnIndex, field, fieldValue)
+    },
+    [setColumnValue, rowIndex, columnIndex],
+  )
+
+  const onMessagesChange: OnMessagesChangeCallback = useCallback(
+    (field, fieldMessages) => {
+      setColumnMessages(rowIndex, columnIndex, field, fieldMessages)
+    },
+    [setColumnMessages, rowIndex, columnIndex],
+  )
+
+  const onValidityChange: OnValidityChangeCallback = useCallback(
+    (field, fieldValid) => {
+      setColumnValidity(rowIndex, columnIndex, field, fieldValid)
+    },
+    [setColumnValidity, rowIndex, columnIndex],
+  )
+
+  return (
+    <FieldReportContext.Provider value={cellReport}>
+      <Fieldset
+        schema={fields}
+        values={column}
+        messages={messages}
+        validity={validity}
+        onValuesChange={onValuesChange}
+        onMessagesChange={onMessagesChange}
+        onValidityChange={onValidityChange}
+      />
+    </FieldReportContext.Provider>
+  )
 }
 
 const Component: InputComponent = function () {
@@ -450,20 +521,16 @@ const Component: InputComponent = function () {
                 {row.map((column, columnIndex) => {
                   return (
                     <td key={columnIndex}>
-                      <Fieldset
-                        schema={fields}
-                        values={column}
+                      <MatrixCell
+                        rowIndex={rowIndex}
+                        columnIndex={columnIndex}
+                        fields={fields}
+                        column={column}
                         messages={cellMessages[`${rowIndex}-${columnIndex}`]}
                         validity={cellValidity[`${rowIndex}-${columnIndex}`]}
-                        onValuesChange={(columnFieldName, columnFieldValue) => {
-                          setColumnValue(rowIndex, columnIndex, columnFieldName, columnFieldValue)
-                        }}
-                        onMessagesChange={(columnFieldName, columnFieldMessages) => {
-                          setColumnMessages(rowIndex, columnIndex, columnFieldName, columnFieldMessages)
-                        }}
-                        onValidityChange={(columnFieldName, columnFieldValidity) => {
-                          setColumnValidity(rowIndex, columnIndex, columnFieldName, columnFieldValidity)
-                        }}
+                        setColumnValue={setColumnValue}
+                        setColumnMessages={setColumnMessages}
+                        setColumnValidity={setColumnValidity}
                       />
                     </td>
                   )
