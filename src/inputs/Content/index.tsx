@@ -16,7 +16,7 @@ export const description: InputDescription = () => 'A block of read only content
 export const category: InputCategory = () => 'Layout'
 
 export const coreFields: InputCoreFields = (defaultFields) => {
-  return defaultFields.filter(({ name }) => ['name', 'label', 'width'].includes(name))
+  return defaultFields.filter(({ name }) => ['name', 'label', 'width', 'conditions'].includes(name))
 }
 
 export const optionFields: InputOptionFields = () => {

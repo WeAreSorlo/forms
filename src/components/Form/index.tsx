@@ -3,32 +3,43 @@ import Fieldset, {
   OnValidityChangeCallback,
   OnValuesChangeCallback,
 } from '@/components/Fieldset'
-import { Context, FieldReportContext, FieldStateReport, FormContext, FormStaticContext } from '@/context/FormProvider'
+import {
+  Context,
+  FieldInjectionContext,
+  FieldReportContext,
+  FieldReportContextValue,
+  FieldScopeContext,
+  FieldStateReport,
+  FormContext,
+  FormStaticContext,
+} from '@/context/FormProvider'
 import i18n from '@/i18n'
 import * as coreInputs from '@/inputs'
+import { FieldMessages } from '@/types/fields'
 import { Input, ValidationReport } from '@/types/inputs'
-import { validateValues } from '@/utils/inputs'
+import { flattenValidationReport, validateValues } from '@/utils/inputs'
 import { useCallback, useEffect, useImperativeHandle, useMemo, useState } from 'react'
 import { I18nextProvider } from 'react-i18next'
 
 export interface FormHandle {
   validate: () => ValidationReport
+  applyReport: (report: ValidationReport) => void
 }
 
-export interface FormProps {
+export interface FormProps<Values extends Record<string, any> = Record<string, any>> {
   schema: Context['schema']
-  values?: Context['values']
+  values?: Values
   messages?: Context['messages']
   validity?: Context['validity']
   inputs?: Record<string, Input>
-  onValuesChange?: (values: Context['values']) => void
+  onValuesChange?: (values: Values) => void
   onMessagesChange?: (messages: Context['messages']) => void
   onValidityChange?: (validity: Context['validity']) => void
   className?: string
   ref?: React.Ref<FormHandle>
 }
 
-export default function Form({
+export default function Form<Values extends Record<string, any> = Record<string, any>>({
   schema: defaultSchema,
   values: defaultValues,
   messages: defaultMessages,
@@ -39,12 +50,14 @@ export default function Form({
   onValidityChange,
   className,
   ref,
-}: FormProps) {
+}: FormProps<Values>) {
   const [schema, setSchema] = useState<Context['schema']>(defaultSchema || [])
   const [values, setValues] = useState<Context['values']>(defaultValues || {})
   const [messages, setMessages] = useState<Context['messages']>(defaultMessages || {})
   const [validity, setValidity] = useState<Context['validity']>(defaultValidity || {})
   const [validationCounter, setValidationCounter] = useState(0)
+  const [injectedMessages, setInjectedMessages] = useState<Record<string, FieldMessages>>({})
+  const [injectedValidity, setInjectedValidity] = useState<Record<string, boolean | undefined>>({})
 
   // Sync props with local state, keeping the local state when a prop is not controlled
   useEffect(() => {
@@ -146,7 +159,7 @@ export default function Form({
   }, [])
 
   useEffect(() => {
-    if (onValuesChange) onValuesChange(values)
+    if (onValuesChange) onValuesChange(values as Values)
   }, [values, onValuesChange])
 
   useEffect(() => {
@@ -164,7 +177,40 @@ export default function Form({
     return validateValues(schema, values, mergedInputs, { environment: 'client' })
   }, [schema, values, mergedInputs])
 
-  useImperativeHandle(ref, () => ({ validate }), [validate])
+  // Apply an external validation report, e.g. one returned by a server, and
+  // show its messages inline until each field next reports for itself
+  const applyReport = useCallback((report: ValidationReport) => {
+    const flat = flattenValidationReport(report)
+
+    setMessages(flat.messages)
+    setValidity(flat.validity)
+    setInjectedMessages(flat.messages)
+    setInjectedValidity(flat.validity)
+  }, [])
+
+  useImperativeHandle(ref, () => ({ validate, applyReport }), [validate, applyReport])
+
+  const clearInjected = useCallback((key: string) => {
+    setInjectedMessages((old) => {
+      if (!(key in old)) return old
+      const { [key]: removed, ...rest } = old
+      return rest
+    })
+
+    setInjectedValidity((old) => {
+      if (!(key in old)) return old
+      const { [key]: removed, ...rest } = old
+      return rest
+    })
+  }, [])
+
+  const injectionContextValue = useMemo(() => {
+    return {
+      messages: injectedMessages,
+      validity: injectedValidity,
+      clear: clearInjected,
+    }
+  }, [injectedMessages, injectedValidity, clearInjected])
 
   const dataContextValue = useMemo(() => {
     return {
@@ -187,26 +233,39 @@ export default function Form({
     }
   }, [mergedInputs, validationCounter])
 
+  const reportContextValue = useMemo<FieldReportContextValue>(() => {
+    return {
+      report: onFieldReport,
+      resolve: (path) => path,
+    }
+  }, [onFieldReport])
+
+  const scopeContextValue = useMemo(() => [values], [values])
+
   return (
     <I18nextProvider i18n={i18n}>
       <FormContext.Provider value={dataContextValue}>
         <FormStaticContext.Provider value={staticContextValue}>
-          <FieldReportContext.Provider value={onFieldReport}>
-            {/* Prevent implicit submissions from reloading the page */}
-            <form
-              className={`iight-form${className ? ` ${className}` : ''}`}
-              onSubmit={(event) => event.preventDefault()}
-            >
-              <Fieldset
-                schema={schema}
-                values={values}
-                messages={messages}
-                validity={validity}
-                onValuesChange={onFieldsetValuesChange}
-                onMessagesChange={onFieldsetMessagesChange}
-                onValidityChange={onFieldsetValidityChange}
-              />
-            </form>
+          <FieldReportContext.Provider value={reportContextValue}>
+            <FieldInjectionContext.Provider value={injectionContextValue}>
+              <FieldScopeContext.Provider value={scopeContextValue}>
+                {/* Prevent implicit submissions from reloading the page */}
+                <form
+                  className={`iight-form${className ? ` ${className}` : ''}`}
+                  onSubmit={(event) => event.preventDefault()}
+                >
+                  <Fieldset
+                    schema={schema}
+                    values={values}
+                    messages={messages}
+                    validity={validity}
+                    onValuesChange={onFieldsetValuesChange}
+                    onMessagesChange={onFieldsetMessagesChange}
+                    onValidityChange={onFieldsetValidityChange}
+                  />
+                </form>
+              </FieldScopeContext.Provider>
+            </FieldInjectionContext.Provider>
           </FieldReportContext.Provider>
         </FormStaticContext.Provider>
       </FormContext.Provider>

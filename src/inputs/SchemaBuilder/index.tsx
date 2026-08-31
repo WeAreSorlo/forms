@@ -5,7 +5,7 @@ import Fieldset, {
   OnValuesChangeCallback,
 } from '@/components/Fieldset'
 import Modal from '@/components/Modal'
-import { FieldReportContext, useFormStaticContext } from '@/context/FormProvider'
+import { FieldReportContext, FieldScopeContext, useFormStaticContext } from '@/context/FormProvider'
 import i18n from '@/i18n'
 import { FieldMessages, FieldSchema } from '@/types/fields'
 import {
@@ -314,6 +314,8 @@ function SchemaEditor({
     closeModal()
   }
 
+  const editorScopes = useMemo(() => [tempValue || {}], [tempValue])
+
   const handleValuesChange: OnValuesChangeCallback = useCallback((field, value) => {
     setTempValue((old) => {
       if (Object.is(old?.[field], value)) return old
@@ -350,17 +352,20 @@ function SchemaEditor({
       <Modal open={open} onClose={handleCancel} header={label}>
         {/* This condition prevents infinite rendering */}
         {open && (
-          /* The editor's state is temporary, so keep its reports out of the form's messages */
+          /* The editor's state is temporary, so keep its reports out of the
+             form's messages and evaluate its conditions against its own values */
           <FieldReportContext.Provider value={undefined}>
-            <Fieldset
-              schema={schema}
-              values={tempValue}
-              messages={tempMessages}
-              validity={tempValidity}
-              onValuesChange={handleValuesChange}
-              onMessagesChange={handleMessagesChange}
-              onValidityChange={handleValidityChange}
-            />
+            <FieldScopeContext.Provider value={editorScopes}>
+              <Fieldset
+                schema={schema}
+                values={tempValue}
+                messages={tempMessages}
+                validity={tempValidity}
+                onValuesChange={handleValuesChange}
+                onMessagesChange={handleMessagesChange}
+                onValidityChange={handleValidityChange}
+              />
+            </FieldScopeContext.Provider>
           </FieldReportContext.Provider>
         )}
         <button className='iight-button' type='button' onClick={handleCancel}>

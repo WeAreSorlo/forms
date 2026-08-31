@@ -88,6 +88,104 @@ describe('form interactions', () => {
     })
   })
 
+  it('shows an applied server report inline until fields report for themselves', async () => {
+    const ref = createRef<FormHandle>()
+
+    render(
+      <Form
+        ref={ref}
+        schema={[
+          { type: 'text', name: 'username', label: 'Username' },
+          {
+            type: 'repeater',
+            name: 'pets',
+            label: 'Pets',
+            options: { fields: [{ type: 'text', name: 'petname', label: 'Pet name', required: true }] },
+          },
+        ]}
+        values={{ username: 'taken', pets: [{ petname: '' }] }}
+      />,
+    )
+
+    // A report as a server would produce it, including a server only error
+    act(() => {
+      ref.current?.applyReport({
+        isValid: false,
+        fields: {
+          username: { isValid: false, messages: ['Already taken.'] },
+          pets: {
+            isValid: false,
+            messages: [],
+            children: [
+              { isValid: false, fields: { petname: { isValid: false, messages: ['This field is required.'] } } },
+            ],
+          },
+        },
+      })
+    })
+
+    // Both the top level and the nested message display inline
+    await waitFor(() => {
+      expect(screen.getByText('Already taken.')).toBeTruthy()
+      expect(screen.getByText('This field is required.')).toBeTruthy()
+    })
+
+    // Editing the nested field clears its injected message through live validation
+    fireEvent.change(screen.getByLabelText(/Pet name/), { target: { value: 'Rex' } })
+
+    await waitFor(() => {
+      expect(screen.queryByText('This field is required.')).toBeNull()
+      expect(screen.getByText('Already taken.')).toBeTruthy()
+    })
+  })
+
+  it('shows and hides fields as their conditions change', async () => {
+    render(
+      <Form
+        schema={[
+          { type: 'boolean', name: 'has_pets', label: 'Has pets', options: { message: 'Yes' } },
+          {
+            type: 'repeater',
+            name: 'pets',
+            label: 'Pets',
+            conditions: [{ field: 'has_pets', operator: 'equals', value: true }],
+            options: {
+              fields: [
+                { type: 'text', name: 'petname', label: 'Pet name' },
+                {
+                  type: 'text',
+                  name: 'chip_id',
+                  label: 'Chip ID',
+                  conditions: [{ field: 'petname', operator: 'notEmpty' }],
+                },
+              ],
+            },
+          },
+        ]}
+        values={{ pets: [{ petname: '' }] }}
+      />,
+    )
+
+    // The repeater is hidden until the boolean is checked
+    expect(screen.queryByText('Pets')).toBeNull()
+
+    fireEvent.click(screen.getByLabelText(/Yes/))
+
+    await waitFor(() => {
+      expect(screen.getByText('Pets')).toBeTruthy()
+      expect(screen.getByLabelText(/Pet name/)).toBeTruthy()
+    })
+
+    // The nested field is hidden until its sibling has a value
+    expect(screen.queryByLabelText(/Chip ID/)).toBeNull()
+
+    fireEvent.change(screen.getByLabelText(/Pet name/), { target: { value: 'Rex' } })
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/Chip ID/)).toBeTruthy()
+    })
+  })
+
   it('removes path entries when fields unmount', async () => {
     const ref = createRef<FormHandle>()
     let latestMessages: Record<string, any> = {}

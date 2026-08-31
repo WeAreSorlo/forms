@@ -209,6 +209,53 @@ describe('environment validators', () => {
   })
 })
 
+describe('conditional fields', () => {
+  const schema = [
+    { type: 'boolean', name: 'has_pets' },
+    {
+      type: 'repeater',
+      name: 'pets',
+      required: true,
+      conditions: [{ field: 'has_pets', operator: 'equals' as const, value: true }],
+      options: {
+        fields: [
+          { type: 'text', name: 'petname', required: true },
+          {
+            type: 'text',
+            name: 'chip_id',
+            required: true,
+            conditions: [{ field: 'petname', operator: 'notEmpty' as const }],
+          },
+        ],
+      },
+    },
+  ]
+
+  it('skips hidden fields when validating', () => {
+    // The required repeater is hidden, so it is not validated at all
+    const hidden = validateValues(schema, { has_pets: false }, inputs)
+    expect(hidden.isValid).toBe(true)
+    expect(hidden.fields.pets).toBeUndefined()
+
+    const shown = validateValues(schema, { has_pets: true }, inputs)
+    expect(shown.isValid).toBe(false)
+  })
+
+  it('evaluates nested conditions against the item scope first', () => {
+    const result = validateValues(schema, { has_pets: true, pets: [{ petname: '' }, { petname: 'Rex' }] }, inputs)
+    const children = result.fields.pets.children as Array<ValidationReport>
+
+    // chip_id is hidden while its sibling petname is empty
+    expect(children[0].fields.chip_id).toBeUndefined()
+    expect(children[1].fields.chip_id?.isValid).toBe(false)
+  })
+
+  it('strips hidden fields when picking', () => {
+    const picked = pickValues(schema, { has_pets: false, pets: [{ petname: 'Rex' }] }, inputs)
+    expect(picked).toEqual({ has_pets: false })
+  })
+})
+
 describe('pickValues', () => {
   it('strips values not defined by the schema', () => {
     const schema = [

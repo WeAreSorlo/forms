@@ -1,6 +1,6 @@
 import { useFieldContext } from '@/components/Field'
 import Fieldset, { OnValidityChangeCallback, OnValuesChangeCallback } from '@/components/Fieldset'
-import { FieldReportContext, FieldStateReport } from '@/context/FormProvider'
+import { FieldPath, FieldReportContext, FieldReportContextValue } from '@/context/FormProvider'
 import i18n from '@/i18n'
 import { FieldSchema } from '@/types/fields'
 import {
@@ -178,27 +178,36 @@ const Component: InputComponent = function () {
     setChildValid(valid)
   }, [])
 
-  // Rewrite the internal matrix's report paths so nested fields appear as
+  // Rewrite the internal matrix's paths so nested fields appear as
   // e.g. 'pets.0.petname' rather than 'pets.value.0.0.petname'
   const parentReport = useContext(FieldReportContext)
 
-  const childReport = useMemo<FieldStateReport | undefined>(() => {
+  const childReport = useMemo<FieldReportContextValue | undefined>(() => {
     if (!parentReport) return undefined
 
-    const report: FieldStateReport = (path, patch) => {
+    // Returns null for the internal matrix's own state, which is already
+    // reported by the repeater itself
+    const rewrite = (path: FieldPath): null | FieldPath => {
       const [name, row, column, ...rest] = path
 
       // Anything not from the internal matrix passes through untouched
-      if (name !== 'value') return parentReport(path, patch)
-
-      // The matrix's own state is already reported by the repeater itself
-      if (rest.length === 0) return
+      if (name !== 'value') return path
+      if (rest.length === 0) return null
 
       const index = isHorizontal ? column : row
-      parentReport([index, ...rest], patch)
+      return [index, ...rest]
     }
 
-    return report
+    return {
+      report: (path, patch) => {
+        const rewritten = rewrite(path)
+        if (rewritten) parentReport.report(rewritten, patch)
+      },
+      resolve: (path) => {
+        const rewritten = rewrite(path)
+        return rewritten ? parentReport.resolve(rewritten) : path
+      },
+    }
   }, [parentReport, isHorizontal])
 
   // Validate the item bounds and aggregate the nested matrix's validity

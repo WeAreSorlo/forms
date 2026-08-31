@@ -64,6 +64,37 @@ describe('form rendering', () => {
     expect(markup).toContain('value="Fido"')
   })
 
+  it('wires accessibility attributes between fields and their messages', () => {
+    const markup = renderToStaticMarkup(
+      <Form
+        schema={[
+          {
+            type: 'text',
+            name: 'first_name',
+            label: 'First name',
+            instructions: 'Your given name.',
+            required: true,
+          },
+          {
+            type: 'radio',
+            name: 'contact',
+            label: 'Contact method',
+            options: { choices: [{ value: 'email', label: 'Email' }] },
+          },
+        ]}
+        messages={{ first_name: ['This field is required.'] }}
+        validity={{ first_name: false }}
+      />,
+    )
+
+    expect(markup).toContain('role="alert"')
+    expect(markup).toContain('aria-invalid="true"')
+    expect(markup).toContain('aria-describedby')
+    expect(markup).toContain('role="radiogroup"')
+    expect(markup).toContain('aria-labelledby')
+    expect(markup).toContain('aria-hidden="true"')
+  })
+
   it('renders matrix rows and columns with their values', () => {
     const markup = renderToStaticMarkup(
       <Form

@@ -103,7 +103,7 @@ export const renderValue: InputRenderValue = (value, schema) => {
 }
 
 const Component: InputComponent = function () {
-  const { id, schema, required, readonly, disabled, options, value = '', handleValidation } = useFieldContext()
+  const { id, aria, schema, required, readonly, disabled, options, value = '', handleValidation } = useFieldContext()
 
   const doValidation = useCallback(
     (input: any) => {
@@ -117,6 +117,7 @@ const Component: InputComponent = function () {
       <textarea
         className='iight-input'
         id={id}
+        {...aria}
         value={value}
         onChange={(event) => doValidation(event.target.value)}
         required={required}

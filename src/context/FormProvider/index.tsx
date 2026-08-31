@@ -1,5 +1,6 @@
 import { FieldMessages, FieldSchema } from '@/types/fields'
 import { Input } from '@/types/inputs'
+import { ConditionScopes } from '@/utils/conditions'
 import { Dispatch, SetStateAction, createContext, useContext, useMemo } from 'react'
 
 // Data that changes as the form is used
@@ -34,10 +35,30 @@ export type FieldStatePatch = undefined | { messages?: FieldMessages; valid?: bo
 // Report a field's messages and validity to the form's path keyed maps
 export type FieldStateReport = (path: FieldPath, patch: FieldStatePatch) => void
 
+// Carries reporting upwards and path resolution downwards; both compose the
+// same way at every level, so a field can learn its absolute path
+export interface FieldReportContextValue {
+  report: FieldStateReport
+  resolve: (path: FieldPath) => FieldPath
+}
+
+// State injected from outside the form, e.g. a server validation report,
+// shown for a field until that field next reports its own state
+export interface FieldInjectionContextValue {
+  messages: Record<string, FieldMessages>
+  validity: Record<string, boolean | undefined>
+  clear: (key: string) => void
+}
+
 // Create form Context
 export const FormContext = createContext<undefined | DataContext>(undefined)
 export const FormStaticContext = createContext<undefined | StaticContext>(undefined)
-export const FieldReportContext = createContext<undefined | FieldStateReport>(undefined)
+export const FieldReportContext = createContext<undefined | FieldReportContextValue>(undefined)
+export const FieldInjectionContext = createContext<undefined | FieldInjectionContextValue>(undefined)
+
+// The stack of value scopes conditions are evaluated against, extended by
+// every container (group, repeater item, matrix cell)
+export const FieldScopeContext = createContext<undefined | ConditionScopes>(undefined)
 
 // Hook for consuming form context
 export const useFormContext = (): Context => {

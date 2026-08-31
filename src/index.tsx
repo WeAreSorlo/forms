@@ -4,6 +4,7 @@ export { default as Field, useFieldContext } from '@/components/Field'
 export { default as Fieldset } from '@/components/Fieldset'
 export { default as Modal } from '@/components/Modal'
 export {
+  FieldInjectionContext,
   FieldReportContext,
   FormContext,
   FormStaticContext,
@@ -13,6 +14,7 @@ export {
 export * as inputs from '@/inputs'
 export {
   baseInputSchemaFields,
+  flattenValidationReport,
   pickValues,
   resolveValidateValue,
   validateInputSchemaFields,
@@ -20,7 +22,16 @@ export {
   validateServerValues,
   validateValues,
 } from '@/utils/inputs'
-export { isEmail, isEmptyValue, validationError, validationReset, validationSuccess } from '@/utils/validation'
+export { evaluateCondition, evaluateConditions, normaliseConditions, resolveConditionValue } from '@/utils/conditions'
+export {
+  isEmail,
+  isEmptyValue,
+  isTel,
+  isUrl,
+  validationError,
+  validationReset,
+  validationSuccess,
+} from '@/utils/validation'
 
 export type { FieldProps, OnValueChangeCallback } from '@/components/Field'
 export type {
@@ -34,13 +45,23 @@ export type { ModalProps } from '@/components/Modal'
 export type {
   Context,
   DataContext,
+  FieldInjectionContextValue,
   FieldPath,
+  FieldReportContextValue,
   FieldStatePatch,
   FieldStateReport,
   StaticContext,
 } from '@/context/FormProvider'
-export type { FieldMessages, FieldSchema } from '@/types/fields'
-export type { ValidateValuesOptions } from '@/utils/inputs'
+export type {
+  ConditionGroup,
+  ConditionOperator,
+  FieldCondition,
+  FieldConditions,
+  FieldMessages,
+  FieldSchema,
+} from '@/types/fields'
+export type { ConditionScopes } from '@/utils/conditions'
+export type { FlatValidationReport, ValidateValuesOptions } from '@/utils/inputs'
 export type {
   FieldValidationReport,
   Input,

@@ -3,11 +3,12 @@ import Field, {
   OnValidityChangeCallback as OnFieldValidityChangeCallback,
   OnValueChangeCallback as OnFieldValueChangeCallback,
 } from '@/components/Field'
-import { useFormStaticContext } from '@/context/FormProvider'
+import { FieldScopeContext, useFormStaticContext } from '@/context/FormProvider'
 import { FieldMessages, FieldSchema } from '@/types/fields'
 import { InputComponent, InputValidateValue } from '@/types/inputs'
+import { evaluateConditions } from '@/utils/conditions'
 import { resolveValidateValue } from '@/utils/inputs'
-import { memo, useCallback } from 'react'
+import { memo, useCallback, useContext } from 'react'
 import { useTranslation } from 'react-i18next'
 
 export type OnValuesChangeCallback = (field: string, value: any) => void
@@ -35,9 +36,14 @@ export default function Fieldset({
 }: FieldsetProps) {
   const { inputs } = useFormStaticContext()
 
+  // Hide fields whose conditions do not match the surrounding values
+  const scopes = useContext(FieldScopeContext) || [values]
+
   return (
     <div className='iight-fieldset'>
       {schema.map((fieldSchema, fieldIndex) => {
+        if (!evaluateConditions(fieldSchema, scopes)) return null
+
         return (
           <FieldsetItem
             key={fieldSchema.name ?? fieldIndex}

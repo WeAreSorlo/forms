@@ -59,7 +59,7 @@ export default function Example() {
 
 ## Field schema
 
-Every field supports `name` (required), `label`, `required`, `instructions`, `defaultValue`, `readonly`, `disabled`, `width` (percentage) and `options`. The `type` selects the input, and `options` carries input-specific settings:
+Every field supports `name` (required), `label`, `required`, `instructions`, `defaultValue`, `readonly`, `disabled`, `width` (percentage), `options`, and `conditions`/`conditionsMode` for conditional logic. The `type` selects the input, and `options` carries input-specific settings:
 
 | Type            | Options                                                                     |
 | --------------- | --------------------------------------------------------------------------- |
@@ -101,6 +101,52 @@ const report = validateValues(schema, values, inputs)
 Container fields aggregate: a group, repeater or matrix is marked invalid while any nested field is invalid, and repeaters/matrices also validate their own item, row and column bounds.
 
 The form's `messages` and `validity` maps are keyed by path, so nested fields report alongside top-level ones — `address.town`, `pets.0.petname`, `grid.0.1.amount` — which makes error summaries a simple iteration. Entries are removed when a field unmounts, for example when a repeater row is deleted. A custom container input can join in by consuming `FieldReportContext` and providing a wrapped report to its children that prefixes their position, exactly as the matrix does for its cells; the schema builder instead provides `undefined` to keep its temporary editor state out of the maps.
+
+## Conditional logic
+
+Any field can declare `conditions` — rules that must match for it to be shown. Hidden fields keep their values but are skipped by rendering, validation and `pickValues`, on the client and the server alike:
+
+```ts
+{
+  type: 'repeater',
+  name: 'pets',
+  conditions: [{ field: 'has_pets', operator: 'equals', value: true }],
+  conditionsMode: 'all', // or 'any'
+  options: { ... },
+}
+```
+
+For and/or logic, conditions can be grouped: the field shows when **any** group has **all** of its rules matching. Groups are written as nested arrays, `{ rules }` objects (which is what the schema builder produces), or bare rules acting as a group of one:
+
+```ts
+// (country equals 'UK' AND age greaterThan 18) OR (role equals 'admin')
+conditions: [
+  [
+    { field: 'country', operator: 'equals', value: 'UK' },
+    { field: 'age', operator: 'greaterThan', value: 18 },
+  ],
+  [{ field: 'role', operator: 'equals', value: 'admin' }],
+]
+```
+
+Operators: `equals`, `notEquals`, `contains`, `greaterThan`, `lessThan`, `empty`, `notEmpty`. Equality compares loosely (`'18'` matches `18`), since values written in the schema builder are strings.
+
+A condition's `field` is a dotted path resolved against the nearest value scope first, then outwards to the form's root — so inside a repeater item, `species` finds the sibling field in the same item, while `address.town` falls through to the root values, and `pets.0.petname` works from the root. The closest scope wins when names collide. The schema builder exposes conditions on every field under "Conditional logic".
+
+## TypeScript
+
+`Form`, `validateValues`, `validateServerValues` and `pickValues` accept a values type parameter, so a form whose shape you know gets typed values in and out:
+
+```tsx
+interface Profile {
+  first_name: string
+  pets: Array<{ petname: string }>
+}
+
+<Form<Profile> schema={schema} onValuesChange={(values) => values.pets} />
+```
+
+Deliberately, there is no compile time typing of individual field paths: schemas are runtime data — often built at runtime by the schema builder itself — so the type system cannot know what fields exist. The generics type the container, not the schema.
 
 ## Server side validation
 

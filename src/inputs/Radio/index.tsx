@@ -78,7 +78,18 @@ export const renderValue: InputRenderValue = (value, schema) => {
 }
 
 const Component: InputComponent = function () {
-  const { id, schema, required, readonly, disabled, options, value = '', handleValidation } = useFieldContext()
+  const {
+    id,
+    labelId,
+    aria,
+    schema,
+    required,
+    readonly,
+    disabled,
+    options,
+    value = '',
+    handleValidation,
+  } = useFieldContext()
 
   const doValidation = useCallback(
     (input: any) => {
@@ -90,7 +101,7 @@ const Component: InputComponent = function () {
   const choices: Array<any> = options?.choices || []
 
   return (
-    <div className='iight-input__radio'>
+    <div className='iight-input__radio' role='radiogroup' aria-labelledby={labelId} {...aria}>
       {choices.map((choice, choiceIndex) => {
         return (
           <div key={choiceIndex}>

@@ -4,6 +4,7 @@ import Fieldset, {
   OnValidityChangeCallback,
   OnValuesChangeCallback,
 } from '@/components/Fieldset'
+import { FieldScopeContext } from '@/context/FormProvider'
 import { FieldMessages } from '@/types/fields'
 import {
   InputCategory,
@@ -20,7 +21,7 @@ import {
 } from '@/types/inputs'
 import { validateSchema } from '@/utils/inputs'
 import { validationSuccess } from '@/utils/validation'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
 export const name: InputName = () => 'Group'
 
@@ -74,6 +75,10 @@ const Component: InputComponent = function () {
   const [tempMessages, setTempMessages] = useState<Record<string, FieldMessages>>({})
   const [tempValidity, setTempValidity] = useState<Record<string, boolean | undefined>>({})
 
+  // Extend the condition scopes with the group's own values
+  const parentScopes = useContext(FieldScopeContext)
+  const scopes = useMemo(() => [...(parentScopes || []), value || {}], [parentScopes, value])
+
   // Mark the group itself invalid when any nested field is invalid
   useEffect(() => {
     const validity = Object.values(tempValidity)
@@ -100,15 +105,17 @@ const Component: InputComponent = function () {
   }, [])
 
   return (
-    <Fieldset
-      schema={options?.fields || []}
-      values={value}
-      messages={tempMessages}
-      validity={tempValidity}
-      onValuesChange={onValuesChange}
-      onMessagesChange={onMessagesChange}
-      onValidityChange={onValidityChange}
-    />
+    <FieldScopeContext.Provider value={scopes}>
+      <Fieldset
+        schema={options?.fields || []}
+        values={value}
+        messages={tempMessages}
+        validity={tempValidity}
+        onValuesChange={onValuesChange}
+        onMessagesChange={onMessagesChange}
+        onValidityChange={onValidityChange}
+      />
+    </FieldScopeContext.Provider>
   )
 }
 

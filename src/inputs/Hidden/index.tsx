@@ -19,7 +19,7 @@ export const description: InputDescription = () => 'An invisible field that carr
 export const category: InputCategory = () => 'Standard'
 
 export const coreFields: InputCoreFields = (defaultFields) => {
-  return defaultFields.filter(({ name }) => name === 'name')
+  return defaultFields.filter(({ name }) => ['name', 'conditions'].includes(name))
 }
 
 export const optionFields: InputOptionFields = () => {

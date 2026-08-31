@@ -4,7 +4,7 @@ import Fieldset, {
   OnValidityChangeCallback,
   OnValuesChangeCallback,
 } from '@/components/Fieldset'
-import { FieldReportContext, FieldStateReport } from '@/context/FormProvider'
+import { FieldReportContext, FieldReportContextValue, FieldScopeContext } from '@/context/FormProvider'
 import i18n from '@/i18n'
 import { FieldMessages, FieldSchema } from '@/types/fields'
 import {
@@ -183,10 +183,17 @@ function MatrixCell({
 }) {
   const parentReport = useContext(FieldReportContext)
 
-  const cellReport = useMemo<FieldStateReport | undefined>(() => {
+  const cellReport = useMemo<FieldReportContextValue | undefined>(() => {
     if (!parentReport) return undefined
-    return (path, patch) => parentReport([rowIndex, columnIndex, ...path], patch)
+    return {
+      report: (path, patch) => parentReport.report([rowIndex, columnIndex, ...path], patch),
+      resolve: (path) => parentReport.resolve([rowIndex, columnIndex, ...path]),
+    }
   }, [parentReport, rowIndex, columnIndex])
+
+  // Extend the condition scopes with the cell's own values
+  const parentScopes = useContext(FieldScopeContext)
+  const scopes = useMemo(() => [...(parentScopes || []), column || {}], [parentScopes, column])
 
   const onValuesChange: OnValuesChangeCallback = useCallback(
     (field, fieldValue) => {
@@ -211,15 +218,17 @@ function MatrixCell({
 
   return (
     <FieldReportContext.Provider value={cellReport}>
-      <Fieldset
-        schema={fields}
-        values={column}
-        messages={messages}
-        validity={validity}
-        onValuesChange={onValuesChange}
-        onMessagesChange={onMessagesChange}
-        onValidityChange={onValidityChange}
-      />
+      <FieldScopeContext.Provider value={scopes}>
+        <Fieldset
+          schema={fields}
+          values={column}
+          messages={messages}
+          validity={validity}
+          onValuesChange={onValuesChange}
+          onMessagesChange={onMessagesChange}
+          onValidityChange={onValidityChange}
+        />
+      </FieldScopeContext.Provider>
     </FieldReportContext.Provider>
   )
 }

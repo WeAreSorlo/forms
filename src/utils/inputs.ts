@@ -11,10 +11,12 @@ import {
   ValidationReport,
   ValidationReportChildren,
 } from '@/types/inputs'
+import { ConditionScopes, evaluateConditions } from '@/utils/conditions'
 import { validationSuccess } from '@/utils/validation'
 
 export interface ValidateValuesOptions {
   environment?: ValidationEnvironment
+  scopes?: ConditionScopes
 }
 
 // Resolve the validator for an environment, falling back to the shared validateValue
@@ -52,20 +54,24 @@ const resolveReportChildren = async (children: ValidationReportChildren): Promis
 }
 
 // Validate a set of values against a schema, letting each input walk its own nested fields
-export function validateValues(
+export function validateValues<Values extends Record<string, any> = Record<string, any>>(
   schema: Array<FieldSchema>,
-  values: Record<string, any>,
+  values: Values,
   inputs: Record<string, Input>,
   options: ValidateValuesOptions = {},
 ): ValidationReport {
   const fields: Record<string, FieldValidationReport> = {}
+  const scopes = options.scopes || [values]
 
   const validateFields: InputValidateFields = (childSchema, childValues) => {
-    return validateValues(childSchema, childValues, inputs, options)
+    return validateValues(childSchema, childValues, inputs, { ...options, scopes: [...scopes, childValues] })
   }
 
   for (const field of schema) {
     const input = inputs?.[field.type]
+
+    // Skip fields hidden by their conditions
+    if (!evaluateConditions(field, scopes)) continue
 
     // Fall back to the schema default when no value is set
     let value = values?.[field.name]
@@ -100,19 +106,24 @@ export function validateValues(
 }
 
 // Validate a set of values on the server, where validators may be asynchronous
-export async function validateServerValues(
+export async function validateServerValues<Values extends Record<string, any> = Record<string, any>>(
   schema: Array<FieldSchema>,
-  values: Record<string, any>,
+  values: Values,
   inputs: Record<string, Input>,
+  options: ValidateValuesOptions = {},
 ): Promise<ValidationReport> {
   const fields: Record<string, FieldValidationReport> = {}
+  const scopes = options.scopes || [values]
 
   const validateFields: InputValidateFields = (childSchema, childValues) => {
-    return validateServerValues(childSchema, childValues, inputs)
+    return validateServerValues(childSchema, childValues, inputs, { ...options, scopes: [...scopes, childValues] })
   }
 
   for (const field of schema) {
     const input = inputs?.[field.type]
+
+    // Skip fields hidden by their conditions
+    if (!evaluateConditions(field, scopes)) continue
 
     // Fall back to the schema default when no value is set
     let value = values?.[field.name]
@@ -142,21 +153,66 @@ export async function validateServerValues(
   }
 }
 
+export interface FlatValidationReport {
+  messages: Record<string, Array<string>>
+  validity: Record<string, boolean | undefined>
+}
+
+// Flatten a nested validation report into path keyed maps matching the form's
+// own messages and validity maps, e.g. 'pets.0.petname'
+export function flattenValidationReport(report: ValidationReport): FlatValidationReport {
+  const flat: FlatValidationReport = { messages: {}, validity: {} }
+
+  const walkReport = (report: ValidationReport, prefix: Array<string | number>) => {
+    for (const [name, fieldReport] of Object.entries(report.fields)) {
+      const path = [...prefix, name]
+      const key = path.join('.')
+
+      if (fieldReport.messages.length >= 1) flat.messages[key] = fieldReport.messages
+      flat.validity[key] = fieldReport.isValid
+
+      if (fieldReport.children !== undefined) walkChildren(fieldReport.children, path)
+    }
+  }
+
+  const walkChildren = (children: ValidationReportChildren, prefix: Array<string | number>) => {
+    if (children instanceof Promise) {
+      throw new Error('The report contains unresolved children')
+    }
+
+    if (Array.isArray(children)) {
+      children.forEach((child, index) => walkChildren(child, [...prefix, index]))
+      return
+    }
+
+    walkReport(children, prefix)
+  }
+
+  walkReport(report, [])
+
+  return flat
+}
+
 // Reduce a set of values to only the fields defined by a schema, letting each
 // input pick its own nested values
-export function pickValues(
+export function pickValues<Values extends Record<string, any> = Record<string, any>>(
   schema: Array<FieldSchema>,
   values: Record<string, any>,
   inputs: Record<string, Input>,
-): Record<string, any> {
+  options: { scopes?: ConditionScopes } = {},
+): Partial<Values> {
   const picked: Record<string, any> = {}
+  const scopes = options.scopes || [values]
 
   const pickFields: InputPickFields = (childSchema, childValues) => {
-    return pickValues(childSchema, childValues, inputs)
+    return pickValues(childSchema, childValues, inputs, { scopes: [...scopes, childValues] })
   }
 
   for (const field of schema) {
     const input = inputs?.[field.type]
+
+    // Skip fields hidden by their conditions
+    if (!evaluateConditions(field, scopes)) continue
 
     // Fall back to the schema default when no value is set
     let value = values?.[field.name]
@@ -168,7 +224,7 @@ export function pickValues(
     picked[field.name] = pickedValue
   }
 
-  return picked
+  return picked as Partial<Values>
 }
 
 // Strip unknown properties from a field schema
@@ -255,6 +311,59 @@ export const baseInputSchemaFields = (): Array<FieldSchema> => {
       options: {
         min: 1,
         max: 100,
+      },
+    },
+    {
+      name: 'conditions',
+      label: 'Conditional logic',
+      type: 'repeater',
+      required: false,
+      instructions: 'Show this field when any group below has all of its rules matching.',
+      options: {
+        fields: [
+          {
+            name: 'rules',
+            label: 'Rules',
+            type: 'repeater',
+            options: {
+              minimum: 1,
+              fields: [
+                {
+                  name: 'field',
+                  label: 'Field',
+                  type: 'text',
+                  required: true,
+                  width: 33.333,
+                },
+                {
+                  name: 'operator',
+                  label: 'Operator',
+                  type: 'select',
+                  required: true,
+                  width: 33.333,
+                  options: {
+                    choices: [
+                      { value: 'equals', label: 'Equals' },
+                      { value: 'notEquals', label: 'Not equals' },
+                      { value: 'contains', label: 'Contains' },
+                      { value: 'greaterThan', label: 'Greater than' },
+                      { value: 'lessThan', label: 'Less than' },
+                      { value: 'empty', label: 'Is empty' },
+                      { value: 'notEmpty', label: 'Is not empty' },
+                    ],
+                  },
+                },
+                {
+                  name: 'value',
+                  label: 'Value',
+                  type: 'text',
+                  required: false,
+                  width: 33.333,
+                },
+              ],
+            },
+          },
+        ],
       },
     },
   ]

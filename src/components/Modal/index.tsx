@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useId, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
 export interface ModalProps {
@@ -13,6 +13,7 @@ export interface ModalProps {
 
 export default function Modal({ open, header, footer, closeButton, onOpen, onClose, children }: ModalProps) {
   const { t } = useTranslation()
+  const headerId = useId()
   const dialogRef = useRef<null | HTMLDialogElement>(null)
 
   const handleClose = useCallback(() => {
@@ -70,9 +71,9 @@ export default function Modal({ open, header, footer, closeButton, onOpen, onClo
   }, [dialogRef, onClose])
 
   return (
-    <dialog ref={dialogRef} className='iight-modal'>
+    <dialog ref={dialogRef} className='iight-modal' aria-labelledby={header ? headerId : undefined}>
       {header && (
-        <div className='iight-modal__header'>
+        <div className='iight-modal__header' id={headerId}>
           {header}
           <CloseButton />
         </div>

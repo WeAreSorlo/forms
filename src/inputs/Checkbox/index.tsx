@@ -81,7 +81,7 @@ export const renderValue: InputRenderValue = (value, schema) => {
 }
 
 const Component: InputComponent = function () {
-  const { id, schema, readonly, disabled, options, value, handleValidation } = useFieldContext()
+  const { id, labelId, aria, schema, readonly, disabled, options, value, handleValidation } = useFieldContext()
 
   const selected: Array<any> = Array.isArray(value) ? value : []
 
@@ -102,7 +102,7 @@ const Component: InputComponent = function () {
   const choices: Array<any> = options?.choices || []
 
   return (
-    <div className='iight-input__checkbox'>
+    <div className='iight-input__checkbox' role='group' aria-labelledby={labelId} {...aria}>
       {choices.map((choice, choiceIndex) => {
         return (
           <div key={choiceIndex}>

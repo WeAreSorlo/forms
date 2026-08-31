@@ -1,4 +1,9 @@
-import { FieldReportContext, FieldStateReport, FormStaticContext } from '@/context/FormProvider'
+import {
+  FieldInjectionContext,
+  FieldReportContext,
+  FieldReportContextValue,
+  FormStaticContext,
+} from '@/context/FormProvider'
 import { FieldMessages } from '@/types/fields'
 import { InputSchema, InputValidateValue, InputValidationResponse } from '@/types/inputs'
 import { validateSchema } from '@/utils/inputs'
@@ -7,6 +12,11 @@ import { SetStateAction, createContext, useCallback, useContext, useEffect, useI
 
 interface Context {
   id: string
+  labelId: string
+  aria: {
+    'aria-describedby'?: string
+    'aria-invalid'?: boolean
+  }
   schema: InputSchema
   name: InputSchema['name']
   label: InputSchema['label']
@@ -85,6 +95,13 @@ export default function Field({
   // Report state changes to the form's path keyed maps
   const parentReport = useContext(FieldReportContext)
 
+  // State injected from outside, e.g. a server validation report, shown for
+  // this field until it next reports its own state
+  const injection = useContext(FieldInjectionContext)
+  const injectionKey = useMemo(() => {
+    return (parentReport ? parentReport.resolve([name]) : [name]).join('.')
+  }, [parentReport, name])
+
   const setValue = useCallback(
     (newValue: SetStateAction<Context['value']>) => {
       if (typeof newValue === 'function') newValue = newValue(value)
@@ -100,10 +117,11 @@ export default function Field({
       if (typeof newMessages === 'function') newMessages = newMessages(messages)
       if (!isEqual(messages, newMessages)) {
         if (onMessagesChange) onMessagesChange(newMessages)
-        if (parentReport) parentReport([name], { messages: newMessages })
+        if (parentReport) parentReport.report([name], { messages: newMessages })
+        if (injection) injection.clear(injectionKey)
       }
     },
-    [messages, onMessagesChange, parentReport, name],
+    [messages, onMessagesChange, parentReport, name, injection, injectionKey],
   )
 
   const setValid = useCallback(
@@ -111,10 +129,11 @@ export default function Field({
       if (typeof newValid === 'function') newValid = newValid(valid)
       if (!isEqual(valid, newValid)) {
         if (onValidityChange) onValidityChange(newValid)
-        if (parentReport) parentReport([name], { valid: newValid })
+        if (parentReport) parentReport.report([name], { valid: newValid })
+        if (injection) injection.clear(injectionKey)
       }
     },
-    [valid, onValidityChange, parentReport, name],
+    [valid, onValidityChange, parentReport, name, injection, injectionKey],
   )
 
   const handleValidation = useCallback(
@@ -146,18 +165,43 @@ export default function Field({
   // unmounts or its path changes
   useEffect(() => {
     if (!parentReport) return
-    return () => parentReport([name], undefined)
+    return () => parentReport.report([name], undefined)
   }, [parentReport, name])
 
-  // Nest children's reports under this field's name
-  const childReport = useMemo<FieldStateReport | undefined>(() => {
+  // Nest children's reports and path resolution under this field's name
+  const childReport = useMemo<FieldReportContextValue | undefined>(() => {
     if (!parentReport) return undefined
-    return (path, patch) => parentReport([name, ...path], patch)
+    return {
+      report: (path, patch) => parentReport.report([name, ...path], patch),
+      resolve: (path) => parentReport.resolve([name, ...path]),
+    }
   }, [parentReport, name])
+
+  // Injected state wins until the field reports for itself
+  const displayMessages = injection && injectionKey in injection.messages ? injection.messages[injectionKey] : messages
+  const displayValid = injection && injectionKey in injection.validity ? injection.validity[injectionKey] : valid
+
+  // Accessibility wiring for the input itself
+  const labelId = `${id}-label`
+  const messagesId = `${id}-messages`
+  const instructionsId = `${id}-instructions`
+
+  const aria = useMemo(() => {
+    const describedBy = [displayMessages.length > 0 ? messagesId : null, instructions ? instructionsId : null]
+      .filter(Boolean)
+      .join(' ')
+
+    return {
+      'aria-describedby': describedBy || undefined,
+      'aria-invalid': displayValid === false || undefined,
+    }
+  }, [displayMessages, messagesId, instructions, instructionsId, displayValid])
 
   const contextValue = useMemo(() => {
     return {
       id,
+      labelId,
+      aria,
       schema,
       name,
       label,
@@ -179,10 +223,10 @@ export default function Field({
 
       handleValidation,
     }
-  }, [id, schema, value, messages, valid, setValue, setMessages, setValid, handleValidation])
+  }, [id, labelId, aria, schema, value, messages, valid, setValue, setMessages, setValid, handleValidation])
 
-  const isValid = valid === true
-  const isInvalid = valid === false
+  const isValid = displayValid === true
+  const isInvalid = displayValid === false
 
   return (
     <FieldContext.Provider value={contextValue}>
@@ -191,16 +235,20 @@ export default function Field({
           <div className={`iight-field${isValid ? ' iight-valid' : ''}${isInvalid ? ' iight-invalid' : ''}`}>
             <div className='iight-meta'>
               {label && (
-                <label className='iight-label' htmlFor={id}>
+                <label className='iight-label' id={labelId} htmlFor={id}>
                   {label}
-                  {required && <span>*</span>}
+                  {required && <span aria-hidden='true'>*</span>}
                 </label>
               )}
-              {instructions && <div className='iight-instructions'>{instructions}</div>}
+              {instructions && (
+                <div className='iight-instructions' id={instructionsId}>
+                  {instructions}
+                </div>
+              )}
             </div>
-            {messages.length > 0 && (
-              <ul className='iight-messages'>
-                {messages.map((message, messageIndex) => {
+            {displayMessages.length > 0 && (
+              <ul className='iight-messages' id={messagesId} role='alert'>
+                {displayMessages.map((message, messageIndex) => {
                   return <li key={messageIndex}>{message}</li>
                 })}
               </ul>
