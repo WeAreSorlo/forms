@@ -1,7 +1,8 @@
 /*
- * Scaffolding styles: layout and structure only, with no visual opinions.
- * Spacing reads from theme tokens but falls back to sensible defaults, so
- * this file works standalone. Visual styles live in base.scss and themes.
+ * Scaffolding styles: layout and structure only, leaving the browser's
+ * default styles intact. Spacing reads from theme tokens but falls back to
+ * sensible defaults, so this file works standalone. Visual styles live in
+ * base.scss and themes.
  */
 
 .iight-form {
@@ -37,21 +38,11 @@
 
 .iight-messages {
   margin: 0;
-  padding-left: 1.25em;
 }
 
 .iight-input {
   width: 100%;
   display: block;
-}
-
-.iight-button {
-  cursor: pointer;
-  font: inherit;
-
-  &:disabled {
-    cursor: not-allowed;
-  }
 }
 
 /* Choice inputs sit inline with their labels */
@@ -77,7 +68,6 @@
 
 .iight-input__color .iight-input {
   width: 4rem;
-  padding: 0;
 }
 
 .iight-input__range {

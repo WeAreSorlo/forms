@@ -132,13 +132,13 @@ import 'iight/styles/base.scss' // the skin: maps --iight-* tokens onto class na
 import 'iight/styles/themes/default.scss' // a theme: defines the tokens
 ```
 
-`layout.scss` is structural (flex grids, widths, table layout) and works standalone. `base.scss` maps every `--iight-*` token onto the library's class names *without fallbacks*, so importing it changes nothing until a theme defines the tokens — the token contract lives there. Themes define the tokens under a scoping class (`.iight-theme-default`, `.iight-theme-dark`), which you attach via the `className` prop or any ancestor element:
+`layout.scss` is structural (flex grids, widths, table layout) and leaves the browser's default styles intact, so an unthemed form looks like a native form that lays out correctly. `base.scss` maps every `--iight-*` token onto the library's class names, with every rule scoped to an active theme — any class starting with `iight-theme-` — so importing it without a theme changes nothing at all; the token contract lives there. Themes define the tokens under their scoping class (`.iight-theme-default`, `.iight-theme-dark`), which you attach via the `className` prop or any ancestor element:
 
 ```tsx
 <Form className='iight-theme-default' schema={schema} />
 ```
 
-A custom theme is a copy of `themes/default.scss` with a new class name and different token values — no selectors, just tokens. Because themes are class-scoped, different forms on one page can use different themes, and single tokens can be overridden inline or in state scopes (for example `.iight-invalid` remaps `--iight-messages-color` to `--iight-color-error`).
+A custom theme is a copy of `themes/default.scss` with a new class name (keeping the `iight-theme-` prefix so the skin activates) and different token values — no selectors, just tokens, so plain CSS works too. Because themes are class-scoped, different forms on one page can use different themes, and single tokens can be overridden inline or in state scopes (for example `.iight-invalid` remaps `--iight-messages-color` to `--iight-color-error`).
 
 ## i18n
 
