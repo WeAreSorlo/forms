@@ -3,9 +3,9 @@ import Form from '@/components/Form'
 export { default as Field, useFieldContext } from '@/components/Field'
 export { default as Fieldset } from '@/components/Fieldset'
 export { default as Modal } from '@/components/Modal'
-export { FormContext, useFormContext } from '@/context/FormProvider'
+export { FormContext, FormStaticContext, useFormContext, useFormStaticContext } from '@/context/FormProvider'
 export * as inputs from '@/inputs'
-export { baseInputSchemaFields, validateInputSchemaFields, validateSchema } from '@/utils/inputs'
+export { baseInputSchemaFields, validateInputSchemaFields, validateSchema, validateValues } from '@/utils/inputs'
 export { isEmail, isEmptyValue, validationError, validationReset, validationSuccess } from '@/utils/validation'
 
 export type { FieldProps, OnValueChangeCallback } from '@/components/Field'
@@ -15,11 +15,12 @@ export type {
   OnValidityChangeCallback,
   OnValuesChangeCallback,
 } from '@/components/Fieldset'
-export type { FormProps } from '@/components/Form'
+export type { FormHandle, FormProps } from '@/components/Form'
 export type { ModalProps } from '@/components/Modal'
-export type { Context } from '@/context/FormProvider'
+export type { Context, StaticContext } from '@/context/FormProvider'
 export type { FieldMessages, FieldSchema } from '@/types/fields'
 export type {
+  FieldValidationReport,
   Input,
   InputCategory,
   InputComponent,
@@ -30,8 +31,12 @@ export type {
   InputOptionFields,
   InputRenderValue,
   InputSchema,
+  InputValidateChildren,
+  InputValidateFields,
   InputValidateValue,
   InputValidationResponse,
+  ValidationReport,
+  ValidationReportChildren,
 } from '@/types/inputs'
 export type {
   ValidationResponse,

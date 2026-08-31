@@ -14,6 +14,7 @@ import {
   InputName,
   InputOptionFields,
   InputRenderValue,
+  InputValidateChildren,
   InputValidateValue,
 } from '@/types/inputs'
 import { validateSchema } from '@/utils/inputs'
@@ -43,6 +44,11 @@ export const optionFields: InputOptionFields = () => {
 export const validateValue: InputValidateValue = (value, schema) => {
   schema = validateSchema(schema)
   return validationSuccess(value)
+}
+
+// Validate the nested fields against the group's value
+export const validateChildren: InputValidateChildren = (value, schema, validateFields) => {
+  return validateFields(schema.options?.fields || [], value || {})
 }
 
 export const formatValue: InputFormatValue = (value, schema) => {

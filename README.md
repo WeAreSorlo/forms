@@ -1,0 +1,113 @@
+# iight
+
+An advanced, schema-driven form builder library for React. Forms are described as plain data, rendered from a set of pluggable inputs, and can include infinitely repeatable and nestable groups of fields. A built-in schema builder input lets end users construct form schemas from a UI — including the options of each field, which are themselves rendered as an iight form.
+
+> **Status:** work in progress, not yet published to npm.
+
+## Getting started
+
+```sh
+npm install
+npm run dev        # start the demo at the vite dev server address
+npm run test       # run the vitest suite
+npm run typecheck  # strict TypeScript check
+npm run build      # build dist/ with tsup
+```
+
+## Usage
+
+```tsx
+import Form, { FormHandle, ValidationReport } from 'iight'
+import { useRef, useState } from 'react'
+
+const schema = [
+  { type: 'text', name: 'first_name', label: 'First name', required: true, width: 50 },
+  { type: 'text', name: 'last_name', label: 'Last name', required: true, width: 50 },
+  { type: 'email', name: 'email', label: 'Your email', required: true },
+  {
+    type: 'repeater',
+    name: 'pets',
+    label: 'Pets',
+    options: {
+      minimum: 1,
+      fields: [{ type: 'text', name: 'petname', label: 'Pet name', required: true }],
+    },
+  },
+]
+
+export default function Example() {
+  const formRef = useRef<FormHandle>(null)
+  const [values, setValues] = useState<Record<string, any>>({})
+
+  const onSubmit = () => {
+    const report: ValidationReport = formRef.current!.validate()
+    if (report.isValid) {
+      // send values somewhere
+    }
+  }
+
+  return (
+    <>
+      <Form ref={formRef} schema={schema} values={values} onValuesChange={setValues} />
+      <button onClick={onSubmit}>Submit</button>
+    </>
+  )
+}
+```
+
+`values`, `messages` and `validity` props are optional; the form manages them internally and reports changes through `onValuesChange`, `onMessagesChange` and `onValidityChange`. Passing a prop makes that piece controlled.
+
+## Field schema
+
+Every field supports `name` (required), `label`, `required`, `instructions`, `defaultValue`, `readonly`, `disabled`, `width` (percentage) and `options`. The `type` selects the input, and `options` carries input-specific settings:
+
+| Type            | Options                                                                     |
+| --------------- | --------------------------------------------------------------------------- |
+| `text`          | `placeholder`, `minLength`, `maxLength`                                      |
+| `textarea`      | `placeholder`, `rows`, `minLength`, `maxLength`                              |
+| `number`        | `placeholder`, `min`, `max`                                                  |
+| `email`         | `placeholder`, `multiple`, `minLength`, `maxLength`                          |
+| `boolean`       | `message` (the checkbox label)                                               |
+| `select`        | `choices` (`{ value, label }` items), `placeholder`, `multiple`              |
+| `group`         | `fields` (nested field schemas)                                              |
+| `repeater`      | `fields`, `minimum`, `maximum`, `direction` (`y` vertical / `x` horizontal)  |
+| `matrix`        | `fields`, `minimumRows`, `maximumRows`, `minimumColumns`, `maximumColumns`   |
+| `schemabuilder` | none — its value is an array of field schemas                                |
+
+Groups nest their values under the group's name, repeaters produce an array of objects, and matrices an array of rows of objects. All three can be nested inside each other without limit.
+
+## Validation
+
+Inputs validate on change. Calling `validate()` on the form ref validates everything at once — untouched fields included — displays the messages, and returns a `ValidationReport` with a nested breakdown per field. The same walk is available as a pure function, useful on a server:
+
+```ts
+import { inputs, validateValues } from 'iight'
+
+const report = validateValues(schema, values, inputs)
+```
+
+Container fields aggregate: a group, repeater or matrix is marked invalid while any nested field is invalid, and repeaters/matrices also validate their own item, row and column bounds.
+
+## Custom inputs
+
+An input is a module implementing the `Input` interface: a default React component plus optional metadata (`name`, `description`, `category`), `validateValue`, `formatValue`, `renderValue`, and `coreFields`/`optionFields` describing how the schema builder should configure it. The component reads everything it needs from `useFieldContext()`:
+
+```tsx
+import { useFieldContext, validationSuccess } from 'iight'
+
+export const name = () => 'Shout'
+export const validateValue = (value: any) => validationSuccess(value)
+
+export default function Component() {
+  const { id, value = '', handleValidation } = useFieldContext()
+  return <input id={id} value={value} onChange={(e) => handleValidation(validateValue(e.target.value.toUpperCase()))} />
+}
+```
+
+Register it per form: `<Form inputs={{ shout: shoutModule }} ... />`. Custom types are then available to schemas and appear in the schema builder.
+
+A custom input that nests other fields can also export `validateChildren(value, schema, validateFields)` — this is how `validateValues` and `validate()` walk into it, and it is exactly what the core group, repeater and matrix inputs do; nothing about containers is special-cased.
+
+## Styling and i18n
+
+Import the stylesheets from `iight/styles/*.scss` (see `public/index.tsx` for an example) and theme via the `--iight-*` CSS custom properties defined in `variables.scss`. All user-facing strings run through an isolated i18next instance (`src/i18n.ts`) with translations in `src/translations`, so the host application's own i18next setup is never touched.

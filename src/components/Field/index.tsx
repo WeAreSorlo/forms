@@ -1,8 +1,9 @@
+import { FormStaticContext } from '@/context/FormProvider'
 import { FieldMessages } from '@/types/fields'
-import { InputSchema, InputValidationResponse } from '@/types/inputs'
+import { InputSchema, InputValidateValue, InputValidationResponse } from '@/types/inputs'
 import { validateSchema } from '@/utils/inputs'
 import { isEqual } from 'lodash'
-import { SetStateAction, createContext, useCallback, useContext, useId, useMemo } from 'react'
+import { SetStateAction, createContext, useCallback, useContext, useEffect, useId, useMemo } from 'react'
 
 interface Context {
   id: string
@@ -49,6 +50,7 @@ export interface FieldProps extends InputSchema {
   value?: any
   messages?: FieldMessages
   valid?: boolean
+  validate?: InputValidateValue
   onValueChange: OnValueChangeCallback
   onMessagesChange: OnMessagesChangeCallback
   onValidityChange: OnValidityChangeCallback
@@ -61,6 +63,7 @@ export default function Field({
   value,
   messages = defaultMessages,
   valid,
+  validate,
   onValueChange,
   onMessagesChange,
   onValidityChange,
@@ -117,6 +120,17 @@ export default function Field({
     },
     [setValue, setMessages, setValid],
   )
+
+  // Re-validate whenever a form wide validation pass is requested, and eagerly
+  // on any change after the first pass
+  const staticContext = useContext(FormStaticContext)
+  const validationCounter = staticContext?.validationCounter || 0
+
+  useEffect(() => {
+    if (validationCounter >= 1 && validate) {
+      handleValidation(validate(value, schema))
+    }
+  }, [validationCounter, validate, value, schema, handleValidation])
 
   const contextValue = useMemo(() => {
     return {

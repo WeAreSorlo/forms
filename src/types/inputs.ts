@@ -15,6 +15,19 @@ export interface InputSchema {
 
 export type InputValidationResponse = ValidationResponse
 
+export interface FieldValidationReport {
+  isValid: boolean
+  messages: Array<string>
+  children?: ValidationReportChildren
+}
+
+export type ValidationReportChildren = ValidationReport | Array<ValidationReportChildren>
+
+export interface ValidationReport {
+  isValid: boolean
+  fields: Record<string, FieldValidationReport>
+}
+
 export type InputComponent = React.ComponentType<any>
 
 export type InputName = () => string
@@ -28,6 +41,13 @@ export type InputValidateValue = (value: any, schema: InputSchema) => InputValid
 export type InputFormatValue = (value: any, schema: InputSchema) => string | null
 export type InputRenderValue = (value: any, schema: InputSchema) => React.ReactNode
 
+export type InputValidateFields = (schema: Array<FieldSchema>, values: Record<string, any>) => ValidationReport
+export type InputValidateChildren = (
+  value: any,
+  schema: InputSchema,
+  validateFields: InputValidateFields,
+) => ValidationReportChildren
+
 export interface Input {
   default: InputComponent
   name?: InputName
@@ -37,6 +57,7 @@ export interface Input {
   coreFields?: InputCoreFields
   optionFields?: InputOptionFields
   validateValue?: InputValidateValue
+  validateChildren?: InputValidateChildren
   formatValue?: InputFormatValue
   renderValue?: InputRenderValue
 }

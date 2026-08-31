@@ -3,9 +3,9 @@ import Field, {
   OnValidityChangeCallback as OnFieldValidityChangeCallback,
   OnValueChangeCallback as OnFieldValueChangeCallback,
 } from '@/components/Field'
-import { useFormContext } from '@/context/FormProvider'
+import { useFormStaticContext } from '@/context/FormProvider'
 import { FieldMessages, FieldSchema } from '@/types/fields'
-import { InputComponent } from '@/types/inputs'
+import { InputComponent, InputValidateValue } from '@/types/inputs'
 import { memo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -32,7 +32,7 @@ export default function Fieldset({
   onMessagesChange = () => {},
   onValidityChange = () => {},
 }: FieldsetProps) {
-  const { inputs } = useFormContext()
+  const { inputs } = useFormStaticContext()
 
   return (
     <div className='iight-fieldset'>
@@ -42,6 +42,7 @@ export default function Fieldset({
             key={fieldSchema.name ?? fieldIndex}
             schema={fieldSchema}
             component={inputs?.[fieldSchema.type]?.default}
+            validate={inputs?.[fieldSchema.type]?.validateValue}
             value={values[fieldSchema.name]}
             messages={messages[fieldSchema.name]}
             valid={validity[fieldSchema.name]}
@@ -59,6 +60,7 @@ export default function Fieldset({
 const FieldsetItem = memo(function FieldsetItem({
   schema,
   component: Component,
+  validate,
   value,
   messages,
   valid,
@@ -68,6 +70,7 @@ const FieldsetItem = memo(function FieldsetItem({
 }: {
   schema: FieldSchema
   component?: InputComponent
+  validate?: InputValidateValue
   value?: any
   messages?: FieldMessages
   valid?: boolean
@@ -105,6 +108,7 @@ const FieldsetItem = memo(function FieldsetItem({
       value={value}
       messages={messages}
       valid={valid}
+      validate={validate}
       onValueChange={onValueChangeHandler}
       onMessagesChange={onMessagesChangeHandler}
       onValidityChange={onValidityChangeHandler}

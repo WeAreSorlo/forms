@@ -1,5 +1,7 @@
 import { useFieldContext } from '@/components/Field'
 import Fieldset from '@/components/Fieldset'
+import i18n from '@/i18n'
+import { FieldMessages } from '@/types/fields'
 import {
   InputCategory,
   InputComponent,
@@ -8,11 +10,12 @@ import {
   InputName,
   InputOptionFields,
   InputRenderValue,
+  InputValidateChildren,
   InputValidateValue,
 } from '@/types/inputs'
 import { validateSchema } from '@/utils/inputs'
-import { validationSuccess } from '@/utils/validation'
-import { useCallback, useMemo } from 'react'
+import { isEmptyValue, validationError, validationSuccess } from '@/utils/validation'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 type Column = Record<string, any>
@@ -81,7 +84,54 @@ export const optionFields: InputOptionFields = () => {
 
 export const validateValue: InputValidateValue = (value, schema) => {
   schema = validateSchema(schema)
+
+  // Return early if the value is empty and the field is optional
+  if (!schema.required && isEmptyValue(value)) {
+    return validationSuccess(value)
+  }
+
+  // Check for an empty value
+  if (schema.required && isEmptyValue(value)) {
+    return validationError(value, i18n.t('validation.required'))
+  }
+
+  if (!Array.isArray(value) || value.some((row) => !Array.isArray(row))) {
+    return validationError(value, i18n.t('validation.invalid'))
+  }
+
+  // Validate the minimum and maximum number of rows
+  const minRows = schema.options?.minimumRows
+  if (typeof minRows === 'number' && value.length < minRows) {
+    return validationError(value, i18n.t('validation.minRows', { min: minRows }))
+  }
+
+  const maxRows = schema.options?.maximumRows
+  if (typeof maxRows === 'number' && value.length > maxRows) {
+    return validationError(value, i18n.t('validation.maxRows', { max: maxRows }))
+  }
+
+  // Validate the minimum and maximum number of columns
+  const columns = value[0]?.length || 0
+
+  const minColumns = schema.options?.minimumColumns
+  if (typeof minColumns === 'number' && value.length >= 1 && columns < minColumns) {
+    return validationError(value, i18n.t('validation.minColumns', { min: minColumns }))
+  }
+
+  const maxColumns = schema.options?.maximumColumns
+  if (typeof maxColumns === 'number' && columns > maxColumns) {
+    return validationError(value, i18n.t('validation.maxColumns', { max: maxColumns }))
+  }
+
   return validationSuccess(value)
+}
+
+// Validate the nested fields against every column of every row
+export const validateChildren: InputValidateChildren = (value, schema, validateFields) => {
+  const rows: Matrix = Array.isArray(value) ? value : []
+  return rows.map((row) => {
+    return (Array.isArray(row) ? row : []).map((column) => validateFields(schema.options?.fields || [], column || {}))
+  })
 }
 
 export const formatValue: InputFormatValue = (value, schema) => {
@@ -96,7 +146,10 @@ export const renderValue: InputRenderValue = (value, schema) => {
 
 const Component: InputComponent = function () {
   const { t } = useTranslation()
-  const { options, value, setValue } = useFieldContext()
+  const { schema, options, value, setValue, setMessages, setValid } = useFieldContext()
+
+  const [cellMessages, setCellMessages] = useState<Record<string, Record<string, FieldMessages>>>({})
+  const [cellValidity, setCellValidity] = useState<Record<string, Record<string, boolean | undefined>>>({})
 
   const fields = useMemo(() => {
     return options?.fields || []
@@ -235,6 +288,10 @@ const Component: InputComponent = function () {
 
   const removeRow = useCallback(
     (index: number) => {
+      // Positions shift when a row is removed, so reset the cell feedback
+      setCellMessages({})
+      setCellValidity({})
+
       setValue((oldValue: Matrix) => {
         // Ensure the old value was an array
         if (!Array.isArray(oldValue)) {
@@ -249,6 +306,10 @@ const Component: InputComponent = function () {
 
   const removeColumn = useCallback(
     (index: number) => {
+      // Positions shift when a column is removed, so reset the cell feedback
+      setCellMessages({})
+      setCellValidity({})
+
       setValue((oldValue: Matrix) => {
         // Ensure the old value was an array
         if (!Array.isArray(oldValue)) {
@@ -284,6 +345,43 @@ const Component: InputComponent = function () {
     },
     [setValue],
   )
+
+  const setColumnMessages = useCallback((row: number, column: number, field: string, messages: FieldMessages) => {
+    setCellMessages((old) => {
+      const key = `${row}-${column}`
+      return { ...old, [key]: { ...old[key], [field]: messages } }
+    })
+  }, [])
+
+  const setColumnValidity = useCallback((row: number, column: number, field: string, valid: boolean | undefined) => {
+    setCellValidity((old) => {
+      const key = `${row}-${column}`
+      return { ...old, [key]: { ...old[key], [field]: valid } }
+    })
+  }, [])
+
+  // Seed the minimum number of rows when there is no value yet
+  useEffect(() => {
+    if (value === undefined && minRows >= 1) {
+      setValue(validateMatrix([]))
+    }
+  }, [value, minRows, setValue, validateMatrix])
+
+  // Validate the matrix bounds and aggregate the validity of every cell
+  const validation = useMemo(() => (value !== undefined ? validateValue(value, schema) : null), [value, schema])
+
+  useEffect(() => {
+    if (!validation) return
+
+    setMessages(validation.messages)
+
+    const cells = Object.values(cellValidity).flatMap((cell) => Object.values(cell))
+    if (validation.isValid === false || cells.some((valid) => valid === false)) {
+      setValid(false)
+    } else if (validation.isValid === true) {
+      setValid(true)
+    }
+  }, [validation, cellValidity, setMessages, setValid])
 
   return (
     <div className='iight-input__matrix'>
@@ -355,8 +453,16 @@ const Component: InputComponent = function () {
                       <Fieldset
                         schema={fields}
                         values={column}
+                        messages={cellMessages[`${rowIndex}-${columnIndex}`]}
+                        validity={cellValidity[`${rowIndex}-${columnIndex}`]}
                         onValuesChange={(columnFieldName, columnFieldValue) => {
                           setColumnValue(rowIndex, columnIndex, columnFieldName, columnFieldValue)
+                        }}
+                        onMessagesChange={(columnFieldName, columnFieldMessages) => {
+                          setColumnMessages(rowIndex, columnIndex, columnFieldName, columnFieldMessages)
+                        }}
+                        onValidityChange={(columnFieldName, columnFieldValidity) => {
+                          setColumnValidity(rowIndex, columnIndex, columnFieldName, columnFieldValidity)
                         }}
                       />
                     </td>

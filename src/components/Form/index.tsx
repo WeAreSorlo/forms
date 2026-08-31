@@ -3,12 +3,17 @@ import Fieldset, {
   OnValidityChangeCallback,
   OnValuesChangeCallback,
 } from '@/components/Fieldset'
-import { Context, FormContext } from '@/context/FormProvider'
+import { Context, FormContext, FormStaticContext } from '@/context/FormProvider'
 import i18n from '@/i18n'
 import * as coreInputs from '@/inputs'
-import { Input } from '@/types/inputs'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Input, ValidationReport } from '@/types/inputs'
+import { validateValues } from '@/utils/inputs'
+import { useCallback, useEffect, useImperativeHandle, useMemo, useState } from 'react'
 import { I18nextProvider } from 'react-i18next'
+
+export interface FormHandle {
+  validate: () => ValidationReport
+}
 
 export interface FormProps {
   schema: Context['schema']
@@ -19,6 +24,7 @@ export interface FormProps {
   onValuesChange?: (values: Context['values']) => void
   onMessagesChange?: (messages: Context['messages']) => void
   onValidityChange?: (validity: Context['validity']) => void
+  ref?: React.Ref<FormHandle>
 }
 
 export default function Form({
@@ -30,11 +36,13 @@ export default function Form({
   onValuesChange,
   onMessagesChange,
   onValidityChange,
+  ref,
 }: FormProps) {
   const [schema, setSchema] = useState<Context['schema']>(defaultSchema || [])
   const [values, setValues] = useState<Context['values']>(defaultValues || {})
   const [messages, setMessages] = useState<Context['messages']>(defaultMessages || {})
   const [validity, setValidity] = useState<Context['validity']>(defaultValidity || {})
+  const [validationCounter, setValidationCounter] = useState(0)
 
   // Sync props with local state, keeping the local state when a prop is not controlled
   useEffect(() => {
@@ -110,6 +118,15 @@ export default function Form({
     if (onValidityChange) onValidityChange(validity)
   }, [validity, onValidityChange])
 
+  // Validate the current values against the schema, and ask every rendered
+  // field to re-run its own validation so all messages are displayed
+  const validate = useCallback(() => {
+    setValidationCounter((old) => old + 1)
+    return validateValues(schema, values, mergedInputs)
+  }, [schema, values, mergedInputs])
+
+  useImperativeHandle(ref, () => ({ validate }), [validate])
+
   const contextValue = useMemo(() => {
     return {
       schema,
@@ -126,21 +143,30 @@ export default function Form({
     }
   }, [schema, values, messages, validity, mergedInputs])
 
+  const staticContextValue = useMemo(() => {
+    return {
+      inputs: mergedInputs,
+      validationCounter,
+    }
+  }, [mergedInputs, validationCounter])
+
   return (
     <I18nextProvider i18n={i18n}>
       <FormContext.Provider value={contextValue}>
-        {/* Prevent implicit submissions from reloading the page */}
-        <form className='iight-form' onSubmit={(event) => event.preventDefault()}>
-          <Fieldset
-            schema={schema}
-            values={values}
-            messages={messages}
-            validity={validity}
-            onValuesChange={onFieldsetValuesChange}
-            onMessagesChange={onFieldsetMessagesChange}
-            onValidityChange={onFieldsetValidityChange}
-          />
-        </form>
+        <FormStaticContext.Provider value={staticContextValue}>
+          {/* Prevent implicit submissions from reloading the page */}
+          <form className='iight-form' onSubmit={(event) => event.preventDefault()}>
+            <Fieldset
+              schema={schema}
+              values={values}
+              messages={messages}
+              validity={validity}
+              onValuesChange={onFieldsetValuesChange}
+              onMessagesChange={onFieldsetMessagesChange}
+              onValidityChange={onFieldsetValidityChange}
+            />
+          </form>
+        </FormStaticContext.Provider>
       </FormContext.Provider>
     </I18nextProvider>
   )

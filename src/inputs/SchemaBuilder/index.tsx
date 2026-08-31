@@ -5,7 +5,7 @@ import Fieldset, {
   OnValuesChangeCallback,
 } from '@/components/Fieldset'
 import Modal from '@/components/Modal'
-import { useFormContext } from '@/context/FormProvider'
+import { useFormStaticContext } from '@/context/FormProvider'
 import i18n from '@/i18n'
 import { FieldMessages, FieldSchema } from '@/types/fields'
 import {
@@ -19,7 +19,7 @@ import {
   InputRenderValue,
   InputValidateValue,
 } from '@/types/inputs'
-import { validateInputSchemaFields, validateSchema } from '@/utils/inputs'
+import { validateInputSchemaFields, validateSchema, validateValues } from '@/utils/inputs'
 import { validationError, validationSuccess } from '@/utils/validation'
 import { Dispatch, Fragment, useCallback, useEffect, useId, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -55,7 +55,7 @@ export const renderValue: InputRenderValue = (value, schema) => {
 }
 
 const Component: InputComponent = function () {
-  const { inputs } = useFormContext()
+  const { inputs } = useFormStaticContext()
   const { t } = useTranslation()
   const { value = [], setValue } = useFieldContext()
 
@@ -79,7 +79,13 @@ const Component: InputComponent = function () {
                 <div style={{ width: valueSchema.width ? `${valueSchema.width}%` : '100%' }}>
                   {!isValidType && <div>{t('ui.invalidFieldType')}</div>}
                   {isValidType && (
-                    <EditValueItem index={valueIndex} input={valueInput} value={valueSchema} setValue={setValue} />
+                    <EditValueItem
+                      index={valueIndex}
+                      total={value.length}
+                      input={valueInput}
+                      value={valueSchema}
+                      setValue={setValue}
+                    />
                   )}
                 </div>
               </Fragment>
@@ -125,11 +131,13 @@ function CreateValueItem({ type, input, setValue }: { type: string; input: Input
 
 function EditValueItem({
   index,
+  total,
   value,
   input,
   setValue,
 }: {
   index: number
+  total: number
   value: FieldSchema
   input: Input
   setValue: Dispatch<any>
@@ -177,9 +185,46 @@ function EditValueItem({
     [setValue, index],
   )
 
+  const onMove = useCallback(
+    (offset: number) => {
+      setValue((old: Array<FieldSchema>) => {
+        const newValue = [...(old || [])]
+        const target = index + offset
+
+        // Keep the field within the bounds of the list
+        if (target < 0 || target >= newValue.length) return old
+
+        const [moved] = newValue.splice(index, 1)
+        newValue.splice(target, 0, moved)
+        return newValue
+      })
+    },
+    [setValue, index],
+  )
+
   return (
     <>
       <SchemaEditor schema={schema} values={values} onSave={onSave} label={label} />
+      <button
+        type='button'
+        disabled={index === 0}
+        onClick={(event) => {
+          event.preventDefault()
+          onMove(-1)
+        }}
+      >
+        {t('ui.moveUp')}
+      </button>
+      <button
+        type='button'
+        disabled={index === total - 1}
+        onClick={(event) => {
+          event.preventDefault()
+          onMove(1)
+        }}
+      >
+        {t('ui.moveDown')}
+      </button>
       <button type='button' onClick={onDelete}>
         {t('ui.delete')}
       </button>
@@ -204,7 +249,7 @@ function SchemaEditor({
   onSave: (value: Record<string, any>) => void
   onCancel?: () => void
 }) {
-  const { inputs } = useFormContext()
+  const { inputs } = useFormStaticContext()
   const { t } = useTranslation()
   const id = useId()
 
@@ -245,20 +290,19 @@ function SchemaEditor({
   const handleSave = (event?: React.MouseEvent<HTMLElement, MouseEvent>) => {
     if (event) event.preventDefault()
 
-    // Validate every field and block the save while any are invalid
-    const newMessages: Record<string, FieldMessages> = {}
-    const newValidity: Record<string, boolean | undefined> = {}
+    // Validate every field, including nested fields, and block the save while any are invalid
+    const report = validateValues(schema, tempValue, inputs)
 
-    for (const field of schema) {
-      const validate = inputs?.[field.type]?.validateValue
-      if (!validate) continue
+    if (!report.isValid) {
+      const newMessages: Record<string, FieldMessages> = {}
+      const newValidity: Record<string, boolean | undefined> = {}
 
-      const validation = validate(tempValue?.[field.name], field)
-      newMessages[field.name] = validation.messages
-      newValidity[field.name] = validation.isValid
-    }
+      for (const [field, fieldReport] of Object.entries(report.fields)) {
+        newValidity[field] = fieldReport.isValid
+        newMessages[field] =
+          !fieldReport.isValid && fieldReport.messages.length === 0 ? [t('validation.children')] : fieldReport.messages
+      }
 
-    if (Object.values(newValidity).some((valid) => valid === false)) {
       setTempMessages(newMessages)
       setTempValidity(newValidity)
       return

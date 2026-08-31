@@ -1,6 +1,8 @@
 import * as boolean from '@/inputs/Boolean'
 import * as email from '@/inputs/Email'
+import * as matrix from '@/inputs/Matrix'
 import * as number from '@/inputs/Number'
+import * as repeater from '@/inputs/Repeater'
 import * as select from '@/inputs/Select'
 import * as text from '@/inputs/Text'
 import * as textarea from '@/inputs/Textarea'
@@ -112,6 +114,46 @@ describe('select', () => {
     const validation = select.validateValue([], schema({ required: true, options: { multiple: true } }))
     expect(validation.isValid).toBe(false)
     expect(validation.messages).toEqual(['At least one selection is required.'])
+  })
+})
+
+describe('repeater', () => {
+  it('accepts an empty optional value', () => {
+    expect(repeater.validateValue(undefined, schema()).isValid).toBe(true)
+    expect(repeater.validateValue([], schema({ options: { minimum: 2 } })).isValid).toBe(true)
+  })
+
+  it('requires items when required', () => {
+    expect(repeater.validateValue([], schema({ required: true })).isValid).toBe(false)
+  })
+
+  it('enforces the minimum and maximum number of items', () => {
+    expect(repeater.validateValue([{}], schema({ options: { minimum: 2 } })).isValid).toBe(false)
+    expect(repeater.validateValue([{}, {}], schema({ options: { maximum: 1 } })).isValid).toBe(false)
+    expect(repeater.validateValue([{}, {}], schema({ options: { minimum: 1, maximum: 2 } })).isValid).toBe(true)
+  })
+})
+
+describe('matrix', () => {
+  it('accepts an empty optional value', () => {
+    expect(matrix.validateValue(undefined, schema()).isValid).toBe(true)
+    expect(matrix.validateValue([], schema({ options: { minimumRows: 2 } })).isValid).toBe(true)
+  })
+
+  it('rejects values that are not a matrix', () => {
+    expect(matrix.validateValue('nope', schema()).isValid).toBe(false)
+    expect(matrix.validateValue([{ amount: 1 }], schema()).isValid).toBe(false)
+  })
+
+  it('enforces the row bounds', () => {
+    expect(matrix.validateValue([[{}]], schema({ options: { minimumRows: 2 } })).isValid).toBe(false)
+    expect(matrix.validateValue([[{}], [{}]], schema({ options: { maximumRows: 1 } })).isValid).toBe(false)
+  })
+
+  it('enforces the column bounds', () => {
+    expect(matrix.validateValue([[{}]], schema({ options: { minimumColumns: 2 } })).isValid).toBe(false)
+    expect(matrix.validateValue([[{}, {}]], schema({ options: { maximumColumns: 1 } })).isValid).toBe(false)
+    expect(matrix.validateValue([[{}, {}]], schema({ options: { maximumColumns: 2 } })).isValid).toBe(true)
   })
 })
 

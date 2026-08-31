@@ -1,11 +1,13 @@
-import Form from '../src'
+import Form, { FormHandle, ValidationReport } from '../src'
 import '../src/styles/base.scss'
 import '../src/styles/layout.scss'
 import '../src/styles/variables.scss'
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 
 const App = () => {
+  const rightFormRef = useRef<FormHandle>(null)
+  const [rightFormReport, setRightFormReport] = useState<null | ValidationReport>(null)
   const [rightFormValues, setRightFormValues] = useState<Record<string, any>>({})
   const [leftFormValues, setLeftFormValues] = useState<Record<string, any>>({
     builder: [
@@ -132,7 +134,11 @@ const App = () => {
         <pre>{JSON.stringify(leftFormValues, null, 2)}</pre>
       </div>
       <div style={{ maxWidth: 600, width: '100%' }}>
-        <Form schema={leftFormValues?.builder || []} onValuesChange={onRightFormChange} />
+        <Form ref={rightFormRef} schema={leftFormValues?.builder || []} onValuesChange={onRightFormChange} />
+        <button type='button' onClick={() => setRightFormReport(rightFormRef.current?.validate() || null)}>
+          Validate
+        </button>
+        {rightFormReport && <pre>{JSON.stringify(rightFormReport, null, 2)}</pre>}
         <pre>{JSON.stringify(rightFormValues, null, 2)}</pre>
       </div>
     </div>

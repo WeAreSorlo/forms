@@ -1,5 +1,6 @@
 import { useFieldContext } from '@/components/Field'
-import Fieldset, { OnValuesChangeCallback } from '@/components/Fieldset'
+import Fieldset, { OnValidityChangeCallback, OnValuesChangeCallback } from '@/components/Fieldset'
+import i18n from '@/i18n'
 import { FieldSchema } from '@/types/fields'
 import {
   InputCategory,
@@ -9,11 +10,12 @@ import {
   InputName,
   InputOptionFields,
   InputRenderValue,
+  InputValidateChildren,
   InputValidateValue,
 } from '@/types/inputs'
 import { validateSchema } from '@/utils/inputs'
-import { validationSuccess } from '@/utils/validation'
-import { useCallback, useMemo } from 'react'
+import { isEmptyValue, validationError, validationSuccess } from '@/utils/validation'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 type Column = Record<string, any>
 type Row = Array<Column>
@@ -75,7 +77,40 @@ export const optionFields: InputOptionFields = () => {
 
 export const validateValue: InputValidateValue = (value, schema) => {
   schema = validateSchema(schema)
+
+  // Return early if the value is empty and the field is optional
+  if (!schema.required && isEmptyValue(value)) {
+    return validationSuccess(value)
+  }
+
+  // Check for an empty value
+  if (schema.required && isEmptyValue(value)) {
+    return validationError(value, i18n.t('validation.required'))
+  }
+
+  if (!Array.isArray(value)) {
+    return validationError(value, i18n.t('validation.invalid'))
+  }
+
+  // Validate the minimum number of items
+  const min = schema.options?.minimum
+  if (typeof min === 'number' && value.length < min) {
+    return validationError(value, i18n.t('validation.minItems', { min }))
+  }
+
+  // Validate the maximum number of items
+  const max = schema.options?.maximum
+  if (typeof max === 'number' && value.length > max) {
+    return validationError(value, i18n.t('validation.maxItems', { max }))
+  }
+
   return validationSuccess(value)
+}
+
+// Validate the nested fields against every repeated item
+export const validateChildren: InputValidateChildren = (value, schema, validateFields) => {
+  const items: Row = Array.isArray(value) ? value : []
+  return items.map((item) => validateFields(schema.options?.fields || [], item || {}))
 }
 
 export const formatValue: InputFormatValue = (value, schema) => {
@@ -89,7 +124,9 @@ export const renderValue: InputRenderValue = (value, schema) => {
 }
 
 const Component: InputComponent = function () {
-  const { options, value, setValue } = useFieldContext()
+  const { schema, options, value, setValue, setMessages, setValid } = useFieldContext()
+
+  const [childValid, setChildValid] = useState<boolean | undefined>(undefined)
 
   const isHorizontal = options?.direction === 'x'
 
@@ -113,8 +150,10 @@ const Component: InputComponent = function () {
     ]
   }, [options?.fields, options?.minimum, options?.maximum, isHorizontal])
 
-  // Convert the repeated items to and from the matrix format
+  // Convert the repeated items to and from the matrix format, leaving an
+  // unset value unset so the matrix can seed its own minimum rows
   const matrixValues = useMemo(() => {
+    if (value === undefined) return {}
     const items: Row = Array.isArray(value) ? value : []
     const matrixValue: Matrix = isHorizontal ? [items] : items.map((item) => [item])
     return { value: matrixValue }
@@ -127,7 +166,33 @@ const Component: InputComponent = function () {
     [setValue, isHorizontal],
   )
 
-  return <Fieldset schema={matrixSchema} values={matrixValues} onValuesChange={onValuesChange} />
+  const onValidityChange: OnValidityChangeCallback = useCallback((field, valid) => {
+    setChildValid(valid)
+  }, [])
+
+  // Validate the item bounds and aggregate the nested matrix's validity
+  const validation = useMemo(() => (value !== undefined ? validateValue(value, schema) : null), [value, schema])
+
+  useEffect(() => {
+    if (!validation) return
+
+    setMessages(validation.messages)
+
+    if (validation.isValid === false || childValid === false) {
+      setValid(false)
+    } else if (validation.isValid === true) {
+      setValid(true)
+    }
+  }, [validation, childValid, setMessages, setValid])
+
+  return (
+    <Fieldset
+      schema={matrixSchema}
+      values={matrixValues}
+      onValuesChange={onValuesChange}
+      onValidityChange={onValidityChange}
+    />
+  )
 }
 
 export default Component
