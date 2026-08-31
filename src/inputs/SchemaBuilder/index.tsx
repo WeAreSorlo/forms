@@ -206,6 +206,7 @@ function EditValueItem({
     <>
       <SchemaEditor schema={schema} values={values} onSave={onSave} label={label} />
       <button
+        className='iight-button'
         type='button'
         disabled={index === 0}
         onClick={(event) => {
@@ -216,6 +217,7 @@ function EditValueItem({
         {t('ui.moveUp')}
       </button>
       <button
+        className='iight-button'
         type='button'
         disabled={index === total - 1}
         onClick={(event) => {
@@ -225,7 +227,7 @@ function EditValueItem({
       >
         {t('ui.moveDown')}
       </button>
-      <button type='button' onClick={onDelete}>
+      <button className='iight-button' type='button' onClick={onDelete}>
         {t('ui.delete')}
       </button>
     </>
@@ -336,6 +338,7 @@ function SchemaEditor({
   return (
     <Fragment key={`${id}-${resetCounter}`}>
       <button
+        className='iight-button'
         type='button'
         onClick={(event) => {
           event.preventDefault()
@@ -360,10 +363,10 @@ function SchemaEditor({
             />
           </FieldReportContext.Provider>
         )}
-        <button type='button' onClick={handleCancel}>
+        <button className='iight-button' type='button' onClick={handleCancel}>
           {cancelLabel || t('ui.cancel')}
         </button>
-        <button type='button' onClick={handleSave}>
+        <button className='iight-button' type='button' onClick={handleSave}>
           {saveLabel || t('ui.save')}
         </button>
       </Modal>

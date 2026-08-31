@@ -1,10 +1,16 @@
+/*
+ * Skin styles: maps the --iight-* theme tokens onto the library's class
+ * names, deliberately without fallbacks. Until a theme defines the tokens
+ * this file changes nothing, so the visual contract lives here and the
+ * visual opinions live in the themes.
+ */
+
 .iight-form {
   font-family: var(--iight-font-family);
   font-size: var(--iight-font-size);
   line-height: var(--iight-line-height);
-}
-
-.iight-fieldset {
+  color: var(--iight-form-color);
+  background: var(--iight-form-background);
 }
 
 .iight-field {
@@ -18,14 +24,21 @@
   border-radius: var(--iight-field-border-radius);
   padding: var(--iight-field-padding);
   margin: var(--iight-field-margin);
-  gap: var(--iight-field-gap);
 
   &.iight-invalid {
     --iight-messages-color: var(--iight-color-error);
+
+    .iight-input {
+      border-color: var(--iight-input-border-color-invalid);
+    }
   }
 
   &.iight-valid {
     --iight-messages-color: var(--iight-color-success);
+
+    .iight-input {
+      border-color: var(--iight-input-border-color-valid);
+    }
   }
 }
 
@@ -35,6 +48,11 @@
   font-weight: var(--iight-label-font-weight);
   line-height: var(--iight-label-line-height);
   color: var(--iight-label-color);
+
+  /* The required marker */
+  span {
+    color: var(--iight-required-color);
+  }
 }
 
 .iight-instructions {
@@ -69,4 +87,77 @@
   border-radius: var(--iight-input-border-radius);
   padding: var(--iight-input-padding);
   margin: var(--iight-input-margin);
+
+  &:focus-visible {
+    border-color: var(--iight-color-focus);
+    outline: var(--iight-focus-outline);
+    outline-offset: var(--iight-focus-outline-offset);
+  }
+
+  &:disabled,
+  &[readonly] {
+    color: var(--iight-input-color-disabled);
+    background: var(--iight-input-background-disabled);
+  }
+}
+
+.iight-button {
+  font-family: var(--iight-button-font-family);
+  font-size: var(--iight-button-font-size);
+  font-weight: var(--iight-button-font-weight);
+  line-height: var(--iight-button-line-height);
+  color: var(--iight-button-color);
+  background: var(--iight-button-background);
+  border: var(--iight-button-border);
+  border-radius: var(--iight-button-border-radius);
+  padding: var(--iight-button-padding);
+
+  &:hover:not(:disabled) {
+    color: var(--iight-button-color-hover);
+    background: var(--iight-button-background-hover);
+  }
+
+  &:focus-visible {
+    outline: var(--iight-focus-outline);
+    outline-offset: var(--iight-focus-outline-offset);
+  }
+
+  &:disabled {
+    opacity: var(--iight-disabled-opacity);
+  }
+}
+
+.iight-input__content {
+  font-size: var(--iight-content-font-size);
+  color: var(--iight-content-color);
+}
+
+.iight-input__range-value {
+  color: var(--iight-instructions-color);
+}
+
+.iight-input__matrix {
+  table,
+  th,
+  td {
+    border: var(--iight-matrix-border);
+  }
+
+  th {
+    background: var(--iight-matrix-header-background);
+    color: var(--iight-matrix-header-color);
+  }
+}
+
+.iight-modal {
+  color: var(--iight-modal-color);
+  background: var(--iight-modal-background);
+  border: var(--iight-modal-border);
+  border-radius: var(--iight-modal-border-radius);
+  padding: var(--iight-modal-padding);
+  box-shadow: var(--iight-modal-shadow);
+
+  &::backdrop {
+    background: var(--iight-modal-backdrop);
+  }
 }

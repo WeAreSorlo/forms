@@ -1,0 +1,130 @@
+/*
+ * The dark theme: the same token contract as the default theme with a dark
+ * palette. See themes/default.scss for notes on making a custom theme.
+ */
+
+.iight-theme-dark {
+  --iight-font-family: inherit;
+  --iight-font-size: 1rem;
+  --iight-line-height: 1.5;
+  --iight-form-color: #e5e7eb;
+  --iight-form-background: #111827;
+
+  /* Sizing utilities */
+  --iight-size-px: 1px;
+  --iight-size-1: 0.25rem; // 4px
+  --iight-size-2: 0.5rem; // 8px
+  --iight-size-3: 0.75rem; // 12px
+  --iight-size-4: 1rem; // 16px
+
+  /* Weights */
+  --iight-font-weight-normal: 400;
+  --iight-font-weight-bold: 600;
+
+  /* Color utilities */
+  --iight-color-base: #e5e7eb;
+  --iight-color-muted: #9ca3af;
+  --iight-color-background: #1f2937;
+  --iight-color-background-subtle: #374151;
+  --iight-color-border: #374151;
+  --iight-color-focus: #60a5fa;
+  --iight-color-error: #f87171;
+  --iight-color-success: #4ade80;
+
+  /* States */
+  --iight-focus-outline: var(--iight-size-px) solid var(--iight-color-focus);
+  --iight-focus-outline-offset: var(--iight-size-px);
+  --iight-disabled-opacity: 0.5;
+  --iight-required-color: var(--iight-color-error);
+
+  /* Spacing */
+  --iight-fieldset-gap: var(--iight-size-2);
+  --iight-field-gap: var(--iight-size-1);
+  --iight-choice-gap: var(--iight-size-2);
+
+  /* Fields (input, label, validation container) */
+  --iight-field-font-family: inherit;
+  --iight-field-font-size: inherit;
+  --iight-field-font-weight: inherit;
+  --iight-field-line-height: inherit;
+  --iight-field-color: inherit;
+  --iight-field-background: transparent;
+  --iight-field-border: none;
+  --iight-field-border-radius: 0;
+  --iight-field-padding: 0;
+  --iight-field-margin: 0;
+
+  /* Labels */
+  --iight-label-font-family: inherit;
+  --iight-label-font-size: 0.875rem;
+  --iight-label-font-weight: var(--iight-font-weight-bold);
+  --iight-label-line-height: inherit;
+  --iight-label-color: inherit;
+
+  /* Instructions */
+  --iight-instructions-font-family: inherit;
+  --iight-instructions-font-size: 0.875rem;
+  --iight-instructions-font-weight: inherit;
+  --iight-instructions-line-height: inherit;
+  --iight-instructions-color: var(--iight-color-muted);
+
+  /* Inputs */
+  --iight-input-font-family: inherit;
+  --iight-input-font-size: inherit;
+  --iight-input-font-weight: inherit;
+  --iight-input-line-height: inherit;
+  --iight-input-color: inherit;
+  --iight-input-background: var(--iight-color-background);
+  --iight-input-border: var(--iight-size-px) solid var(--iight-color-border);
+  --iight-input-border-radius: var(--iight-size-1);
+  --iight-input-padding: var(--iight-size-1) var(--iight-size-2);
+  --iight-input-margin: 0;
+  --iight-input-border-color-invalid: var(--iight-color-error);
+  --iight-input-border-color-valid: var(--iight-color-border);
+  --iight-input-color-disabled: var(--iight-color-muted);
+  --iight-input-background-disabled: #111827;
+
+  /* Buttons */
+  --iight-button-font-family: inherit;
+  --iight-button-font-size: 0.875rem;
+  --iight-button-font-weight: var(--iight-font-weight-normal);
+  --iight-button-line-height: inherit;
+  --iight-button-color: inherit;
+  --iight-button-background: var(--iight-color-background);
+  --iight-button-border: var(--iight-size-px) solid var(--iight-color-border);
+  --iight-button-border-radius: var(--iight-size-1);
+  --iight-button-padding: var(--iight-size-1) var(--iight-size-2);
+  --iight-button-color-hover: inherit;
+  --iight-button-background-hover: var(--iight-color-background-subtle);
+
+  /* Messages list */
+  --iight-messages-font-family: inherit;
+  --iight-messages-font-size: 0.875rem;
+  --iight-messages-font-weight: inherit;
+  --iight-messages-line-height: inherit;
+  --iight-messages-color: var(--iight-color-base);
+  --iight-messages-background: transparent;
+  --iight-messages-border: none;
+  --iight-messages-border-radius: var(--iight-size-1);
+  --iight-messages-padding: 0 0 0 1.25em;
+  --iight-messages-margin: 0;
+
+  /* Content blocks */
+  --iight-content-font-size: 0.875rem;
+  --iight-content-color: var(--iight-color-muted);
+
+  /* Matrix tables */
+  --iight-matrix-cell-padding: var(--iight-size-1);
+  --iight-matrix-border: var(--iight-size-px) solid var(--iight-color-border);
+  --iight-matrix-header-background: var(--iight-color-background);
+  --iight-matrix-header-color: inherit;
+
+  /* Modals */
+  --iight-modal-color: var(--iight-color-base);
+  --iight-modal-background: var(--iight-color-background);
+  --iight-modal-border: var(--iight-size-px) solid var(--iight-color-border);
+  --iight-modal-border-radius: var(--iight-size-2);
+  --iight-modal-padding: var(--iight-size-4);
+  --iight-modal-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  --iight-modal-backdrop: rgba(0, 0, 0, 0.6);
+}

@@ -1,3 +1,9 @@
+/*
+ * Scaffolding styles: layout and structure only, with no visual opinions.
+ * Spacing reads from theme tokens but falls back to sensible defaults, so
+ * this file works standalone. Visual styles live in base.scss and themes.
+ */
+
 .iight-form {
   &,
   *,
@@ -11,10 +17,10 @@
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  margin: calc(0px - var(--iight-fieldset-gap));
+  margin: calc(0px - var(--iight-fieldset-gap, 0.5rem));
 
   > div {
-    padding: var(--iight-fieldset-gap);
+    padding: var(--iight-fieldset-gap, 0.5rem);
     box-sizing: border-box;
   }
 }
@@ -22,18 +28,111 @@
 .iight-field {
   display: flex;
   flex-direction: column;
+  gap: var(--iight-field-gap, 0.25rem);
 }
 
 .iight-label {
-}
-
-.iight-instructions {
+  display: block;
 }
 
 .iight-messages {
+  margin: 0;
+  padding-left: 1.25em;
 }
 
 .iight-input {
   width: 100%;
   display: block;
+}
+
+.iight-button {
+  cursor: pointer;
+  font: inherit;
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+/* Choice inputs sit inline with their labels */
+.iight-input__boolean,
+.iight-input__radio > div,
+.iight-input__checkbox > div {
+  display: flex;
+  align-items: center;
+  gap: var(--iight-choice-gap, 0.5rem);
+
+  .iight-input {
+    display: inline-block;
+    width: auto;
+  }
+}
+
+.iight-input__radio,
+.iight-input__checkbox {
+  display: flex;
+  flex-direction: column;
+  gap: var(--iight-choice-gap, 0.25rem);
+}
+
+.iight-input__color .iight-input {
+  width: 4rem;
+  padding: 0;
+}
+
+.iight-input__range {
+  display: flex;
+  align-items: center;
+  gap: var(--iight-choice-gap, 0.5rem);
+
+  .iight-input {
+    flex: 1;
+    width: auto;
+  }
+}
+
+.iight-input__range-value {
+  min-width: 2em;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.iight-input__matrix {
+  overflow-x: auto;
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th,
+  td {
+    text-align: left;
+    vertical-align: top;
+    padding: var(--iight-matrix-cell-padding, 0.25rem);
+  }
+}
+
+.iight-input__schemabuilder {
+  > div:last-child {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--iight-fieldset-gap, 0.5rem);
+  }
+
+  .iight-button {
+    text-align: left;
+  }
+}
+
+.iight-modal {
+  width: 100%;
+  max-width: 40rem;
+}
+
+.iight-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--iight-fieldset-gap, 0.5rem);
 }

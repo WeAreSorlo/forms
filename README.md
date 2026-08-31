@@ -122,6 +122,24 @@ Register it per form: `<Form inputs={{ shout: shoutModule }} ... />`. Custom typ
 
 A custom input that nests other fields can also export `validateChildren(value, schema, validateFields)` — this is how `validateValues` and `validate()` walk into it, and it is exactly what the core group, repeater and matrix inputs do; nothing about containers is special-cased.
 
-## Styling and i18n
+## Styling and theming
 
-Import the stylesheets from `iight/styles/*.scss` (see `public/index.tsx` for an example) and theme via the `--iight-*` CSS custom properties defined in `variables.scss`. All user-facing strings run through an isolated i18next instance (`src/i18n.ts`) with translations in `src/translations`, so the host application's own i18next setup is never touched.
+Styles ship in three layers so the library is unstyled scaffolding by default, with themes as an opt-in:
+
+```ts
+import 'iight/styles/layout.scss' // scaffolding: layout and structure only
+import 'iight/styles/base.scss' // the skin: maps --iight-* tokens onto class names
+import 'iight/styles/themes/default.scss' // a theme: defines the tokens
+```
+
+`layout.scss` is structural (flex grids, widths, table layout) and works standalone. `base.scss` maps every `--iight-*` token onto the library's class names *without fallbacks*, so importing it changes nothing until a theme defines the tokens — the token contract lives there. Themes define the tokens under a scoping class (`.iight-theme-default`, `.iight-theme-dark`), which you attach via the `className` prop or any ancestor element:
+
+```tsx
+<Form className='iight-theme-default' schema={schema} />
+```
+
+A custom theme is a copy of `themes/default.scss` with a new class name and different token values — no selectors, just tokens. Because themes are class-scoped, different forms on one page can use different themes, and single tokens can be overridden inline or in state scopes (for example `.iight-invalid` remaps `--iight-messages-color` to `--iight-color-error`).
+
+## i18n
+
+All user-facing strings run through an isolated i18next instance (`src/i18n.ts`) with translations in `src/translations`, so the host application's own i18next setup is never touched.

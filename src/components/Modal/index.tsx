@@ -27,6 +27,7 @@ export default function Modal({ open, header, footer, closeButton, onOpen, onClo
       <>
         {closeButton === true && (
           <button
+            className='iight-button'
             type='button'
             onClick={(event) => {
               event.preventDefault()
@@ -79,7 +80,7 @@ export default function Modal({ open, header, footer, closeButton, onOpen, onClo
 
       {!header && <CloseButton />}
 
-      <div>{children}</div>
+      <div className='iight-modal__body'>{children}</div>
 
       {footer && <div className='iight-modal__footer'>{footer}</div>}
     </dialog>

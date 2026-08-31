@@ -24,6 +24,7 @@ export interface FormProps {
   onValuesChange?: (values: Context['values']) => void
   onMessagesChange?: (messages: Context['messages']) => void
   onValidityChange?: (validity: Context['validity']) => void
+  className?: string
   ref?: React.Ref<FormHandle>
 }
 
@@ -36,6 +37,7 @@ export default function Form({
   onValuesChange,
   onMessagesChange,
   onValidityChange,
+  className,
   ref,
 }: FormProps) {
   const [schema, setSchema] = useState<Context['schema']>(defaultSchema || [])
@@ -191,7 +193,10 @@ export default function Form({
         <FormStaticContext.Provider value={staticContextValue}>
           <FieldReportContext.Provider value={onFieldReport}>
             {/* Prevent implicit submissions from reloading the page */}
-            <form className='iight-form' onSubmit={(event) => event.preventDefault()}>
+            <form
+              className={`iight-form${className ? ` ${className}` : ''}`}
+              onSubmit={(event) => event.preventDefault()}
+            >
               <Fieldset
                 schema={schema}
                 values={values}

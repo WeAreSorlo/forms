@@ -1,11 +1,13 @@
 import Form, { FormHandle, ValidationReport } from '../src'
 import '../src/styles/base.scss'
 import '../src/styles/layout.scss'
-import '../src/styles/variables.scss'
+import '../src/styles/themes/dark.scss'
+import '../src/styles/themes/default.scss'
 import React, { useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 
 const App = () => {
+  const [theme, setTheme] = useState('iight-theme-default')
   const rightFormRef = useRef<FormHandle>(null)
   const [rightFormReport, setRightFormReport] = useState<null | ValidationReport>(null)
   const [rightFormValues, setRightFormValues] = useState<Record<string, any>>({})
@@ -430,13 +432,28 @@ const App = () => {
   }
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-evenly' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-evenly', flexWrap: 'wrap' }}>
+      <div style={{ width: '100%', padding: '1rem' }}>
+        <label>
+          Theme{' '}
+          <select value={theme} onChange={(event) => setTheme(event.target.value)}>
+            <option value=''>Scaffolding only</option>
+            <option value='iight-theme-default'>Default</option>
+            <option value='iight-theme-dark'>Dark</option>
+          </select>
+        </label>
+      </div>
       <div style={{ maxWidth: 600, width: '100%' }}>
-        <Form onValuesChange={onLeftFormChange} values={leftFormValues} schema={builderSchema} />
+        <Form className={theme} onValuesChange={onLeftFormChange} values={leftFormValues} schema={builderSchema} />
         <pre>{JSON.stringify(leftFormValues, null, 2)}</pre>
       </div>
       <div style={{ maxWidth: 600, width: '100%' }}>
-        <Form ref={rightFormRef} schema={leftFormValues?.builder || []} onValuesChange={onRightFormChange} />
+        <Form
+          className={theme}
+          ref={rightFormRef}
+          schema={leftFormValues?.builder || []}
+          onValuesChange={onRightFormChange}
+        />
         <button type='button' onClick={() => setRightFormReport(rightFormRef.current?.validate() || null)}>
           Validate
         </button>

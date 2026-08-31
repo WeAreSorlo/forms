@@ -466,6 +466,7 @@ const Component: InputComponent = function () {
                   <span>{columnIndex + 1}</span>
                   {canRemoveColumn && (
                     <button
+                      className='iight-button'
                       type='button'
                       onClick={(event) => {
                         event.preventDefault()
@@ -490,6 +491,7 @@ const Component: InputComponent = function () {
             <td rowSpan={totalRows + 1}>
               {canAddColumn && totalRows > 0 && (
                 <button
+                  className='iight-button'
                   type='button'
                   onClick={(event) => {
                     event.preventDefault()
@@ -508,6 +510,7 @@ const Component: InputComponent = function () {
                   {rowIndex + 1}
                   {canRemoveRow && (
                     <button
+                      className='iight-button'
                       type='button'
                       onClick={(event) => {
                         event.preventDefault()
@@ -544,6 +547,7 @@ const Component: InputComponent = function () {
             <tr>
               <td colSpan={totalColumns + 2}>
                 <button
+                  className='iight-button'
                   type='button'
                   onClick={(event) => {
                     event.preventDefault()
