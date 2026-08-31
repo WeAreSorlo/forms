@@ -1,6 +1,5 @@
 import { useFieldContext } from '@/components/Field'
 import Fieldset from '@/components/Fieldset'
-import { useFormContext } from '@/context/FormProvider'
 import {
   InputCategory,
   InputComponent,
@@ -14,6 +13,7 @@ import {
 import { validateSchema } from '@/utils/inputs'
 import { validationSuccess } from '@/utils/validation'
 import { useCallback, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 
 type Column = Record<string, any>
 type Row = Array<Column>
@@ -95,12 +95,12 @@ export const renderValue: InputRenderValue = (value, schema) => {
 }
 
 const Component: InputComponent = function () {
-  const { inputs } = useFormContext()
-  const { id, schema, required, readonly, disabled, options, value, setValue, handleValidation } = useFieldContext()
+  const { t } = useTranslation()
+  const { options, value, setValue } = useFieldContext()
 
   const fields = useMemo(() => {
-    return options.fields || []
-  }, [options.fields])
+    return options?.fields || []
+  }, [options?.fields])
 
   const maxRows = useMemo(() => {
     const value = options?.maximumRows ? Number(options?.maximumRows) : null
@@ -146,38 +146,43 @@ const Component: InputComponent = function () {
   const canRemoveRow = totalRows > minRows
   const canRemoveColumn = totalColumns > minColumns
 
+  // Normalise a matrix without mutating the old value, enforcing the row and
+  // column limits and filling each column with the fields' default values
   const validateMatrix = useCallback(
-    (matrix: Matrix) => {
-      let newMatrix = matrix
+    (matrix: Matrix): Matrix => {
+      let newMatrix = [...matrix]
 
       // Enforce minimum rows
       while (newMatrix.length < minRows) {
         newMatrix.push([])
       }
 
-      // Enforce maximum rows
+      // Enforce maximum rows, dropping the rows beyond the limit
       if (newMatrix.length > maxRows) {
-        newMatrix.splice(0, maxRows)
+        newMatrix = newMatrix.slice(0, maxRows)
       }
 
-      return newMatrix.map((row, rowIndex, rows) => {
-        let lastColumnCount = rows[rowIndex - 1]?.length
+      // Keep the matrix rectangular by matching each row's column count to the previous row
+      let lastColumnCount: undefined | number = undefined
 
-        let newRow = row
+      return newMatrix.map((row) => {
+        let newRow: Row = Array.isArray(row) ? [...row] : []
 
         // Enforce minimum columns
         while (newRow.length < minColumns || (lastColumnCount !== undefined && newRow.length < lastColumnCount)) {
-          newRow.push([])
+          newRow.push({})
         }
 
-        // Enforce maximum columns
+        // Enforce maximum columns, dropping the columns beyond the limit
         if (newRow.length > maxColumns) {
-          newRow.splice(0, maxColumns)
+          newRow = newRow.slice(0, maxColumns)
         }
 
-        return newRow.map((column, columnIndex, columns) => {
-          const newColumn = fields.map((field) => {
-            let value = field.value ?? null
+        lastColumnCount = newRow.length
+
+        return newRow.map((column) => {
+          const newColumn = fields.map((field: Column) => {
+            let value = field.defaultValue ?? null
             if (typeof column === 'object' && column.hasOwnProperty(field.name)) {
               value = column[field.name]
             }
@@ -194,58 +199,49 @@ const Component: InputComponent = function () {
 
   const addRow = useCallback(
     (row: Row = []) => {
-      setValue((oldValue) => {
-        let newValue = oldValue
-
+      setValue((oldValue: Matrix) => {
         // Ensure the old value was an array
-        if (!Array.isArray(newValue)) {
-          newValue = []
+        if (!Array.isArray(oldValue)) {
+          oldValue = []
         }
 
-        return validateMatrix([...newValue, row])
+        return validateMatrix([...oldValue, row])
       })
     },
-    [setValue],
+    [setValue, validateMatrix],
   )
+
   const addColumn = useCallback(
     (columns: Array<Column> = []) => {
       setValue((oldValue: Matrix) => {
-        let newValue = oldValue
-
-        // Ensure the old value is an array
-        if (!Array.isArray(newValue)) {
-          newValue = []
+        // Ensure the old value was an array
+        if (!Array.isArray(oldValue)) {
+          oldValue = []
         }
 
-        newValue = newValue.map((row, rowIndex) => {
-          let newRow = row
-
-          // Ensure the old row is an array
-          if (!Array.isArray(newRow)) {
-            newRow = []
-          }
+        const newValue = oldValue.map((row, rowIndex) => {
+          // Ensure the old row was an array
+          const newRow = Array.isArray(row) ? row : []
 
           // Add new column
-          return [...newRow, columns[rowIndex] || []]
+          return [...newRow, columns[rowIndex] || {}]
         })
 
         return validateMatrix(newValue)
       })
     },
-    [setValue],
+    [setValue, validateMatrix],
   )
 
   const removeRow = useCallback(
     (index: number) => {
-      setValue((oldValue) => {
-        let newValue = [...oldValue]
-
-        // Ensure the old value is an array
-        if (!Array.isArray(newValue)) {
-          newValue = []
+      setValue((oldValue: Matrix) => {
+        // Ensure the old value was an array
+        if (!Array.isArray(oldValue)) {
+          return []
         }
 
-        return newValue.toSpliced(index, 1)
+        return oldValue.toSpliced(index, 1)
       })
     },
     [setValue],
@@ -253,63 +249,49 @@ const Component: InputComponent = function () {
 
   const removeColumn = useCallback(
     (index: number) => {
-      setValue((oldValue) => {
-        let newValue = [...oldValue]
-
-        // Ensure the old value is an array
-        if (!Array.isArray(newValue)) {
-          newValue = []
+      setValue((oldValue: Matrix) => {
+        // Ensure the old value was an array
+        if (!Array.isArray(oldValue)) {
+          return []
         }
 
-        return newValue.map((row) => {
-          return row.toSpliced(index, 1)
+        return oldValue.map((row) => {
+          return Array.isArray(row) ? row.toSpliced(index, 1) : row
         })
       })
     },
     [setValue],
   )
 
-  const doValidation = useCallback(
-    (input: any) => {
-      handleValidation(validateValue(input, schema))
-    },
-    [handleValidation, validateValue],
-  )
-
   const setColumnValue = useCallback(
     (row: number, column: number, columnFieldName: string, columnFieldValue: any) => {
-      setValue((oldValue) => {
-        let newValue = [...oldValue]
-
-        if (typeof newValue[row][column][columnFieldName] !== undefined) {
-          newValue[row][column][columnFieldName] = columnFieldValue
+      setValue((oldValue: Matrix) => {
+        // Ensure the old value was an array
+        if (!Array.isArray(oldValue)) {
+          return oldValue
         }
 
-        return newValue
+        return oldValue.map((oldRow, rowIndex) => {
+          if (rowIndex !== row) return oldRow
+
+          return oldRow.map((oldColumn, columnIndex) => {
+            if (columnIndex !== column) return oldColumn
+
+            return { ...oldColumn, [columnFieldName]: columnFieldValue }
+          })
+        })
       })
     },
     [setValue],
   )
 
-  const generateColumnSchema = useCallback(
-    (columnValue: Column) => {
-      return fields.map((field) => {
-        const newField = structuredClone(field)
-        newField.value = columnValue?.[newField.name] ?? newField.value
-        return newField
-      })
-    },
-    [fields, value],
-  )
-
   return (
     <div className='iight-input__matrix'>
-      <pre>{JSON.stringify(value, null, 2)}</pre>
       <table>
         <thead>
           <tr>
             <td></td>
-            {(value?.[0] || []).map((column, columnIndex) => {
+            {(value?.[0] || []).map((column: Column, columnIndex: number) => {
               return (
                 <th key={columnIndex}>
                   <span>{columnIndex + 1}</span>
@@ -321,7 +303,7 @@ const Component: InputComponent = function () {
                         removeColumn(columnIndex)
                       }}
                     >
-                      Remove column
+                      {t('ui.removeColumn')}
                     </button>
                   )}
                 </th>
@@ -333,11 +315,11 @@ const Component: InputComponent = function () {
         <tbody>
           <tr>
             <td></td>
-            {(value?.[0] || []).map((column, columnIndex) => {
+            {(value?.[0] || []).map((column: Column, columnIndex: number) => {
               return <td key={columnIndex}></td>
             })}
             <td rowSpan={totalRows + 1}>
-              {canAddColumn && totalRows && (
+              {canAddColumn && totalRows > 0 && (
                 <button
                   type='button'
                   onClick={(event) => {
@@ -345,12 +327,12 @@ const Component: InputComponent = function () {
                     addColumn()
                   }}
                 >
-                  Add column
+                  {t('ui.addColumn')}
                 </button>
               )}
             </td>
           </tr>
-          {(value || []).map((row, rowIndex) => {
+          {(value || []).map((row: Row, rowIndex: number) => {
             return (
               <tr key={rowIndex}>
                 <th>
@@ -363,7 +345,7 @@ const Component: InputComponent = function () {
                         removeRow(rowIndex)
                       }}
                     >
-                      Remove row
+                      {t('ui.removeRow')}
                     </button>
                   )}
                 </th>
@@ -371,8 +353,8 @@ const Component: InputComponent = function () {
                   return (
                     <td key={columnIndex}>
                       <Fieldset
-                        schema={generateColumnSchema(column)}
-                        inputs={inputs}
+                        schema={fields}
+                        values={column}
                         onValuesChange={(columnFieldName, columnFieldValue) => {
                           setColumnValue(rowIndex, columnIndex, columnFieldName, columnFieldValue)
                         }}
@@ -392,10 +374,10 @@ const Component: InputComponent = function () {
                   type='button'
                   onClick={(event) => {
                     event.preventDefault()
-                    addRow([])
+                    addRow()
                   }}
                 >
-                  Add row
+                  {t('ui.addRow')}
                 </button>
               </td>
             </tr>

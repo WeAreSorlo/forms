@@ -2,7 +2,7 @@ import { FieldMessages } from '@/types/fields'
 import { InputSchema, InputValidationResponse } from '@/types/inputs'
 import { validateSchema } from '@/utils/inputs'
 import { isEqual } from 'lodash'
-import { createContext, Dispatch, SetStateAction, useContext, useId } from 'react'
+import { SetStateAction, createContext, useCallback, useContext, useId, useMemo } from 'react'
 
 interface Context {
   id: string
@@ -21,9 +21,9 @@ interface Context {
   messages: FieldMessages
   valid: boolean | undefined
 
-  setValue: Dispatch<SetStateAction<Context['value']>>
-  setMessages: Dispatch<SetStateAction<Context['messages']>>
-  setValid: Dispatch<SetStateAction<Context['valid']>>
+  setValue: (value: SetStateAction<Context['value']>) => void
+  setMessages: (messages: SetStateAction<Context['messages']>) => void
+  setValid: (valid: SetStateAction<Context['valid']>) => void
 
   handleValidation: (response: InputValidationResponse) => void
 }
@@ -54,70 +54,95 @@ export interface FieldProps extends InputSchema {
   onValidityChange: OnValidityChangeCallback
 }
 
+const defaultMessages: FieldMessages = []
+
 // Field Provider Component
 export default function Field({
   value,
-  messages = [],
+  messages = defaultMessages,
   valid,
   onValueChange,
   onMessagesChange,
   onValidityChange,
   children,
-  ...schema
+  ...rawSchema
 }: FieldProps) {
-  schema = validateSchema(schema)
+  const { name, label, required, instructions, defaultValue, readonly, disabled, width, options } = rawSchema
 
-  const { name, label, required, instructions, defaultValue, readonly, disabled, width, options = {} } = schema
+  // Strip unknown properties from the schema
+  const schema = useMemo(() => {
+    return validateSchema(rawSchema)
+  }, [name, label, required, instructions, defaultValue, readonly, disabled, width, options])
+
+  // Fall back to the schema default when no value is set
+  if (value === undefined) value = defaultValue
 
   const id = useId()
 
-  const setValue = (newValue: SetStateAction<Context['value']>) => {
-    if (onValueChange && !isEqual(value, newValue)) {
-      onValueChange(typeof newValue === 'function' ? newValue(value) : newValue)
+  const setValue = useCallback(
+    (newValue: SetStateAction<Context['value']>) => {
+      if (typeof newValue === 'function') newValue = newValue(value)
+      if (onValueChange && !isEqual(value, newValue)) {
+        onValueChange(newValue)
+      }
+    },
+    [value, onValueChange],
+  )
+
+  const setMessages = useCallback(
+    (newMessages: SetStateAction<Context['messages']>) => {
+      if (typeof newMessages === 'function') newMessages = newMessages(messages)
+      if (onMessagesChange && !isEqual(messages, newMessages)) {
+        onMessagesChange(newMessages)
+      }
+    },
+    [messages, onMessagesChange],
+  )
+
+  const setValid = useCallback(
+    (newValid: SetStateAction<Context['valid']>) => {
+      if (typeof newValid === 'function') newValid = newValid(valid)
+      if (onValidityChange && !isEqual(valid, newValid)) {
+        onValidityChange(newValid)
+      }
+    },
+    [valid, onValidityChange],
+  )
+
+  const handleValidation = useCallback(
+    ({ isValid, value, messages }: InputValidationResponse) => {
+      setValid(isValid)
+      setMessages(messages)
+      setValue(value)
+    },
+    [setValue, setMessages, setValid],
+  )
+
+  const contextValue = useMemo(() => {
+    return {
+      id,
+      schema,
+      name,
+      label,
+      required,
+      instructions,
+      defaultValue,
+      readonly,
+      disabled,
+      width,
+      options: options || {},
+
+      value,
+      messages,
+      valid,
+
+      setValue,
+      setMessages,
+      setValid,
+
+      handleValidation,
     }
-  }
-
-  const setMessages = (newMessages: SetStateAction<Context['messages']>) => {
-    if (onMessagesChange && !isEqual(messages, newMessages)) {
-      onMessagesChange(typeof newMessages === 'function' ? newMessages(messages) : newMessages)
-    }
-  }
-
-  const setValid = (newValid: SetStateAction<Context['valid']>) => {
-    if (onValidityChange && !isEqual(valid, newValid)) {
-      onValidityChange(typeof newValid === 'function' ? newValid(valid) : newValid)
-    }
-  }
-
-  const handleValidation = ({ isValid, value, messages }: InputValidationResponse) => {
-    setValid(isValid)
-    setMessages(messages)
-    setValue(value)
-  }
-
-  const contextValue = {
-    id,
-    schema,
-    name,
-    label,
-    required,
-    instructions,
-    defaultValue,
-    readonly,
-    disabled,
-    width,
-    options,
-
-    value,
-    messages,
-    valid,
-
-    setValue,
-    setMessages,
-    setValid,
-
-    handleValidation,
-  }
+  }, [id, schema, value, messages, valid, setValue, setMessages, setValid, handleValidation])
 
   const isValid = valid === true
   const isInvalid = valid === false

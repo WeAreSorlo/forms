@@ -1,6 +1,9 @@
 import { useFieldContext } from '@/components/Field'
-import Fieldset from '@/components/Fieldset'
-import { useFormContext } from '@/context/FormProvider'
+import Fieldset, {
+  OnMessagesChangeCallback,
+  OnValidityChangeCallback,
+  OnValuesChangeCallback,
+} from '@/components/Fieldset'
 import { FieldMessages } from '@/types/fields'
 import {
   InputCategory,
@@ -15,11 +18,7 @@ import {
 } from '@/types/inputs'
 import { validateSchema } from '@/utils/inputs'
 import { validationSuccess } from '@/utils/validation'
-import { useState } from 'react'
-
-type Column = Record<string, any>
-type Row = Array<Column>
-type Matrix = Array<Row>
+import { useCallback, useEffect, useState } from 'react'
 
 export const name: InputName = () => 'Group'
 
@@ -57,32 +56,46 @@ export const renderValue: InputRenderValue = (value, schema) => {
 }
 
 const Component: InputComponent = function () {
-  const { inputs } = useFormContext()
-  const { id, schema, required, readonly, disabled, options, value, setValue, valid, setValid, messages, setMessages } =
-    useFieldContext()
+  const { options, value, setValue, setValid } = useFieldContext()
 
   const [tempMessages, setTempMessages] = useState<Record<string, FieldMessages>>({})
-  const [tempValidity, setTempValidity] = useState<Record<string, boolean>>({})
+  const [tempValidity, setTempValidity] = useState<Record<string, boolean | undefined>>({})
+
+  // Mark the group itself invalid when any nested field is invalid
+  useEffect(() => {
+    const validity = Object.values(tempValidity)
+    if (validity.some((valid) => valid === false)) {
+      setValid(false)
+    } else if (validity.length >= 1 && validity.every((valid) => valid === true)) {
+      setValid(true)
+    }
+  }, [tempValidity, setValid])
+
+  const onValuesChange: OnValuesChangeCallback = useCallback(
+    (field, fieldValue) => {
+      setValue((old: Record<string, any>) => ({ ...old, [field]: fieldValue }))
+    },
+    [setValue],
+  )
+
+  const onMessagesChange: OnMessagesChangeCallback = useCallback((field, messages) => {
+    setTempMessages((old) => ({ ...old, [field]: messages }))
+  }, [])
+
+  const onValidityChange: OnValidityChangeCallback = useCallback((field, valid) => {
+    setTempValidity((old) => ({ ...old, [field]: valid }))
+  }, [])
 
   return (
-    <>
-      <Fieldset
-        schema={options?.fields || []}
-        inputs={inputs}
-        values={value}
-        messages={tempMessages}
-        validity={tempValidity}
-        onValuesChange={(field, value) => {
-          setValue((old) => ({ ...old, [field]: value }))
-        }}
-        onMessagesChange={(field, messages) => {
-          setTempMessages((old) => ({ ...old, [field]: messages }))
-        }}
-        onValidityChange={(field, valid) => {
-          setTempValidity((old) => ({ ...old, [field]: valid }))
-        }}
-      />
-    </>
+    <Fieldset
+      schema={options?.fields || []}
+      values={value}
+      messages={tempMessages}
+      validity={tempValidity}
+      onValuesChange={onValuesChange}
+      onMessagesChange={onMessagesChange}
+      onValidityChange={onValidityChange}
+    />
   )
 }
 

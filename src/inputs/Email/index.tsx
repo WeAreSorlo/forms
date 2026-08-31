@@ -1,4 +1,5 @@
 import { useFieldContext } from '@/components/Field'
+import i18n from '@/i18n'
 import {
   InputCategory,
   InputComponent,
@@ -10,7 +11,7 @@ import {
   InputValidateValue,
 } from '@/types/inputs'
 import { validateSchema } from '@/utils/inputs'
-import { isEmail, validationError, validationSuccess } from '@/utils/validation'
+import { isEmail, isEmptyValue, validationError, validationSuccess } from '@/utils/validation'
 import { useCallback } from 'react'
 
 export const name: InputName = () => 'Email'
@@ -20,28 +21,70 @@ export const description: InputDescription = () => 'A text input specifically de
 export const category: InputCategory = () => 'Standard'
 
 export const optionFields: InputOptionFields = () => {
-  return []
+  return [
+    {
+      name: 'placeholder',
+      label: 'Placeholder',
+      type: 'text',
+      required: false,
+    },
+    {
+      name: 'multiple',
+      label: 'Multiple',
+      type: 'boolean',
+      required: false,
+      options: {
+        message: 'Allow multiple addresses',
+      },
+    },
+    {
+      name: 'minLength',
+      label: 'Minimum length',
+      type: 'number',
+      required: false,
+      width: 50,
+      options: {
+        min: 0,
+      },
+    },
+    {
+      name: 'maxLength',
+      label: 'Maximum length',
+      type: 'number',
+      required: false,
+      width: 50,
+      options: {
+        min: 1,
+      },
+    },
+  ]
 }
 
 export const validateValue: InputValidateValue = (value, schema) => {
   schema = validateSchema(schema)
 
-  if (typeof value !== 'string') {
-    return validationError(value, 'Invalid value.')
+  // Return early if the value is empty and the field is optional
+  if (!schema.required && isEmptyValue(value)) {
+    return validationSuccess(value)
   }
 
-  if (schema.required && !value) {
-    return validationError(value, 'This field is required.')
+  // Check for an empty value
+  if (schema.required && isEmptyValue(value)) {
+    return validationError(value, i18n.t('validation.required'))
+  }
+
+  if (typeof value !== 'string') {
+    return validationError(value, i18n.t('validation.invalid'))
   }
 
   if (!schema.options?.multiple && !isEmail(value)) {
-    return validationError(value, 'A valid email address required.')
+    return validationError(value, i18n.t('validation.email'))
   }
 
   // If input allows for multiple addresses
   // @link https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/email#multiple
   if (schema.options?.multiple && value.split(/[ ,]+/).filter((item) => !isEmail(item)).length) {
-    return validationError(value, 'One or more email address(es) is invalid.')
+    return validationError(value, i18n.t('validation.emailMultiple'))
   }
 
   return validationSuccess(value)
@@ -64,7 +107,7 @@ const Component: InputComponent = function () {
     (input: any) => {
       handleValidation(validateValue(input, schema))
     },
-    [handleValidation, validateValue, schema],
+    [handleValidation, schema],
   )
 
   return (

@@ -1,5 +1,5 @@
 export interface ValidationResponse {
-  isValid: boolean
+  isValid: boolean | undefined
   messages: Array<string>
   value: any
 }
@@ -38,6 +38,12 @@ export function validationSuccess(value: any, message?: string | Array<string>):
     messages: Array.isArray(message) ? message : message ? [message] : [],
     value: value,
   }
+}
+
+// Check whether a value is considered empty, note that 0 and false are not empty
+export function isEmptyValue(value: any) {
+  if (Array.isArray(value)) return value.length === 0
+  return value === '' || value === null || value === undefined
 }
 
 export function isEmail(email: string) {

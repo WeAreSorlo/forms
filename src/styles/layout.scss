@@ -1,5 +1,8 @@
 .iight-form {
-  &, *, *:before, *:after {
+  &,
+  *,
+  *:before,
+  *:after {
     box-sizing: border-box;
   }
 }
@@ -22,15 +25,12 @@
 }
 
 .iight-label {
-
 }
 
 .iight-instructions {
-
 }
 
 .iight-messages {
-
 }
 
 .iight-input {

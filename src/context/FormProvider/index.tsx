@@ -9,7 +9,7 @@ export interface Context {
   setValues: Dispatch<SetStateAction<Context['values']>>
   messages: Record<string, any>
   setMessages: Dispatch<SetStateAction<Context['messages']>>
-  validity: Record<string, boolean>
+  validity: Record<string, boolean | undefined>
   setValidity: Dispatch<SetStateAction<Context['validity']>>
 
   // Static

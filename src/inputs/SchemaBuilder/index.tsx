@@ -6,6 +6,7 @@ import Fieldset, {
 } from '@/components/Fieldset'
 import Modal from '@/components/Modal'
 import { useFormContext } from '@/context/FormProvider'
+import i18n from '@/i18n'
 import { FieldMessages, FieldSchema } from '@/types/fields'
 import {
   Input,
@@ -21,10 +22,11 @@ import {
 import { validateInputSchemaFields, validateSchema } from '@/utils/inputs'
 import { validationError, validationSuccess } from '@/utils/validation'
 import { Dispatch, Fragment, useCallback, useEffect, useId, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 export const name: InputName = () => 'Schema Builder'
 
-export const description: InputDescription = () => 'An intuative interface for building form schemas.'
+export const description: InputDescription = () => 'An intuitive interface for building form schemas.'
 
 export const category: InputCategory = () => 'Layout'
 
@@ -36,7 +38,7 @@ export const validateValue: InputValidateValue = (value, schema) => {
   schema = validateSchema(schema)
 
   if (!Array.isArray(value)) {
-    return validationError(value, 'Invalid value.')
+    return validationError(value, i18n.t('validation.invalid'))
   }
 
   return validationSuccess(value)
@@ -54,6 +56,7 @@ export const renderValue: InputRenderValue = (value, schema) => {
 
 const Component: InputComponent = function () {
   const { inputs } = useFormContext()
+  const { t } = useTranslation()
   const { value = [], setValue } = useFieldContext()
 
   const inputEntries = useMemo(() => {
@@ -74,7 +77,7 @@ const Component: InputComponent = function () {
             return (
               <Fragment key={valueIndex}>
                 <div style={{ width: valueSchema.width ? `${valueSchema.width}%` : '100%' }}>
-                  {!isValidType && <div>Invalid field type</div>}
+                  {!isValidType && <div>{t('ui.invalidFieldType')}</div>}
                   {isValidType && (
                     <EditValueItem index={valueIndex} input={valueInput} value={valueSchema} setValue={setValue} />
                   )}
@@ -99,10 +102,10 @@ function CreateValueItem({ type, input, setValue }: { type: string; input: Input
   const schema = validateInputSchemaFields(input)
 
   const onSave = useCallback(
-    (editorValues: Record<string, Input>) => {
-      setValue((old) => [...(old || []), { type, ...editorValues }])
+    (editorValues: Record<string, any>) => {
+      setValue((old: Array<FieldSchema>) => [...(old || []), { type, ...editorValues }])
     },
-    [setValue],
+    [setValue, type],
   )
 
   return (
@@ -111,9 +114,9 @@ function CreateValueItem({ type, input, setValue }: { type: string; input: Input
       onSave={onSave}
       label={
         <>
-          <strong>{input?.name() || type}</strong>
+          <strong>{input?.name?.() || type}</strong>
           <br />
-          <span>{input?.description()}</span>
+          <span>{input?.description?.()}</span>
         </>
       }
     />
@@ -131,13 +134,17 @@ function EditValueItem({
   input: Input
   setValue: Dispatch<any>
 }) {
-  const schema = validateInputSchemaFields(input)
+  const { t } = useTranslation()
+  const schema = useMemo(() => validateInputSchemaFields(input), [input])
 
-  const values = Object.fromEntries(
-    schema.map((item) => {
-      return [item.name, value[item.name] ?? item.defaultValue]
-    }),
-  )
+  const values = useMemo(() => {
+    const valueRecord: Record<string, any> = value
+    return Object.fromEntries(
+      schema.map((item) => {
+        return [item.name, valueRecord[item.name] ?? item.defaultValue]
+      }),
+    )
+  }, [schema, value])
 
   const label = useMemo(() => {
     if (value.name && value.label) {
@@ -152,18 +159,32 @@ function EditValueItem({
   }, [value.name, value.label, value.type])
 
   const onSave = useCallback(
-    (editorValues: Record<string, Input>) => {
-      setValue((old) => {
+    (editorValues: Record<string, any>) => {
+      setValue((old: Array<FieldSchema>) => {
         const newValue = [...(old || [])]
-        newValue[index] = { type: value.type, ...editorValues }
-        if (Object.is(newValue, old)) return old
+        newValue[index] = { type: value.type, ...editorValues } as FieldSchema
         return newValue
       })
+    },
+    [setValue, index, value.type],
+  )
+
+  const onDelete = useCallback(
+    (event: React.MouseEvent<HTMLElement, MouseEvent>) => {
+      event.preventDefault()
+      setValue((old: Array<FieldSchema>) => (old || []).toSpliced(index, 1))
     },
     [setValue, index],
   )
 
-  return <SchemaEditor schema={schema} values={values} onSave={onSave} label={label} />
+  return (
+    <>
+      <SchemaEditor schema={schema} values={values} onSave={onSave} label={label} />
+      <button type='button' onClick={onDelete}>
+        {t('ui.delete')}
+      </button>
+    </>
+  )
 }
 
 function SchemaEditor({
@@ -180,30 +201,40 @@ function SchemaEditor({
   cancelLabel?: string | React.ReactNode
   schema: Array<FieldSchema>
   values?: Record<string, any>
-  onSave: (value: Record<string, Input>) => void
+  onSave: (value: Record<string, any>) => void
   onCancel?: () => void
 }) {
+  const { inputs } = useFormContext()
+  const { t } = useTranslation()
   const id = useId()
+
+  // Merge the schema's default values with the current values
+  const mergedValues = useMemo(() => {
+    const defaultValues = schema.filter((field) => field.defaultValue !== undefined)
+    const defaultEntries = Object.fromEntries(defaultValues.map((field) => [field.name, field.defaultValue]))
+    return { ...defaultEntries, ...(values || {}) }
+  }, [schema, values])
 
   const [resetCounter, setResetCounter] = useState(0)
   const [open, setOpen] = useState(false)
-  const [tempValue, setTempValue] = useState<Record<string, any>>(values || {})
+  const [tempValue, setTempValue] = useState<Record<string, any>>(mergedValues)
   const [tempMessages, setTempMessages] = useState<Record<string, FieldMessages>>({})
-  const [tempValidity, setTempValidity] = useState<Record<string, boolean>>({})
+  const [tempValidity, setTempValidity] = useState<Record<string, boolean | undefined>>({})
 
   const closeModal = () => {
     setResetCounter((old) => old + 1)
     setTempMessages({})
+    setTempValidity({})
     setOpen(false)
-    setTempValue(values)
+    setTempValue(mergedValues)
   }
 
   useEffect(() => {
     setTempValue((old) => {
-      if (Object.is(values, old)) return old
-      return values
+      if (Object.is(mergedValues, old)) return old
+      return mergedValues
     })
-  }, [values])
+  }, [mergedValues])
 
   const handleCancel = (event?: React.MouseEvent<HTMLElement, MouseEvent>) => {
     if (event) event.preventDefault()
@@ -213,27 +244,47 @@ function SchemaEditor({
 
   const handleSave = (event?: React.MouseEvent<HTMLElement, MouseEvent>) => {
     if (event) event.preventDefault()
+
+    // Validate every field and block the save while any are invalid
+    const newMessages: Record<string, FieldMessages> = {}
+    const newValidity: Record<string, boolean | undefined> = {}
+
+    for (const field of schema) {
+      const validate = inputs?.[field.type]?.validateValue
+      if (!validate) continue
+
+      const validation = validate(tempValue?.[field.name], field)
+      newMessages[field.name] = validation.messages
+      newValidity[field.name] = validation.isValid
+    }
+
+    if (Object.values(newValidity).some((valid) => valid === false)) {
+      setTempMessages(newMessages)
+      setTempValidity(newValidity)
+      return
+    }
+
     onSave({ ...tempValue })
     closeModal()
   }
 
   const handleValuesChange: OnValuesChangeCallback = useCallback((field, value) => {
     setTempValue((old) => {
-      if (Object.is(value, old)) return old
+      if (Object.is(old?.[field], value)) return old
       return { ...old, [field]: value }
     })
   }, [])
 
   const handleMessagesChange: OnMessagesChangeCallback = useCallback((field, messages) => {
     setTempMessages((old) => {
-      if (Object.is(messages, old)) return old
+      if (Object.is(old?.[field], messages)) return old
       return { ...old, [field]: messages }
     })
   }, [])
 
   const handleValidityChange: OnValidityChangeCallback = useCallback((field, valid) => {
     setTempValidity((old) => {
-      if (Object.is(valid, old)) return old
+      if (Object.is(old?.[field], valid)) return old
       return { ...old, [field]: valid }
     })
   }, [])
@@ -241,6 +292,7 @@ function SchemaEditor({
   return (
     <Fragment key={`${id}-${resetCounter}`}>
       <button
+        type='button'
         onClick={(event) => {
           event.preventDefault()
           setOpen((old) => !old)
@@ -261,8 +313,12 @@ function SchemaEditor({
             onValidityChange={handleValidityChange}
           />
         )}
-        <button onClick={handleCancel}>{cancelLabel || 'Cancel'}</button>
-        <button onClick={handleSave}>{saveLabel || 'Save'}</button>
+        <button type='button' onClick={handleCancel}>
+          {cancelLabel || t('ui.cancel')}
+        </button>
+        <button type='button' onClick={handleSave}>
+          {saveLabel || t('ui.save')}
+        </button>
       </Modal>
     </Fragment>
   )

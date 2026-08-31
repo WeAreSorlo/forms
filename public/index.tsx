@@ -91,7 +91,7 @@ const App = () => {
             },
             {
               type: 'number',
-              name: 'day',
+              name: 'month',
               label: 'MM',
               required: true,
               width: 33.333,
@@ -109,7 +109,7 @@ const App = () => {
     ],
   })
 
-  const buiderSchema = [
+  const builderSchema = [
     {
       name: 'builder',
       label: 'Form Builder',
@@ -128,18 +128,18 @@ const App = () => {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-evenly' }}>
       <div style={{ maxWidth: 600, width: '100%' }}>
-        <Form onValuesChange={onLeftFormChange} values={leftFormValues} schema={buiderSchema} />
+        <Form onValuesChange={onLeftFormChange} values={leftFormValues} schema={builderSchema} />
         <pre>{JSON.stringify(leftFormValues, null, 2)}</pre>
       </div>
       <div style={{ maxWidth: 600, width: '100%' }}>
-        <Form schema={leftFormValues?.builder} onChange={onRightFormChange} />
+        <Form schema={leftFormValues?.builder || []} onValuesChange={onRightFormChange} />
         <pre>{JSON.stringify(rightFormValues, null, 2)}</pre>
       </div>
     </div>
   )
 }
 
-const root = createRoot(document.getElementById('root'))
+const root = createRoot(document.getElementById('root')!)
 root.render(
   <React.StrictMode>
     <App />

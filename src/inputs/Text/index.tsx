@@ -1,4 +1,5 @@
 import { useFieldContext } from '@/components/Field'
+import i18n from '@/i18n'
 import {
   InputCategory,
   InputComponent,
@@ -10,7 +11,7 @@ import {
   InputValidateValue,
 } from '@/types/inputs'
 import { validateSchema } from '@/utils/inputs'
-import { validationError, validationSuccess } from '@/utils/validation'
+import { isEmptyValue, validationError, validationSuccess } from '@/utils/validation'
 import { useCallback } from 'react'
 
 export const name: InputName = () => 'Text'
@@ -27,30 +28,56 @@ export const optionFields: InputOptionFields = () => {
       type: 'text',
       required: false,
     },
+    {
+      name: 'minLength',
+      label: 'Minimum length',
+      type: 'number',
+      required: false,
+      width: 50,
+      options: {
+        min: 0,
+      },
+    },
+    {
+      name: 'maxLength',
+      label: 'Maximum length',
+      type: 'number',
+      required: false,
+      width: 50,
+      options: {
+        min: 1,
+      },
+    },
   ]
 }
 
 export const validateValue: InputValidateValue = (value, schema) => {
   schema = validateSchema(schema)
 
-  if (typeof value !== 'string') {
-    return validationError(value, 'Invalid value.')
+  // Return early if the value is empty and the field is optional
+  if (!schema.required && isEmptyValue(value)) {
+    return validationSuccess(value)
   }
 
-  if (schema.required && !value) {
-    return validationError(value, 'This field is required.')
+  // Check for an empty value
+  if (schema.required && isEmptyValue(value)) {
+    return validationError(value, i18n.t('validation.required'))
+  }
+
+  if (typeof value !== 'string') {
+    return validationError(value, i18n.t('validation.invalid'))
   }
 
   // Validate the minimum value length
   const min = schema.options?.minLength
   if (typeof min === 'number' && value.length < min) {
-    return validationError(value, `This field requires a minimum of ${min} character(s).`)
+    return validationError(value, i18n.t('validation.minLength', { min }))
   }
 
   // Validate the maximum value length
   const max = schema.options?.maxLength
   if (typeof max === 'number' && value.length > max) {
-    return validationError(value, `This field requires a maximum of ${max} character(s).`)
+    return validationError(value, i18n.t('validation.maxLength', { max }))
   }
 
   return validationSuccess(value)
@@ -73,7 +100,7 @@ const Component: InputComponent = function () {
     (input: any) => {
       handleValidation(validateValue(input, schema))
     },
-    [handleValidation, validateValue, schema],
+    [handleValidation, schema],
   )
 
   return (

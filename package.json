@@ -2,22 +2,39 @@
   "name": "iight",
   "version": "0.0.1",
   "description": "",
-  "main": "index.js",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "src/styles"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./styles/*": "./src/styles/*"
+  },
   "scripts": {
     "build": "tsup",
     "dev": "vite",
     "format": "prettier ./src --check",
-    "format:fix": "prettier ./src --write"
+    "format:fix": "prettier ./src --write",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "i18next": "^24.2.2",
     "lodash": "^4.17.21",
+    "react-i18next": "^15.4.0"
+  },
+  "peerDependencies": {
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-i18next": "^15.4.0",
-    "sass": "^1.85.0"
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@trivago/prettier-plugin-sort-imports": "^5.2.2",
@@ -27,8 +44,12 @@
     "@types/react-dom": "^19.0.3",
     "@vitejs/plugin-react": "^4.3.4",
     "prettier": "^3.5.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "sass": "^1.85.0",
     "tsup": "^8.3.6",
     "typescript": "^5.7.3",
-    "vite": "^6.1.0"
+    "vite": "^6.1.0",
+    "vitest": "^3.0.5"
   }
 }

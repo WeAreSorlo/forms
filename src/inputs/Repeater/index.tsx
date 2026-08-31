@@ -1,6 +1,5 @@
 import { useFieldContext } from '@/components/Field'
-import Fieldset from '@/components/Fieldset'
-import { useFormContext } from '@/context/FormProvider'
+import Fieldset, { OnValuesChangeCallback } from '@/components/Fieldset'
 import { FieldSchema } from '@/types/fields'
 import {
   InputCategory,
@@ -14,7 +13,7 @@ import {
 } from '@/types/inputs'
 import { validateSchema } from '@/utils/inputs'
 import { validationSuccess } from '@/utils/validation'
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 
 type Column = Record<string, any>
 type Row = Array<Column>
@@ -90,45 +89,45 @@ export const renderValue: InputRenderValue = (value, schema) => {
 }
 
 const Component: InputComponent = function () {
-  const { inputs } = useFormContext()
-  const { id, schema, required, readonly, disabled, options, value, setValue, handleValidation } = useFieldContext()
+  const { options, value, setValue } = useFieldContext()
 
-  const { minimumRows, maximumRows, minimumCols, maximumCols } = useMemo(() => {
-    const isHorizontal = options?.direction === 'x'
-    return {
-      minimumRows: isHorizontal ? 1 : 0,
-      maximumRows: isHorizontal ? 1 : null,
-      minimumCols: isHorizontal ? 0 : 1,
-      maximumCols: isHorizontal ? null : 1,
-    }
-  }, [options?.direction])
+  const isHorizontal = options?.direction === 'x'
 
+  // A repeater is a matrix locked to a single column or a single row
   const matrixSchema: Array<FieldSchema> = useMemo(() => {
+    const minimum = options?.minimum ?? 0
+    const maximum = options?.maximum ?? null
+
     return [
       {
         name: 'value',
         type: 'matrix',
-        fields: options?.fields || [],
-        value: value ? [value] : [],
-        options: { minimumRows, maximumRows, minimumCols, maximumCols },
+        options: {
+          fields: options?.fields || [],
+          minimumRows: isHorizontal ? 1 : minimum,
+          maximumRows: isHorizontal ? 1 : maximum,
+          minimumColumns: isHorizontal ? minimum : 1,
+          maximumColumns: isHorizontal ? maximum : 1,
+        },
       },
     ]
-  }, [schema, options?.fields, value, minimumRows, maximumRows, minimumCols, maximumCols])
+  }, [options?.fields, options?.minimum, options?.maximum, isHorizontal])
 
-  return (
-    <>
-      <pre>
-        <code>{JSON.stringify({ minimumRows, maximumRows, minimumCols, maximumCols }, null, 2)}</code>
-      </pre>
-      <Fieldset
-        schema={matrixSchema}
-        inputs={inputs}
-        onValuesChange={(columnFieldName, columnFieldValue) => {
-          setValue(columnFieldValue[0])
-        }}
-      />
-    </>
+  // Convert the repeated items to and from the matrix format
+  const matrixValues = useMemo(() => {
+    const items: Row = Array.isArray(value) ? value : []
+    const matrixValue: Matrix = isHorizontal ? [items] : items.map((item) => [item])
+    return { value: matrixValue }
+  }, [value, isHorizontal])
+
+  const onValuesChange: OnValuesChangeCallback = useCallback(
+    (field, matrixValue: Matrix) => {
+      setValue(isHorizontal ? matrixValue[0] || [] : matrixValue.map((row) => row[0]))
+    },
+    [setValue, isHorizontal],
   )
+
+  return <Fieldset schema={matrixSchema} values={matrixValues} onValuesChange={onValuesChange} />
 }
 
 export default Component

@@ -1,4 +1,5 @@
 import { useFieldContext } from '@/components/Field'
+import i18n from '@/i18n'
 import {
   InputCategory,
   InputComponent,
@@ -33,13 +34,14 @@ export const optionFields: InputOptionFields = () => {
 export const validateValue: InputValidateValue = (value, schema) => {
   schema = validateSchema(schema)
 
-  value = ['yes', '1', 'true'].includes(String(value).trim().toLowerCase())
+  value = [true, 1, 'yes', '1', 'true'].includes(typeof value === 'string' ? value.trim().toLowerCase() : value)
 
+  // A required boolean must be checked
   if (schema.required && !value) {
-    return validationError(value, 'This field is required.')
+    return validationError(value, i18n.t('validation.required'))
   }
 
-  return validationSuccess(!!value)
+  return validationSuccess(value)
 }
 
 export const formatValue: InputFormatValue = (value, schema) => {
@@ -53,13 +55,13 @@ export const renderValue: InputRenderValue = (value, schema) => {
 }
 
 const Component: InputComponent = function () {
-  const { id, schema, required, readonly, disabled, options, value = '', handleValidation } = useFieldContext()
+  const { id, schema, required, readonly, disabled, options, value = false, handleValidation } = useFieldContext()
 
   const doValidation = useCallback(
     (input: any) => {
       handleValidation(validateValue(input, schema))
     },
-    [handleValidation, validateValue, schema],
+    [handleValidation, schema],
   )
 
   return (
@@ -68,7 +70,7 @@ const Component: InputComponent = function () {
         className='iight-input'
         id={id}
         type='checkbox'
-        checked={value}
+        checked={!!value}
         onChange={(event) => doValidation(event.target.checked)}
         required={required}
         readOnly={readonly}

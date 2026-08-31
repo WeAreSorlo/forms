@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 
 export interface ModalProps {
   open: React.HTMLProps<HTMLDialogElement>['open']
@@ -11,6 +12,7 @@ export interface ModalProps {
 }
 
 export default function Modal({ open, header, footer, closeButton, onOpen, onClose, children }: ModalProps) {
+  const { t } = useTranslation()
   const dialogRef = useRef<null | HTMLDialogElement>(null)
 
   const handleClose = useCallback(() => {
@@ -25,15 +27,16 @@ export default function Modal({ open, header, footer, closeButton, onOpen, onClo
       <>
         {closeButton === true && (
           <button
+            type='button'
             onClick={(event) => {
               event.preventDefault()
               handleClose()
             }}
           >
-            Close
+            {t('ui.close')}
           </button>
         )}
-        {closeButton}
+        {closeButton !== true && closeButton}
       </>
     )
   }
@@ -45,28 +48,25 @@ export default function Modal({ open, header, footer, closeButton, onOpen, onClo
     if (dialog) {
       if (open && !dialog.open) {
         dialog.showModal()
+        if (onOpen) onOpen()
       } else if (!open && dialog.open) {
         dialog.close()
       }
     }
-  }, [dialogRef, open])
+  }, [dialogRef, open, onOpen])
 
-  // Fire open/close events
+  // Fire the close event when the dialog is dismissed natively, e.g. with the escape key
   useEffect(() => {
     const dialog = dialogRef.current
     if (dialog) {
-      const openListener = () => (onOpen ? onOpen() : null)
-      dialog.addEventListener('open', openListener)
-
       const closeListener = () => (onClose ? onClose() : null)
       dialog.addEventListener('close', closeListener)
 
       return () => {
-        dialog.removeEventListener('open', openListener)
         dialog.removeEventListener('close', closeListener)
       }
     }
-  }, [dialogRef, onOpen, onClose])
+  }, [dialogRef, onClose])
 
   return (
     <dialog ref={dialogRef} className='iight-modal'>

@@ -1,6 +1,7 @@
 import { FieldSchema } from '@/types/fields'
 import { Input, InputSchema } from '@/types/inputs'
 
+// Strip unknown properties from a field schema
 export function validateSchema({
   name,
   label,
@@ -34,6 +35,7 @@ export function validateInputSchemaFields(input: Input) {
   if (optionFields.length >= 1) {
     schema.push({
       name: 'options',
+      label: 'Options',
       type: 'group',
       options: {
         fields: optionFields,
@@ -44,7 +46,7 @@ export function validateInputSchemaFields(input: Input) {
   return schema
 }
 
-export const baseInputSchemaFields = (): Array<FieldSchema & { [key: string]: any }> => {
+export const baseInputSchemaFields = (): Array<FieldSchema> => {
   return [
     {
       name: 'name',
@@ -65,7 +67,9 @@ export const baseInputSchemaFields = (): Array<FieldSchema & { [key: string]: an
       label: 'Required',
       type: 'boolean',
       required: false,
-      message: 'Yes',
+      options: {
+        message: 'Yes',
+      },
     },
     {
       name: 'instructions',
@@ -78,8 +82,10 @@ export const baseInputSchemaFields = (): Array<FieldSchema & { [key: string]: an
       label: 'Width',
       type: 'number',
       required: false,
-      min: 1,
-      max: 100,
+      options: {
+        min: 1,
+        max: 100,
+      },
     },
   ]
 }

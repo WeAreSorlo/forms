@@ -4,19 +4,11 @@ import Fieldset, {
   OnValuesChangeCallback,
 } from '@/components/Fieldset'
 import { Context, FormContext } from '@/context/FormProvider'
+import i18n from '@/i18n'
 import * as coreInputs from '@/inputs'
-import * as resources from '@/translations'
 import { Input } from '@/types/inputs'
-import i18n from 'i18next'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { I18nextProvider, initReactI18next } from 'react-i18next'
-
-i18n.use(initReactI18next).init({
-  resources: resources,
-  lng: 'en',
-  fallbackLng: 'en',
-  interpolation: { escapeValue: false },
-})
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { I18nextProvider } from 'react-i18next'
 
 export interface FormProps {
   schema: Context['schema']
@@ -44,9 +36,10 @@ export default function Form({
   const [messages, setMessages] = useState<Context['messages']>(defaultMessages || {})
   const [validity, setValidity] = useState<Context['validity']>(defaultValidity || {})
 
-  // Sync props with local state
+  // Sync props with local state, keeping the local state when a prop is not controlled
   useEffect(() => {
     setSchema((old) => {
+      if (defaultSchema === undefined) return old
       if (Object.is(defaultSchema, old)) return old
       return defaultSchema
     })
@@ -54,6 +47,7 @@ export default function Form({
 
   useEffect(() => {
     setValues((old) => {
+      if (defaultValues === undefined) return old
       if (Object.is(defaultValues, old)) return old
       return defaultValues
     })
@@ -61,6 +55,7 @@ export default function Form({
 
   useEffect(() => {
     setMessages((old) => {
+      if (defaultMessages === undefined) return old
       if (Object.is(defaultMessages, old)) return old
       return defaultMessages
     })
@@ -68,6 +63,7 @@ export default function Form({
 
   useEffect(() => {
     setValidity((old) => {
+      if (defaultValidity === undefined) return old
       if (Object.is(defaultValidity, old)) return old
       return defaultValidity
     })
@@ -79,7 +75,7 @@ export default function Form({
       ...coreInputs,
       ...(inputs || {}),
     }
-  }, [coreInputs, inputs])
+  }, [inputs])
 
   const onFieldsetValuesChange: OnValuesChangeCallback = useCallback((field, value) => {
     setValues((old) => {
@@ -114,24 +110,27 @@ export default function Form({
     if (onValidityChange) onValidityChange(validity)
   }, [validity, onValidityChange])
 
+  const contextValue = useMemo(() => {
+    return {
+      schema,
+      setSchema,
+      values,
+      setValues,
+      messages,
+      setMessages,
+      validity,
+      setValidity,
+
+      // Static
+      inputs: mergedInputs,
+    }
+  }, [schema, values, messages, validity, mergedInputs])
+
   return (
     <I18nextProvider i18n={i18n}>
-      <FormContext.Provider
-        value={{
-          schema,
-          setSchema,
-          values,
-          setValues,
-          messages,
-          setMessages,
-          validity,
-          setValidity,
-
-          // Static
-          inputs: mergedInputs,
-        }}
-      >
-        <form className='iight-form'>
+      <FormContext.Provider value={contextValue}>
+        {/* Prevent implicit submissions from reloading the page */}
+        <form className='iight-form' onSubmit={(event) => event.preventDefault()}>
           <Fieldset
             schema={schema}
             values={values}

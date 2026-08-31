@@ -5,17 +5,19 @@ import Field, {
 } from '@/components/Field'
 import { useFormContext } from '@/context/FormProvider'
 import { FieldMessages, FieldSchema } from '@/types/fields'
-import { useCallback } from 'react'
+import { InputComponent } from '@/types/inputs'
+import { memo, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 
 export type OnValuesChangeCallback = (field: string, value: any) => void
 export type OnMessagesChangeCallback = (field: string, messages: FieldMessages) => void
-export type OnValidityChangeCallback = (field: string, valid: boolean) => void
+export type OnValidityChangeCallback = (field: string, valid: boolean | undefined) => void
 
 export interface FieldsetProps {
   schema: Array<FieldSchema>
   values?: Record<string, any>
   messages?: Record<string, FieldMessages>
-  validity?: Record<string, boolean>
+  validity?: Record<string, boolean | undefined>
   onValuesChange?: OnValuesChangeCallback
   onMessagesChange?: OnMessagesChangeCallback
   onValidityChange?: OnValidityChangeCallback
@@ -30,16 +32,19 @@ export default function Fieldset({
   onMessagesChange = () => {},
   onValidityChange = () => {},
 }: FieldsetProps) {
+  const { inputs } = useFormContext()
+
   return (
     <div className='iight-fieldset'>
       {schema.map((fieldSchema, fieldIndex) => {
         return (
           <FieldsetItem
-            key={fieldIndex}
+            key={fieldSchema.name ?? fieldIndex}
             schema={fieldSchema}
-            values={values}
-            messages={messages}
-            validity={validity}
+            component={inputs?.[fieldSchema.type]?.default}
+            value={values[fieldSchema.name]}
+            messages={messages[fieldSchema.name]}
+            valid={validity[fieldSchema.name]}
             onValuesChange={onValuesChange}
             onMessagesChange={onMessagesChange}
             onValidityChange={onValidityChange}
@@ -50,61 +55,62 @@ export default function Fieldset({
   )
 }
 
-function FieldsetItem({
+// Memoised so a field only re-renders when its own schema or state changes
+const FieldsetItem = memo(function FieldsetItem({
   schema,
-  values = {},
-  messages = {},
-  validity = {},
+  component: Component,
+  value,
+  messages,
+  valid,
   onValuesChange = () => {},
   onMessagesChange = () => {},
   onValidityChange = () => {},
 }: {
   schema: FieldSchema
-  values?: Record<string, any>
-  messages?: Record<string, FieldMessages>
-  validity?: Record<string, boolean>
+  component?: InputComponent
+  value?: any
+  messages?: FieldMessages
+  valid?: boolean
   onValuesChange?: OnValuesChangeCallback
   onMessagesChange?: OnMessagesChangeCallback
   onValidityChange?: OnValidityChangeCallback
 }) {
-  const { inputs } = useFormContext()
+  const { t } = useTranslation()
   const { type, ...fieldProps } = schema
-  const input = inputs?.[type]
-  const InputCompontent = input?.default
 
-  const onValuesChangeHandler: OnFieldValueChangeCallback = useCallback(
+  const onValueChangeHandler: OnFieldValueChangeCallback = useCallback(
     (value) => {
       onValuesChange(schema.name, value)
     },
-    [onValuesChange],
+    [onValuesChange, schema.name],
   )
 
   const onMessagesChangeHandler: OnFieldMessagesChangeCallback = useCallback(
     (messages) => {
       onMessagesChange(schema.name, messages)
     },
-    [onMessagesChange],
+    [onMessagesChange, schema.name],
   )
 
   const onValidityChangeHandler: OnFieldValidityChangeCallback = useCallback(
     (validity) => {
       onValidityChange(schema.name, validity)
     },
-    [onValidityChange],
+    [onValidityChange, schema.name],
   )
 
   return (
     <Field
-      value={values[schema.name]}
-      messages={messages[schema.name]}
-      valid={validity[schema.name]}
-      onValueChange={onValuesChangeHandler}
+      {...fieldProps}
+      value={value}
+      messages={messages}
+      valid={valid}
+      onValueChange={onValueChangeHandler}
       onMessagesChange={onMessagesChangeHandler}
       onValidityChange={onValidityChangeHandler}
-      {...fieldProps}
     >
-      {InputCompontent && <InputCompontent />}
-      {!InputCompontent && 'Invalid input type.'}
+      {Component && <Component />}
+      {!Component && t('ui.invalidFieldType')}
     </Field>
   )
-}
+})

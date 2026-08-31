@@ -1,4 +1,5 @@
 import { useFieldContext } from '@/components/Field'
+import i18n from '@/i18n'
 import {
   InputCategory,
   InputComponent,
@@ -10,7 +11,7 @@ import {
   InputValidateValue,
 } from '@/types/inputs'
 import { validateSchema } from '@/utils/inputs'
-import { validationError, validationSuccess } from '@/utils/validation'
+import { isEmptyValue, validationError, validationSuccess } from '@/utils/validation'
 import { useCallback } from 'react'
 
 export const name: InputName = () => 'Number'
@@ -22,11 +23,16 @@ export const category: InputCategory = () => 'Standard'
 export const optionFields: InputOptionFields = () => {
   return [
     {
+      label: 'Placeholder',
+      name: 'placeholder',
+      type: 'text',
+      required: false,
+    },
+    {
       label: 'Minimum',
       name: 'min',
       type: 'number',
       required: false,
-      defaultValue: 1,
       width: 50,
       options: {
         min: 0,
@@ -48,34 +54,34 @@ export const optionFields: InputOptionFields = () => {
 export const validateValue: InputValidateValue = (value, schema) => {
   schema = validateSchema(schema)
 
-  // Return early if empty value and field is optional
-  if (!schema.required && (value === '' || !value)) {
+  // Return early if the value is empty and the field is optional, note that 0 is not empty
+  if (!schema.required && isEmptyValue(value)) {
     return validationSuccess(value)
+  }
+
+  // Check for an empty value
+  if (schema.required && isEmptyValue(value)) {
+    return validationError(value, i18n.t('validation.required'))
   }
 
   // Enforce number type
   if (typeof value !== 'number') value = Number(value)
 
-  // Check for empty value
-  if (schema.required && !value) {
-    return validationError(value, 'This field is required.')
-  }
-
   // Double check it's a valid number
   if (isNaN(value) || !isFinite(value)) {
-    return validationError(value, 'Invalid value.')
+    return validationError(value, i18n.t('validation.invalid'))
   }
 
   // Validate minimum value
   const min = schema.options?.min
   if (typeof min === 'number' && value < min) {
-    return validationError(value, `This field requires a minimum value of ${min}.`)
+    return validationError(value, i18n.t('validation.min', { min }))
   }
 
   // Validate maximum value
   const max = schema.options?.max
   if (typeof max === 'number' && value > max) {
-    return validationError(value, `This field requires a maximum value of ${max}.`)
+    return validationError(value, i18n.t('validation.max', { max }))
   }
 
   // Return success
@@ -103,7 +109,7 @@ const Component: InputComponent = function () {
     (input: any) => {
       handleValidation(validateValue(input, schema))
     },
-    [handleValidation, validateValue, schema],
+    [handleValidation, schema],
   )
 
   return (
