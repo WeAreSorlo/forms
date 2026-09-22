@@ -10,4 +10,12 @@ export default defineConfig({
             "@": path.resolve(__dirname, "src"), // Map @ to src/
         },
     },
+    build: {
+        rollupOptions: {
+            input: {
+                index: path.resolve(__dirname, "public/index.html"),
+                marketo: path.resolve(__dirname, "public/marketo.html"),
+            },
+        },
+    },
 });
