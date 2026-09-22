@@ -1,7 +1,6 @@
 import { useFieldContext } from '@/components/Field'
 import Fieldset, { OnValidityChangeCallback, OnValuesChangeCallback } from '@/components/Fieldset'
 import { FieldPath, FieldReportContext, FieldReportContextValue } from '@/context/FormProvider'
-import i18n from '@/i18n'
 import { FieldSchema } from '@/types/fields'
 import {
   InputCategory,
@@ -16,6 +15,7 @@ import {
   InputValidateValue,
 } from '@/types/inputs'
 import { validateSchema } from '@/utils/inputs'
+import { validationMessage } from '@/utils/messages'
 import { isEmptyValue, validationError, validationSuccess } from '@/utils/validation'
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
@@ -87,23 +87,23 @@ export const validateValue: InputValidateValue = (value, schema) => {
 
   // Check for an empty value
   if (schema.required && isEmptyValue(value)) {
-    return validationError(value, i18n.t('validation.required'))
+    return validationError(value, validationMessage(schema, 'required'))
   }
 
   if (!Array.isArray(value)) {
-    return validationError(value, i18n.t('validation.invalid'))
+    return validationError(value, validationMessage(schema, 'invalid'))
   }
 
   // Validate the minimum number of items
   const min = schema.options?.minimum
   if (typeof min === 'number' && value.length < min) {
-    return validationError(value, i18n.t('validation.minItems', { min }))
+    return validationError(value, validationMessage(schema, 'minItems', { min }))
   }
 
   // Validate the maximum number of items
   const max = schema.options?.maximum
   if (typeof max === 'number' && value.length > max) {
-    return validationError(value, i18n.t('validation.maxItems', { max }))
+    return validationError(value, validationMessage(schema, 'maxItems', { max }))
   }
 
   return validationSuccess(value)

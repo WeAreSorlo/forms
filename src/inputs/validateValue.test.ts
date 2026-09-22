@@ -259,6 +259,32 @@ describe('checkbox', () => {
   })
 })
 
+describe('message overrides', () => {
+  it('prefers per field messages over the built in translations', () => {
+    const validation = text.validateValue(
+      '',
+      schema({ required: true, options: { messages: { required: 'Please enter your work email' } } }),
+    )
+
+    expect(validation.messages).toEqual(['Please enter your work email'])
+  })
+
+  it('interpolates parameters into overridden messages', () => {
+    const validation = number.validateValue(
+      1,
+      schema({ options: { min: 5, messages: { min: 'Must be at least {{min}}' } } }),
+    )
+
+    expect(validation.messages).toEqual(['Must be at least 5'])
+  })
+
+  it('falls back to the built in translations for keys without overrides', () => {
+    const validation = text.validateValue('', schema({ required: true, options: { messages: { invalid: 'Nope' } } }))
+
+    expect(validation.messages).toEqual(['This field is required.'])
+  })
+})
+
 describe('repeater', () => {
   it('accepts an empty optional value', () => {
     expect(repeater.validateValue(undefined, schema()).isValid).toBe(true)

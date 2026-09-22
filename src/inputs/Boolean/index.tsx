@@ -1,5 +1,4 @@
 import { useFieldContext } from '@/components/Field'
-import i18n from '@/i18n'
 import {
   InputCategory,
   InputComponent,
@@ -11,6 +10,7 @@ import {
   InputValidateValue,
 } from '@/types/inputs'
 import { validateSchema } from '@/utils/inputs'
+import { validationMessage } from '@/utils/messages'
 import { validationError, validationSuccess } from '@/utils/validation'
 import { useCallback } from 'react'
 
@@ -38,7 +38,7 @@ export const validateValue: InputValidateValue = (value, schema) => {
 
   // A required boolean must be checked
   if (schema.required && !value) {
-    return validationError(value, i18n.t('validation.required'))
+    return validationError(value, validationMessage(schema, 'required'))
   }
 
   return validationSuccess(value)

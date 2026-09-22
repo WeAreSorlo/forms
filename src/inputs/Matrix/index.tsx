@@ -5,7 +5,6 @@ import Fieldset, {
   OnValuesChangeCallback,
 } from '@/components/Fieldset'
 import { FieldReportContext, FieldReportContextValue, FieldScopeContext } from '@/context/FormProvider'
-import i18n from '@/i18n'
 import { FieldMessages, FieldSchema } from '@/types/fields'
 import {
   InputCategory,
@@ -20,6 +19,7 @@ import {
   InputValidateValue,
 } from '@/types/inputs'
 import { validateSchema } from '@/utils/inputs'
+import { validationMessage } from '@/utils/messages'
 import { isEmptyValue, validationError, validationSuccess } from '@/utils/validation'
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -98,22 +98,22 @@ export const validateValue: InputValidateValue = (value, schema) => {
 
   // Check for an empty value
   if (schema.required && isEmptyValue(value)) {
-    return validationError(value, i18n.t('validation.required'))
+    return validationError(value, validationMessage(schema, 'required'))
   }
 
   if (!Array.isArray(value) || value.some((row) => !Array.isArray(row))) {
-    return validationError(value, i18n.t('validation.invalid'))
+    return validationError(value, validationMessage(schema, 'invalid'))
   }
 
   // Validate the minimum and maximum number of rows
   const minRows = schema.options?.minimumRows
   if (typeof minRows === 'number' && value.length < minRows) {
-    return validationError(value, i18n.t('validation.minRows', { min: minRows }))
+    return validationError(value, validationMessage(schema, 'minRows', { min: minRows }))
   }
 
   const maxRows = schema.options?.maximumRows
   if (typeof maxRows === 'number' && value.length > maxRows) {
-    return validationError(value, i18n.t('validation.maxRows', { max: maxRows }))
+    return validationError(value, validationMessage(schema, 'maxRows', { max: maxRows }))
   }
 
   // Validate the minimum and maximum number of columns
@@ -121,12 +121,12 @@ export const validateValue: InputValidateValue = (value, schema) => {
 
   const minColumns = schema.options?.minimumColumns
   if (typeof minColumns === 'number' && value.length >= 1 && columns < minColumns) {
-    return validationError(value, i18n.t('validation.minColumns', { min: minColumns }))
+    return validationError(value, validationMessage(schema, 'minColumns', { min: minColumns }))
   }
 
   const maxColumns = schema.options?.maximumColumns
   if (typeof maxColumns === 'number' && columns > maxColumns) {
-    return validationError(value, i18n.t('validation.maxColumns', { max: maxColumns }))
+    return validationError(value, validationMessage(schema, 'maxColumns', { max: maxColumns }))
   }
 
   return validationSuccess(value)

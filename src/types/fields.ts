@@ -1,6 +1,15 @@
 import { InputSchema } from '@/types/inputs'
 
-export type ConditionOperator = 'equals' | 'notEquals' | 'contains' | 'greaterThan' | 'lessThan' | 'empty' | 'notEmpty'
+export type ConditionOperator =
+  | 'equals'
+  | 'notEquals'
+  | 'contains'
+  | 'notContains'
+  | 'startsWith'
+  | 'greaterThan'
+  | 'lessThan'
+  | 'empty'
+  | 'notEmpty'
 
 // A rule that must match for a field to be shown, where the field is a dotted
 // path resolved against the nearest value scope first

@@ -346,6 +346,8 @@ export const baseInputSchemaFields = (): Array<FieldSchema> => {
                       { value: 'equals', label: 'Equals' },
                       { value: 'notEquals', label: 'Not equals' },
                       { value: 'contains', label: 'Contains' },
+                      { value: 'notContains', label: 'Not contains' },
+                      { value: 'startsWith', label: 'Starts with' },
                       { value: 'greaterThan', label: 'Greater than' },
                       { value: 'lessThan', label: 'Less than' },
                       { value: 'empty', label: 'Is empty' },

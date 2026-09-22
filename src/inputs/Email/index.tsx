@@ -1,5 +1,4 @@
 import { useFieldContext } from '@/components/Field'
-import i18n from '@/i18n'
 import {
   InputCategory,
   InputComponent,
@@ -11,6 +10,7 @@ import {
   InputValidateValue,
 } from '@/types/inputs'
 import { validateSchema } from '@/utils/inputs'
+import { validationMessage } from '@/utils/messages'
 import { isEmail, isEmptyValue, validationError, validationSuccess } from '@/utils/validation'
 import { useCallback } from 'react'
 
@@ -70,21 +70,21 @@ export const validateValue: InputValidateValue = (value, schema) => {
 
   // Check for an empty value
   if (schema.required && isEmptyValue(value)) {
-    return validationError(value, i18n.t('validation.required'))
+    return validationError(value, validationMessage(schema, 'required'))
   }
 
   if (typeof value !== 'string') {
-    return validationError(value, i18n.t('validation.invalid'))
+    return validationError(value, validationMessage(schema, 'invalid'))
   }
 
   if (!schema.options?.multiple && !isEmail(value)) {
-    return validationError(value, i18n.t('validation.email'))
+    return validationError(value, validationMessage(schema, 'email'))
   }
 
   // If input allows for multiple addresses
   // @link https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/email#multiple
   if (schema.options?.multiple && value.split(/[ ,]+/).filter((item) => !isEmail(item)).length) {
-    return validationError(value, i18n.t('validation.emailMultiple'))
+    return validationError(value, validationMessage(schema, 'emailMultiple'))
   }
 
   return validationSuccess(value)

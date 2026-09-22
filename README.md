@@ -100,6 +100,17 @@ const report = validateValues(schema, values, inputs)
 
 Container fields aggregate: a group, repeater or matrix is marked invalid while any nested field is invalid, and repeaters/matrices also validate their own item, row and column bounds.
 
+Validation messages can be overridden per field through `options.messages`, keyed by the built in message names (`required`, `invalid`, `minLength`, `min`, `email`, and so on), with `{{min}}`-style parameters interpolated:
+
+```ts
+{
+  type: 'email',
+  name: 'email',
+  required: true,
+  options: { messages: { required: 'Please enter your work email' } },
+}
+```
+
 The form's `messages` and `validity` maps are keyed by path, so nested fields report alongside top-level ones — `address.town`, `pets.0.petname`, `grid.0.1.amount` — which makes error summaries a simple iteration. Entries are removed when a field unmounts, for example when a repeater row is deleted. A custom container input can join in by consuming `FieldReportContext` and providing a wrapped report to its children that prefixes their position, exactly as the matrix does for its cells; the schema builder instead provides `undefined` to keep its temporary editor state out of the maps.
 
 ## Conditional logic
@@ -129,7 +140,7 @@ conditions: [
 ]
 ```
 
-Operators: `equals`, `notEquals`, `contains`, `greaterThan`, `lessThan`, `empty`, `notEmpty`. Equality compares loosely (`'18'` matches `18`), since values written in the schema builder are strings.
+Operators: `equals`, `notEquals`, `contains`, `notContains`, `startsWith`, `greaterThan`, `lessThan`, `empty`, `notEmpty`. Equality compares loosely (`'18'` matches `18`), since values written in the schema builder are strings.
 
 A condition's `field` is a dotted path resolved against the nearest value scope first, then outwards to the form's root — so inside a repeater item, `species` finds the sibling field in the same item, while `address.town` falls through to the root values, and `pets.0.petname` works from the root. The closest scope wins when names collide. The schema builder exposes conditions on every field under "Conditional logic".
 

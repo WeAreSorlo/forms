@@ -6,7 +6,6 @@ import Fieldset, {
 } from '@/components/Fieldset'
 import Modal from '@/components/Modal'
 import { FieldReportContext, FieldScopeContext, useFormStaticContext } from '@/context/FormProvider'
-import i18n from '@/i18n'
 import { FieldMessages, FieldSchema } from '@/types/fields'
 import {
   Input,
@@ -20,6 +19,7 @@ import {
   InputValidateValue,
 } from '@/types/inputs'
 import { validateInputSchemaFields, validateSchema, validateValues } from '@/utils/inputs'
+import { validationMessage } from '@/utils/messages'
 import { validationError, validationSuccess } from '@/utils/validation'
 import { Dispatch, Fragment, useCallback, useEffect, useId, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -38,7 +38,7 @@ export const validateValue: InputValidateValue = (value, schema) => {
   schema = validateSchema(schema)
 
   if (!Array.isArray(value)) {
-    return validationError(value, i18n.t('validation.invalid'))
+    return validationError(value, validationMessage(schema, 'invalid'))
   }
 
   return validationSuccess(value)

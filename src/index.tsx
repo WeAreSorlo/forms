@@ -23,6 +23,7 @@ export {
   validateValues,
 } from '@/utils/inputs'
 export { evaluateCondition, evaluateConditions, normaliseConditions, resolveConditionValue } from '@/utils/conditions'
+export { validationMessage } from '@/utils/messages'
 export {
   isEmail,
   isEmptyValue,

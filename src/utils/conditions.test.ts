@@ -40,6 +40,18 @@ describe('evaluateCondition', () => {
     expect(evaluateCondition({ field: 'colours', operator: 'contains', value: 'green' }, scopes)).toBe(false)
   })
 
+  it('supports notContains as the inverse of contains', () => {
+    expect(evaluateCondition({ field: 'colours', operator: 'notContains', value: 'green' }, scopes)).toBe(true)
+    expect(evaluateCondition({ field: 'colours', operator: 'notContains', value: 'red' }, scopes)).toBe(false)
+    expect(evaluateCondition({ field: 'nope', operator: 'notContains', value: 'red' }, scopes)).toBe(true)
+  })
+
+  it('supports startsWith for strings', () => {
+    expect(evaluateCondition({ field: 'bio', operator: 'startsWith', value: 'painter' }, scopes)).toBe(true)
+    expect(evaluateCondition({ field: 'bio', operator: 'startsWith', value: 'trees' }, scopes)).toBe(false)
+    expect(evaluateCondition({ field: 'age', operator: 'startsWith', value: '2' }, scopes)).toBe(false)
+  })
+
   it('supports numeric comparisons', () => {
     expect(evaluateCondition({ field: 'age', operator: 'greaterThan', value: 18 }, scopes)).toBe(true)
     expect(evaluateCondition({ field: 'age', operator: 'lessThan', value: 18 }, scopes)).toBe(false)

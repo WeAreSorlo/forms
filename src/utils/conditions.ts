@@ -42,6 +42,11 @@ export function evaluateCondition(condition: FieldCondition, scopes: ConditionSc
     case 'contains':
       if (Array.isArray(value)) return value.includes(condition.value)
       return typeof value === 'string' && value.includes(String(condition.value))
+    case 'notContains':
+      if (Array.isArray(value)) return !value.includes(condition.value)
+      return !(typeof value === 'string' && value.includes(String(condition.value)))
+    case 'startsWith':
+      return typeof value === 'string' && value.startsWith(String(condition.value))
     case 'greaterThan':
       return Number(value) > Number(condition.value)
     case 'lessThan':

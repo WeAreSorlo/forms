@@ -1,5 +1,4 @@
 import { useFieldContext } from '@/components/Field'
-import i18n from '@/i18n'
 import {
   InputCategory,
   InputComponent,
@@ -11,6 +10,7 @@ import {
   InputValidateValue,
 } from '@/types/inputs'
 import { validateSchema } from '@/utils/inputs'
+import { validationMessage } from '@/utils/messages'
 import { isEmptyValue, validationError, validationSuccess } from '@/utils/validation'
 import { useCallback } from 'react'
 
@@ -61,7 +61,7 @@ export const validateValue: InputValidateValue = (value, schema) => {
 
   // Check for an empty value
   if (schema.required && isEmptyValue(value)) {
-    return validationError(value, i18n.t('validation.required'))
+    return validationError(value, validationMessage(schema, 'required'))
   }
 
   // Enforce number type
@@ -69,19 +69,19 @@ export const validateValue: InputValidateValue = (value, schema) => {
 
   // Double check it's a valid number
   if (isNaN(value) || !isFinite(value)) {
-    return validationError(value, i18n.t('validation.invalid'))
+    return validationError(value, validationMessage(schema, 'invalid'))
   }
 
   // Validate minimum value
   const min = schema.options?.min
   if (typeof min === 'number' && value < min) {
-    return validationError(value, i18n.t('validation.min', { min }))
+    return validationError(value, validationMessage(schema, 'min', { min }))
   }
 
   // Validate maximum value
   const max = schema.options?.max
   if (typeof max === 'number' && value > max) {
-    return validationError(value, i18n.t('validation.max', { max }))
+    return validationError(value, validationMessage(schema, 'max', { max }))
   }
 
   // Return success

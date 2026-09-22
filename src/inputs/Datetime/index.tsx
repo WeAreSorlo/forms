@@ -1,5 +1,4 @@
 import { useFieldContext } from '@/components/Field'
-import i18n from '@/i18n'
 import {
   InputCategory,
   InputComponent,
@@ -11,6 +10,7 @@ import {
   InputValidateValue,
 } from '@/types/inputs'
 import { validateSchema } from '@/utils/inputs'
+import { validationMessage } from '@/utils/messages'
 import { isEmptyValue, validationError, validationSuccess } from '@/utils/validation'
 import { useCallback } from 'react'
 
@@ -49,7 +49,7 @@ export const validateValue: InputValidateValue = (value, schema) => {
 
   // Check for an empty value
   if (schema.required && isEmptyValue(value)) {
-    return validationError(value, i18n.t('validation.required'))
+    return validationError(value, validationMessage(schema, 'required'))
   }
 
   if (
@@ -57,18 +57,18 @@ export const validateValue: InputValidateValue = (value, schema) => {
     !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?$/.test(value) ||
     isNaN(Date.parse(value))
   ) {
-    return validationError(value, i18n.t('validation.datetime'))
+    return validationError(value, validationMessage(schema, 'datetime'))
   }
 
   // Local ISO datetimes compare lexicographically, so validate the range as strings
   const min = schema.options?.min
   if (typeof min === 'string' && min && value < min) {
-    return validationError(value, i18n.t('validation.min', { min }))
+    return validationError(value, validationMessage(schema, 'min', { min }))
   }
 
   const max = schema.options?.max
   if (typeof max === 'string' && max && value > max) {
-    return validationError(value, i18n.t('validation.max', { max }))
+    return validationError(value, validationMessage(schema, 'max', { max }))
   }
 
   return validationSuccess(value)

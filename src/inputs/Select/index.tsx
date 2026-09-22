@@ -1,5 +1,4 @@
 import { useFieldContext } from '@/components/Field'
-import i18n from '@/i18n'
 import {
   InputCategory,
   InputComponent,
@@ -11,6 +10,7 @@ import {
   InputValidateValue,
 } from '@/types/inputs'
 import { validateSchema } from '@/utils/inputs'
+import { validationMessage } from '@/utils/messages'
 import { isEmptyValue, validationError, validationSuccess } from '@/utils/validation'
 import { Fragment, useCallback } from 'react'
 
@@ -77,7 +77,7 @@ export const validateValue: InputValidateValue = (value, schema) => {
   if (schema.required && isEmptyValue(value)) {
     return validationError(
       value,
-      schema.options?.multiple ? i18n.t('validation.selection') : i18n.t('validation.required'),
+      schema.options?.multiple ? validationMessage(schema, 'selection') : validationMessage(schema, 'required'),
     )
   }
 
