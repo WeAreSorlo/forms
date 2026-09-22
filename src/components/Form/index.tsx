@@ -18,7 +18,7 @@ import * as coreInputs from '@/inputs'
 import { FieldMessages } from '@/types/fields'
 import { Input, ValidationReport } from '@/types/inputs'
 import { flattenValidationReport, validateValues } from '@/utils/inputs'
-import { useCallback, useEffect, useImperativeHandle, useMemo, useState } from 'react'
+import { SetStateAction, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { I18nextProvider } from 'react-i18next'
 
 export interface FormHandle {
@@ -59,38 +59,65 @@ export default function Form<Values extends Record<string, any> = Record<string,
   const [injectedMessages, setInjectedMessages] = useState<Record<string, FieldMessages>>({})
   const [injectedValidity, setInjectedValidity] = useState<Record<string, boolean | undefined>>({})
 
-  // Sync props with local state, keeping the local state when a prop is not controlled
+  // Every write goes through these refs so each change commits exactly one
+  // object identity, reads the very latest state, and is emitted exactly once
+  // from its write site. Emitting from an effect instead would echo adopted
+  // props back to a controlling parent and feed back forever.
+  const schemaRef = useRef(schema)
+  const valuesRef = useRef(values)
+  const messagesRef = useRef(messages)
+  const validityRef = useRef(validity)
+
+  const callbacks = useRef({ onValuesChange, onMessagesChange, onValidityChange })
+  callbacks.current = { onValuesChange, onMessagesChange, onValidityChange }
+
+  const commitSchema = useCallback((next: Context['schema']) => {
+    schemaRef.current = next
+    setSchema(next)
+  }, [])
+
+  const commitValues = useCallback((next: Context['values'], emit = true) => {
+    valuesRef.current = next
+    setValues(next)
+    if (emit && callbacks.current.onValuesChange) callbacks.current.onValuesChange(next as Values)
+  }, [])
+
+  const commitMessages = useCallback((next: Context['messages'], emit = true) => {
+    messagesRef.current = next
+    setMessages(next)
+    if (emit && callbacks.current.onMessagesChange) callbacks.current.onMessagesChange(next)
+  }, [])
+
+  const commitValidity = useCallback((next: Context['validity'], emit = true) => {
+    validityRef.current = next
+    setValidity(next)
+    if (emit && callbacks.current.onValidityChange) callbacks.current.onValidityChange(next)
+  }, [])
+
+  // Adopt controlled props without emitting them back to the parent
   useEffect(() => {
-    setSchema((old) => {
-      if (defaultSchema === undefined) return old
-      if (Object.is(defaultSchema, old)) return old
-      return defaultSchema
-    })
-  }, [defaultSchema])
+    if (defaultSchema === undefined) return
+    if (Object.is(defaultSchema, schemaRef.current)) return
+    commitSchema(defaultSchema)
+  }, [defaultSchema, commitSchema])
 
   useEffect(() => {
-    setValues((old) => {
-      if (defaultValues === undefined) return old
-      if (Object.is(defaultValues, old)) return old
-      return defaultValues
-    })
-  }, [defaultValues])
+    if (defaultValues === undefined) return
+    if (Object.is(defaultValues, valuesRef.current)) return
+    commitValues(defaultValues, false)
+  }, [defaultValues, commitValues])
 
   useEffect(() => {
-    setMessages((old) => {
-      if (defaultMessages === undefined) return old
-      if (Object.is(defaultMessages, old)) return old
-      return defaultMessages
-    })
-  }, [defaultMessages])
+    if (defaultMessages === undefined) return
+    if (Object.is(defaultMessages, messagesRef.current)) return
+    commitMessages(defaultMessages, false)
+  }, [defaultMessages, commitMessages])
 
   useEffect(() => {
-    setValidity((old) => {
-      if (defaultValidity === undefined) return old
-      if (Object.is(defaultValidity, old)) return old
-      return defaultValidity
-    })
-  }, [defaultValidity])
+    if (defaultValidity === undefined) return
+    if (Object.is(defaultValidity, validityRef.current)) return
+    commitValidity(defaultValidity, false)
+  }, [defaultValidity, commitValidity])
 
   // Merge internal inputs with user defined
   const mergedInputs = useMemo(() => {
@@ -100,93 +127,85 @@ export default function Form<Values extends Record<string, any> = Record<string,
     }
   }, [inputs])
 
-  const onFieldsetValuesChange: OnValuesChangeCallback = useCallback((field, value) => {
-    setValues((old) => {
-      if (Object.is(old?.[field], value)) return old
-      return { ...old, [field]: value }
-    })
-  }, [])
+  const onFieldsetValuesChange: OnValuesChangeCallback = useCallback(
+    (field, value) => {
+      const old = valuesRef.current
+      if (Object.is(old?.[field], value)) return
+      commitValues({ ...old, [field]: value })
+    },
+    [commitValues],
+  )
 
-  const onFieldsetMessagesChange: OnMessagesChangeCallback = useCallback((field, messages) => {
-    setMessages((old) => {
-      if (Object.is(old?.[field], messages)) return old
-      return { ...old, [field]: messages }
-    })
-  }, [])
+  const onFieldsetMessagesChange: OnMessagesChangeCallback = useCallback(
+    (field, fieldMessages) => {
+      const old = messagesRef.current
+      if (Object.is(old?.[field], fieldMessages)) return
+      commitMessages({ ...old, [field]: fieldMessages })
+    },
+    [commitMessages],
+  )
 
-  const onFieldsetValidityChange: OnValidityChangeCallback = useCallback((field, validity) => {
-    setValidity((old) => {
-      if (Object.is(old?.[field], validity)) return old
-      return { ...old, [field]: validity }
-    })
-  }, [])
+  const onFieldsetValidityChange: OnValidityChangeCallback = useCallback(
+    (field, fieldValidity) => {
+      const old = validityRef.current
+      if (Object.is(old?.[field], fieldValidity)) return
+      commitValidity({ ...old, [field]: fieldValidity })
+    },
+    [commitValidity],
+  )
 
   // Collect every field's messages and validity into path keyed maps, so
   // nested fields appear as e.g. 'address.town' or 'pets.0.petname'
-  const onFieldReport: FieldStateReport = useCallback((path, patch) => {
-    const key = path.join('.')
+  const onFieldReport: FieldStateReport = useCallback(
+    (path, patch) => {
+      const key = path.join('.')
 
-    // An undefined patch removes the field's entries entirely
-    if (patch === undefined) {
-      setMessages((old) => {
-        if (!(key in old)) return old
-        const { [key]: removed, ...rest } = old
-        return rest
-      })
+      // An undefined patch removes the field's entries entirely
+      if (patch === undefined) {
+        if (key in messagesRef.current) {
+          const { [key]: removed, ...rest } = messagesRef.current
+          commitMessages(rest)
+        }
 
-      setValidity((old) => {
-        if (!(key in old)) return old
-        const { [key]: removed, ...rest } = old
-        return rest
-      })
+        if (key in validityRef.current) {
+          const { [key]: removed, ...rest } = validityRef.current
+          commitValidity(rest)
+        }
 
-      return
-    }
+        return
+      }
 
-    if ('messages' in patch) {
-      setMessages((old) => {
-        if (Object.is(old?.[key], patch.messages)) return old
-        return { ...old, [key]: patch.messages }
-      })
-    }
+      if ('messages' in patch && !Object.is(messagesRef.current?.[key], patch.messages)) {
+        commitMessages({ ...messagesRef.current, [key]: patch.messages })
+      }
 
-    if ('valid' in patch) {
-      setValidity((old) => {
-        if (Object.is(old?.[key], patch.valid)) return old
-        return { ...old, [key]: patch.valid }
-      })
-    }
-  }, [])
-
-  useEffect(() => {
-    if (onValuesChange) onValuesChange(values as Values)
-  }, [values, onValuesChange])
-
-  useEffect(() => {
-    if (onMessagesChange) onMessagesChange(messages)
-  }, [messages, onMessagesChange])
-
-  useEffect(() => {
-    if (onValidityChange) onValidityChange(validity)
-  }, [validity, onValidityChange])
+      if ('valid' in patch && !Object.is(validityRef.current?.[key], patch.valid)) {
+        commitValidity({ ...validityRef.current, [key]: patch.valid })
+      }
+    },
+    [commitMessages, commitValidity],
+  )
 
   // Validate the current values against the schema, and ask every rendered
   // field to re-run its own validation so all messages are displayed
   const validate = useCallback(() => {
     setValidationCounter((old) => old + 1)
-    return validateValues(schema, values, mergedInputs, { environment: 'client' })
-  }, [schema, values, mergedInputs])
+    return validateValues(schemaRef.current, valuesRef.current, mergedInputs, { environment: 'client' })
+  }, [mergedInputs])
 
   // Apply an external validation report, e.g. one returned by a server, and
   // show its messages inline until each field next reports for itself
-  const applyReport = useCallback((report: ValidationReport) => {
-    const flat = flattenValidationReport(report)
+  const applyReport = useCallback(
+    (report: ValidationReport) => {
+      const flat = flattenValidationReport(report)
 
-    setMessages(flat.messages)
-    setValidity(flat.validity)
-    setInjectedMessages(flat.messages)
-    setInjectedValidity(flat.validity)
-  }, [])
+      commitMessages(flat.messages)
+      commitValidity(flat.validity)
+      setInjectedMessages(flat.messages)
+      setInjectedValidity(flat.validity)
+    },
+    [commitMessages, commitValidity],
+  )
 
   useImperativeHandle(ref, () => ({ validate, applyReport }), [validate, applyReport])
 
@@ -203,6 +222,44 @@ export default function Form<Values extends Record<string, any> = Record<string,
       return rest
     })
   }, [])
+
+  // External setters go through the same write path, so state, refs and
+  // change callbacks stay coherent
+  const setSchemaExternal = useCallback(
+    (action: SetStateAction<Context['schema']>) => {
+      const next = typeof action === 'function' ? action(schemaRef.current) : action
+      if (Object.is(next, schemaRef.current)) return
+      commitSchema(next)
+    },
+    [commitSchema],
+  )
+
+  const setValuesExternal = useCallback(
+    (action: SetStateAction<Context['values']>) => {
+      const next = typeof action === 'function' ? action(valuesRef.current) : action
+      if (Object.is(next, valuesRef.current)) return
+      commitValues(next)
+    },
+    [commitValues],
+  )
+
+  const setMessagesExternal = useCallback(
+    (action: SetStateAction<Context['messages']>) => {
+      const next = typeof action === 'function' ? action(messagesRef.current) : action
+      if (Object.is(next, messagesRef.current)) return
+      commitMessages(next)
+    },
+    [commitMessages],
+  )
+
+  const setValidityExternal = useCallback(
+    (action: SetStateAction<Context['validity']>) => {
+      const next = typeof action === 'function' ? action(validityRef.current) : action
+      if (Object.is(next, validityRef.current)) return
+      commitValidity(next)
+    },
+    [commitValidity],
+  )
 
   const injectionContextValue = useMemo(() => {
     return {
@@ -226,12 +283,12 @@ export default function Form<Values extends Record<string, any> = Record<string,
       inputs: mergedInputs,
       validationCounter,
 
-      setSchema,
-      setValues,
-      setMessages,
-      setValidity,
+      setSchema: setSchemaExternal,
+      setValues: setValuesExternal,
+      setMessages: setMessagesExternal,
+      setValidity: setValidityExternal,
     }
-  }, [mergedInputs, validationCounter])
+  }, [mergedInputs, validationCounter, setSchemaExternal, setValuesExternal, setMessagesExternal, setValidityExternal])
 
   const reportContextValue = useMemo<FieldReportContextValue>(() => {
     return {
