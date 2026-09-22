@@ -20,8 +20,8 @@
   "scripts": {
     "build": "tsup",
     "dev": "vite",
-    "format": "prettier ./src --check",
-    "format:fix": "prettier ./src --write",
+    "format": "prettier ./src ./examples --check",
+    "format:fix": "prettier ./src ./examples --write",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
