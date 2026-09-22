@@ -15,6 +15,7 @@ export default defineConfig({
             input: {
                 index: path.resolve(__dirname, "public/index.html"),
                 marketo: path.resolve(__dirname, "public/marketo.html"),
+                hubspot: path.resolve(__dirname, "public/hubspot.html"),
             },
         },
     },
