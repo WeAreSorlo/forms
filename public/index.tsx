@@ -34,6 +34,17 @@ const App = () => {
         },
       },
       {
+        type: 'identifier',
+        name: 'username',
+        label: 'Username',
+        instructions: 'Generated from your first name until you edit it.',
+        required: true,
+        options: {
+          source: 'first_name',
+          format: 'snake',
+        },
+      },
+      {
         type: 'email',
         name: 'email',
         label: 'Your email',

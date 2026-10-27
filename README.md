@@ -71,6 +71,7 @@ Every field supports `name` (required), `label`, `required`, `instructions`, `de
 | `email`         | `placeholder`, `multiple`, `minLength`, `maxLength`                          |
 | `url`           | `placeholder` — http(s) addresses only                                       |
 | `tel`           | `placeholder` — loose phone number validation                                |
+| `identifier`    | `source`, `format` (`kebab`, `snake`, `camel`, `pascal`), `unicode`          |
 | `date`          | `min`, `max` — value is an ISO date, e.g. `2026-01-15`                       |
 | `time`          | `min`, `max` — value is a 24 hour time, e.g. `13:30`                         |
 | `datetime`      | `min`, `max` — value is a local ISO datetime, e.g. `2026-01-15T13:30`        |
@@ -87,6 +88,8 @@ Every field supports `name` (required), `label`, `required`, `instructions`, `de
 | `schemabuilder` | none — its value is an array of field schemas                                |
 
 Groups nest their values under the group's name, repeaters produce an array of objects, and matrices an array of rows of objects. All three can be nested inside each other without limit.
+
+An `identifier` with a `source`, e.g. `title`, follows that field, found the same way as a condition's `field`, while it is empty or still holds the value it generated. A typed or loaded value never changes by itself. Clearing it picks the source back up when the field loses focus, which is also when an invalid value is tidied into its format. `kebab` (the default) is the URL style and may start with a digit, while `snake`, `camel` and `pascal` are code styles and must start with a letter. Latin accents are always removed, and letters from other scripts are dropped unless `unicode` is set, e.g. `東京-タワー`.
 
 ## Validation
 

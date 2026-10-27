@@ -4,6 +4,7 @@ import * as color from '@/inputs/Color'
 import * as date from '@/inputs/Date'
 import * as datetime from '@/inputs/Datetime'
 import * as email from '@/inputs/Email'
+import * as identifier from '@/inputs/Identifier'
 import * as matrix from '@/inputs/Matrix'
 import * as number from '@/inputs/Number'
 import * as password from '@/inputs/Password'
@@ -138,6 +139,118 @@ describe('url', () => {
     expect(url.validateValue('example.com', schema()).isValid).toBe(false)
     expect(url.validateValue('ftp://example.com', schema()).isValid).toBe(false)
     expect(url.validateValue('nope', schema()).isValid).toBe(false)
+  })
+})
+
+describe('identifier', () => {
+  const formatted = (format: string, unicode = false) => schema({ options: { format, unicode } })
+
+  it('accepts an empty optional value and requires one when required', () => {
+    expect(identifier.validateValue('', schema()).isValid).toBe(true)
+    expect(identifier.validateValue('', schema({ required: true })).messages).toEqual(['This field is required.'])
+  })
+
+  it('validates kebab case by default, which may start with a digit', () => {
+    for (const value of ['my-post', 'post-2', '2024-recap']) {
+      expect(identifier.validateValue(value, schema()).isValid, value).toBe(true)
+    }
+    for (const value of ['My-Post', 'my post', 'café', 'my--post', '-my-post', 'my-post-', 'my_post', 'myPost']) {
+      expect(identifier.validateValue(value, schema()).isValid, value).toBe(false)
+    }
+    expect(identifier.validateValue(123, schema()).isValid).toBe(false)
+  })
+
+  it('validates the code styles, which must start with a letter', () => {
+    const cases: Array<[string, Array<string>, Array<string>]> = [
+      ['snake', ['first_name', 'address_line_2'], ['first-name', 'First_name', 'first__name']],
+      ['camel', ['firstName', 'myHTTPServer', 'h1Title'], ['FirstName', 'first_name', 'first name']],
+      ['pascal', ['FirstName', 'HTTPServer', 'H1Title'], ['firstName', 'First_Name', 'First Name']],
+    ]
+
+    for (const [format, valid, invalid] of cases) {
+      for (const value of valid) {
+        expect(identifier.validateValue(value, formatted(format)).isValid, `${format} ${value}`).toBe(true)
+      }
+      for (const value of invalid) {
+        expect(identifier.validateValue(value, formatted(format)).isValid, `${format} ${value}`).toBe(false)
+      }
+      expect(identifier.validateValue('2fa', formatted(format)).messages).toEqual([
+        'This field must start with a letter.',
+      ])
+    }
+  })
+
+  it('shows an example of the format in its message', () => {
+    const messages = (format: string) => identifier.validateValue('My Page!', formatted(format)).messages
+
+    expect(messages('kebab')).toEqual(['A valid identifier required, e.g. my-page.'])
+    expect(messages('snake')).toEqual(['A valid identifier required, e.g. my_page.'])
+    expect(messages('camel')).toEqual(['A valid identifier required, e.g. myPage.'])
+    expect(messages('pascal')).toEqual(['A valid identifier required, e.g. MyPage.'])
+  })
+
+  it('only accepts letters from other scripts when unicode is set', () => {
+    expect(identifier.validateValue('東京-タワー', schema()).isValid).toBe(false)
+    expect(identifier.validateValue('東京-タワー', formatted('kebab', true)).isValid).toBe(true)
+    expect(identifier.validateValue('привет-мир', formatted('kebab', true)).isValid).toBe(true)
+    expect(identifier.validateValue('Привет-мир', formatted('kebab', true)).isValid).toBe(false)
+    expect(identifier.validateValue('東京タワー', formatted('pascal', true)).isValid).toBe(true)
+  })
+
+  it('formats text into each style', () => {
+    expect(identifier.formatIdentifier('Hello, World!')).toBe('hello-world')
+    expect(identifier.formatIdentifier('Hello, World!', 'snake')).toBe('hello_world')
+    expect(identifier.formatIdentifier('Hello, World!', 'camel')).toBe('helloWorld')
+    expect(identifier.formatIdentifier('Hello, World!', 'pascal')).toBe('HelloWorld')
+    expect(identifier.formatIdentifier('Version 2.0')).toBe('version-2-0')
+    expect(identifier.formatIdentifier('')).toBe('')
+  })
+
+  it('removes Latin accents', () => {
+    expect(identifier.formatIdentifier('Crème Brûlée à la Straße')).toBe('creme-brulee-a-la-strasse')
+    expect(identifier.formatIdentifier('Việt Nam')).toBe('viet-nam')
+    expect(identifier.formatIdentifier('Łódź')).toBe('lodz')
+  })
+
+  it('keeps the words of existing names in the code styles only', () => {
+    expect(identifier.formatIdentifier('emailOptIn', 'snake')).toBe('email_opt_in')
+    expect(identifier.formatIdentifier('myHTTPServer', 'camel')).toBe('myHttpServer')
+    expect(identifier.formatIdentifier('FirstName', 'camel')).toBe('firstName')
+    expect(identifier.formatIdentifier('iPhone 15 Review')).toBe('iphone-15-review')
+  })
+
+  it('drops other scripts unless unicode is set, keeping their own marks', () => {
+    expect(identifier.formatIdentifier('東京 タワー')).toBe('')
+    expect(identifier.formatIdentifier('東京 タワー', 'kebab', true)).toBe('東京-タワー')
+    expect(identifier.formatIdentifier('Мой дом', 'kebab', true)).toBe('мой-дом')
+    expect(identifier.formatIdentifier('नमस्ते दुनिया', 'kebab', true)).toBe('नमस्ते-दुनिया')
+    expect(identifier.formatIdentifier('Привет мир', 'camel', true)).toBe('приветМир')
+  })
+
+  it('accepts everything it generates that starts with a letter', () => {
+    const samples = [
+      'Hello World',
+      'a b c',
+      'myHTTPServer',
+      'emailOptIn',
+      'Crème Brûlée',
+      'Việt Nam',
+      '東京 タワー',
+      'Мой дом',
+      'नमस्ते दुनिया',
+      'Οδός',
+      'iPhone 15',
+    ]
+
+    for (const format of ['kebab', 'snake', 'camel', 'pascal'] as const) {
+      for (const unicode of [false, true]) {
+        for (const text of samples) {
+          const value = identifier.formatIdentifier(text, format, unicode)
+          if (!/^\p{L}/u.test(value)) continue
+          expect(identifier.validateValue(value, formatted(format, unicode)).isValid, `${format} ${text}`).toBe(true)
+        }
+      }
+    }
   })
 })
 

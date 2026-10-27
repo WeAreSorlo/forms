@@ -25,6 +25,7 @@ describe('optionFields', () => {
       email: ['placeholder', 'multiple', 'minLength', 'maxLength'],
       url: ['placeholder'],
       tel: ['placeholder'],
+      identifier: ['source', 'format', 'unicode'],
       password: ['placeholder', 'minLength', 'maxLength'],
       hidden: ['value'],
       color: [],

@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import Form, { FormHandle } from '@/components/Form'
+import { FieldSchema } from '@/types/fields'
 import { ValidationReport } from '@/types/inputs'
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { createRef } from 'react'
@@ -219,5 +220,121 @@ describe('form interactions', () => {
     await waitFor(() => {
       expect(latestMessages['pets.0.petname']).toBeUndefined()
     })
+  })
+})
+
+describe('identifier interactions', () => {
+  const schema: Array<FieldSchema> = [
+    { type: 'text', name: 'title', label: 'Title' },
+    { type: 'identifier', name: 'slug', label: 'Slug', options: { source: 'title' } },
+  ]
+
+  const title = () => screen.getByLabelText(/Title/) as HTMLInputElement
+  const slug = () => screen.getByLabelText(/Slug/) as HTMLInputElement
+
+  it('follows its source until the slug is edited', async () => {
+    render(<Form schema={schema} />)
+
+    fireEvent.change(title(), { target: { value: 'Hello World' } })
+    await waitFor(() => expect(slug().value).toBe('hello-world'))
+
+    fireEvent.change(title(), { target: { value: 'Hello World Again' } })
+    await waitFor(() => expect(slug().value).toBe('hello-world-again'))
+
+    // A typed slug stops the following
+    fireEvent.change(slug(), { target: { value: 'custom' } })
+    fireEvent.change(title(), { target: { value: 'Something else' } })
+    expect(slug().value).toBe('custom')
+  })
+
+  it('keeps a saved slug when the title changes', () => {
+    render(<Form schema={schema} values={{ title: 'My Post', slug: 'my-post' }} />)
+
+    fireEvent.change(title(), { target: { value: 'My Renamed Post' } })
+    expect(slug().value).toBe('my-post')
+  })
+
+  it('keeps a saved slug that loads after the form renders', async () => {
+    const { rerender } = render(<Form schema={schema} values={{}} />)
+    rerender(<Form schema={schema} values={{ title: 'My Post', slug: 'my-post' }} />)
+    await waitFor(() => expect(slug().value).toBe('my-post'))
+
+    fireEvent.change(title(), { target: { value: 'My Renamed Post' } })
+    expect(slug().value).toBe('my-post')
+  })
+
+  it('picks the source back up when the slug is cleared', async () => {
+    render(<Form schema={schema} values={{ title: 'My Post', slug: 'old-slug' }} />)
+
+    fireEvent.change(slug(), { target: { value: '' } })
+    fireEvent.blur(slug())
+    await waitFor(() => expect(slug().value).toBe('my-post'))
+
+    fireEvent.change(title(), { target: { value: 'New Title' } })
+    await waitFor(() => expect(slug().value).toBe('new-title'))
+  })
+
+  it('tidies an invalid value when the field loses focus', async () => {
+    let latestMessages: Record<string, any> = {}
+
+    render(
+      <Form
+        schema={[{ type: 'identifier', name: 'slug', label: 'Slug' }]}
+        onMessagesChange={(messages) => (latestMessages = messages)}
+      />,
+    )
+
+    fireEvent.change(slug(), { target: { value: 'My Custom Slug!' } })
+    await waitFor(() => expect(latestMessages['slug']).toEqual(['A valid identifier required, e.g. my-page.']))
+
+    fireEvent.blur(slug())
+    await waitFor(() => {
+      expect(slug().value).toBe('my-custom-slug')
+      expect(latestMessages['slug']).toEqual([])
+    })
+  })
+
+  it('leaves a valid value alone when the field loses focus', async () => {
+    render(<Form schema={[{ type: 'identifier', name: 'key', label: 'Key', options: { format: 'camel' } }]} />)
+
+    const key = () => screen.getByLabelText(/Key/) as HTMLInputElement
+
+    fireEvent.change(key(), { target: { value: 'my HTTP server' } })
+    fireEvent.blur(key())
+    await waitFor(() => expect(key().value).toBe('myHttpServer'))
+
+    // Valid camel case keeps its own casing rather than being reformatted
+    fireEvent.change(key(), { target: { value: 'myHTTPServer' } })
+    fireEvent.blur(key())
+    expect(key().value).toBe('myHTTPServer')
+  })
+
+  it('follows the title in its own repeater item', async () => {
+    render(
+      <Form
+        schema={[
+          { type: 'text', name: 'title', label: 'Page title' },
+          {
+            type: 'repeater',
+            name: 'sections',
+            label: 'Sections',
+            options: {
+              fields: [
+                { type: 'text', name: 'title', label: 'Section title' },
+                { type: 'identifier', name: 'anchor', label: 'Anchor', options: { source: 'title', format: 'snake' } },
+              ],
+            },
+          },
+        ]}
+        values={{ sections: [{ title: '' }, { title: '' }] }}
+      />,
+    )
+
+    const anchors = () => screen.getAllByLabelText(/Anchor/) as Array<HTMLInputElement>
+
+    fireEvent.change(screen.getAllByLabelText(/Section title/)[0], { target: { value: 'Getting Started' } })
+    fireEvent.change(screen.getByLabelText(/Page title/), { target: { value: 'Docs Home' } })
+
+    await waitFor(() => expect(anchors().map((anchor) => anchor.value)).toEqual(['getting_started', '']))
   })
 })

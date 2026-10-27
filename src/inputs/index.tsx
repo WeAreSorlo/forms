@@ -7,6 +7,7 @@ import * as datetime from './Datetime'
 import * as email from './Email'
 import * as group from './Group'
 import * as hidden from './Hidden'
+import * as identifier from './Identifier'
 import * as matrix from './Matrix'
 import * as number from './Number'
 import * as password from './Password'
@@ -31,6 +32,7 @@ export {
   email,
   group,
   hidden,
+  identifier,
   matrix,
   number,
   password,

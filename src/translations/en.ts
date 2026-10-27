@@ -11,6 +11,8 @@ export default {
       emailMultiple: 'One or more email address(es) is invalid.',
       url: 'A valid URL required.',
       tel: 'A valid phone number required.',
+      identifier: 'A valid identifier required, e.g. {{example}}.',
+      identifierStart: 'This field must start with a letter.',
       color: 'A valid color required.',
       date: 'A valid date required.',
       time: 'A valid time required.',
