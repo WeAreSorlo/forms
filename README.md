@@ -84,10 +84,13 @@ Every field supports `name` (required), `label`, `required`, `instructions`, `de
 | `group`         | `fields` (nested field schemas)                                              |
 | `repeater`      | `fields`, `minimum`, `maximum`, `direction` (`y` vertical / `x` horizontal)  |
 | `matrix`        | `fields`, `minimumRows`, `maximumRows`, `minimumColumns`, `maximumColumns`   |
+| `flexible`      | `layouts` (`{ name, label, fields }`) — value is `[{ _layout, ...fields }]`  |
 | `content`       | `content` — a read only block with no value, for headings and instructions   |
 | `schemabuilder` | none — its value is an array of field schemas                                |
 
-Groups nest their values under the group's name, repeaters produce an array of objects, and matrices an array of rows of objects. All three can be nested inside each other without limit.
+Groups nest their values under the group's name, repeaters produce an array of objects, matrices an array of rows of objects, and flexible content an array of blocks. All four can be nested inside each other without limit.
+
+A `flexible` block is a layout's field values plus `_layout`, the name of the layout it uses, e.g. `[{ _layout: 'hero', title: 'Welcome' }]`, so `_layout` can't be a field name inside a layout. Its messages are keyed like a repeater's, e.g. `blocks.0.title`, and `pickValues` drops blocks whose layout no longer exists.
 
 An `identifier` with a `source`, e.g. `title`, follows that field, found the same way as a condition's `field`, while it is empty or still holds the value it generated. A typed or loaded value never changes by itself. Clearing it picks the source back up when the field loses focus, which is also when an invalid value is tidied into its format. `kebab` (the default) is the URL style and may start with a digit, while `snake`, `camel` and `pascal` are code styles and must start with a letter. Latin accents are always removed, and letters from other scripts are dropped unless `unicode` is set, e.g. `東京-タワー`.
 

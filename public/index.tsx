@@ -301,6 +301,66 @@ const App = () => {
         },
       },
       {
+        type: 'flexible',
+        name: 'profile_page',
+        label: 'Profile page',
+        instructions: 'Built from text and link blocks, in any order.',
+        options: {
+          layouts: [
+            {
+              name: 'text',
+              label: 'Text',
+              fields: [
+                {
+                  type: 'text',
+                  name: 'heading',
+                  label: 'Heading',
+                  required: true,
+                },
+                {
+                  type: 'textarea',
+                  name: 'body',
+                  label: 'Body',
+                  options: {
+                    rows: 3,
+                  },
+                },
+              ],
+            },
+            {
+              name: 'links',
+              label: 'Links',
+              fields: [
+                {
+                  type: 'repeater',
+                  name: 'links',
+                  label: 'Links',
+                  options: {
+                    minimum: 1,
+                    fields: [
+                      {
+                        type: 'text',
+                        name: 'label',
+                        label: 'Label',
+                        required: true,
+                        width: 50,
+                      },
+                      {
+                        type: 'url',
+                        name: 'url',
+                        label: 'URL',
+                        required: true,
+                        width: 50,
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      },
+      {
         type: 'content',
         name: 'contact_section',
         label: 'Getting in touch',

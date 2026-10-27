@@ -4,6 +4,7 @@ import * as color from '@/inputs/Color'
 import * as date from '@/inputs/Date'
 import * as datetime from '@/inputs/Datetime'
 import * as email from '@/inputs/Email'
+import * as flexible from '@/inputs/Flexible'
 import * as identifier from '@/inputs/Identifier'
 import * as matrix from '@/inputs/Matrix'
 import * as number from '@/inputs/Number'
@@ -412,6 +413,32 @@ describe('repeater', () => {
     expect(repeater.validateValue([{}], schema({ options: { minimum: 2 } })).isValid).toBe(false)
     expect(repeater.validateValue([{}, {}], schema({ options: { maximum: 1 } })).isValid).toBe(false)
     expect(repeater.validateValue([{}, {}], schema({ options: { minimum: 1, maximum: 2 } })).isValid).toBe(true)
+  })
+})
+
+describe('flexible', () => {
+  const layouts = schema({
+    options: {
+      layouts: [
+        { name: 'hero', fields: [] },
+        { name: 'quote', fields: [] },
+      ],
+    },
+  })
+
+  it('accepts an empty optional value and requires a block when required', () => {
+    expect(flexible.validateValue(undefined, layouts).isValid).toBe(true)
+    expect(flexible.validateValue([], { ...layouts, required: true }).messages).toEqual(['This field is required.'])
+  })
+
+  it('accepts blocks that use one of its layouts', () => {
+    expect(flexible.validateValue([{ _layout: 'hero' }, { _layout: 'quote' }], layouts).isValid).toBe(true)
+  })
+
+  it('rejects anything else', () => {
+    for (const value of ['nope', [{ _layout: 'gallery' }], [{ title: 'No layout' }], [null]]) {
+      expect(flexible.validateValue(value, layouts).isValid, JSON.stringify(value)).toBe(false)
+    }
   })
 })
 

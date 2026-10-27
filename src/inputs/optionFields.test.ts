@@ -40,6 +40,7 @@ describe('optionFields', () => {
       group: ['fields'],
       repeater: ['fields', 'minimum', 'maximum', 'direction'],
       matrix: ['fields', 'minimumRows', 'maximumRows', 'minimumColumns', 'maximumColumns'],
+      flexible: ['layouts'],
       schemabuilder: [],
       content: ['content'],
     }

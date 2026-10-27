@@ -5,6 +5,7 @@ import * as content from './Content'
 import * as date from './Date'
 import * as datetime from './Datetime'
 import * as email from './Email'
+import * as flexible from './Flexible'
 import * as group from './Group'
 import * as hidden from './Hidden'
 import * as identifier from './Identifier'
@@ -30,6 +31,7 @@ export {
   date,
   datetime,
   email,
+  flexible,
   group,
   hidden,
   identifier,

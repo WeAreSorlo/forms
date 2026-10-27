@@ -1,6 +1,6 @@
 import * as inputs from '@/inputs'
 import { Input, ValidationReport } from '@/types/inputs'
-import { pickValues, validateServerValues, validateValues } from '@/utils/inputs'
+import { flattenValidationReport, pickValues, validateServerValues, validateValues } from '@/utils/inputs'
 import { validationError, validationSuccess } from '@/utils/validation'
 import { describe, expect, it } from 'vitest'
 
@@ -112,6 +112,32 @@ describe('validateValues', () => {
     expect(result.fields.bundle.isValid).toBe(false)
     expect(children[0].fields.label.isValid).toBe(false)
     expect(children[1].fields.label.isValid).toBe(true)
+  })
+
+  it('walks flexible blocks against their own layouts', async () => {
+    const schema = [
+      {
+        type: 'flexible',
+        name: 'blocks',
+        options: {
+          layouts: [
+            { name: 'hero', fields: [{ type: 'text', name: 'title', required: true }] },
+            { name: 'quote', fields: [{ type: 'text', name: 'quote', required: true }] },
+          ],
+        },
+      },
+    ]
+    const values = {
+      blocks: [
+        { _layout: 'hero', title: '' },
+        { _layout: 'quote', quote: 'Hi' },
+      ],
+    }
+
+    // The client and the server report the block's field under the same path
+    const expected = { 'blocks.0.title': ['This field is required.'] }
+    expect(flattenValidationReport(report(schema, values)).messages).toEqual(expected)
+    expect(flattenValidationReport(await validateServerValues(schema, values, inputs)).messages).toEqual(expected)
   })
 
   it('reports container bounds through the field itself', () => {
@@ -303,6 +329,29 @@ describe('pickValues', () => {
     const schema = [{ type: 'hidden', name: 'source', options: { value: 'demo' } }]
 
     expect(pickValues(schema, { source: 'tampered' }, inputs)).toEqual({ source: 'demo' })
+  })
+
+  it("keeps flexible blocks whose layout exists, with only that layout's fields", () => {
+    const schema = [
+      {
+        type: 'flexible',
+        name: 'blocks',
+        options: { layouts: [{ name: 'hero', fields: [{ type: 'text', name: 'title' }] }] },
+      },
+    ]
+
+    const picked = pickValues(
+      schema,
+      {
+        blocks: [
+          { _layout: 'hero', title: 'Welcome', junk: 'nope' },
+          { _layout: 'gallery', images: [] },
+        ],
+      },
+      inputs,
+    )
+
+    expect(picked).toEqual({ blocks: [{ _layout: 'hero', title: 'Welcome' }] })
   })
 
   it('drops content values and junk shaped containers', () => {

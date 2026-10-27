@@ -37,6 +37,7 @@ export default {
       removeRow: 'Remove row',
       addColumn: 'Add column',
       removeColumn: 'Remove column',
+      addBlock: 'Add {{layout}}',
       invalidFieldType: 'Invalid field type.',
     },
   },

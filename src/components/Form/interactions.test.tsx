@@ -338,3 +338,110 @@ describe('identifier interactions', () => {
     await waitFor(() => expect(anchors().map((anchor) => anchor.value)).toEqual(['getting_started', '']))
   })
 })
+
+describe('flexible interactions', () => {
+  const schema: Array<FieldSchema> = [
+    {
+      type: 'flexible',
+      name: 'blocks',
+      label: 'Blocks',
+      options: {
+        layouts: [
+          { name: 'hero', label: 'Hero', fields: [{ type: 'text', name: 'title', label: 'Title', required: true }] },
+          { name: 'quote', label: 'Quote', fields: [{ type: 'text', name: 'quote', label: 'Quote text' }] },
+        ],
+      },
+    },
+  ]
+
+  it('adds, edits, moves and deletes blocks', async () => {
+    let latestValues: Record<string, any> = {}
+
+    render(<Form schema={schema} onValuesChange={(values) => (latestValues = values)} />)
+
+    fireEvent.click(screen.getByText('Add Hero'))
+    fireEvent.click(screen.getByText('Add Quote'))
+    fireEvent.change(screen.getByLabelText(/Title/), { target: { value: 'Welcome' } })
+
+    await waitFor(() => {
+      expect(latestValues.blocks).toEqual([{ _layout: 'hero', title: 'Welcome' }, { _layout: 'quote' }])
+    })
+
+    // Move the quote above the hero, then delete the hero
+    fireEvent.click(screen.getAllByText('Move up')[1])
+    await waitFor(() => expect(latestValues.blocks.map((block: any) => block._layout)).toEqual(['quote', 'hero']))
+
+    fireEvent.click(screen.getAllByText('Delete')[1])
+    await waitFor(() => expect(latestValues.blocks).toEqual([{ _layout: 'quote' }]))
+  })
+
+  it('reports block fields under their path and marks the field invalid', async () => {
+    const ref = createRef<FormHandle>()
+    let latestMessages: Record<string, any> = {}
+    let latestValidity: Record<string, boolean | undefined> = {}
+
+    render(
+      <Form
+        ref={ref}
+        schema={schema}
+        values={{
+          blocks: [
+            { _layout: 'quote', quote: 'Hi' },
+            { _layout: 'hero', title: '' },
+          ],
+        }}
+        onMessagesChange={(messages) => (latestMessages = messages)}
+        onValidityChange={(validity) => (latestValidity = validity)}
+      />,
+    )
+
+    act(() => {
+      ref.current?.validate()
+    })
+
+    await waitFor(() => {
+      expect(latestMessages['blocks.1.title']).toEqual(['This field is required.'])
+      expect(latestValidity['blocks']).toBe(false)
+    })
+  })
+
+  it('clears block messages when blocks move rather than leaving them on the wrong block', async () => {
+    render(
+      <Form
+        schema={schema}
+        values={{
+          blocks: [
+            { _layout: 'hero', title: '' },
+            { _layout: 'hero', title: 'Hi' },
+          ],
+        }}
+      />,
+    )
+
+    fireEvent.change(screen.getAllByLabelText(/Title/)[0], { target: { value: 'x' } })
+    fireEvent.change(screen.getAllByLabelText(/Title/)[0], { target: { value: '' } })
+    await waitFor(() => expect(screen.getByText('This field is required.')).toBeTruthy())
+
+    // The valid block moves to the top, where the old first block's message must not follow it
+    fireEvent.click(screen.getAllByText('Move up')[1])
+    await waitFor(() => expect(screen.getAllByLabelText<HTMLInputElement>(/Title/)[0].value).toBe('Hi'))
+    expect(screen.queryByText('This field is required.')).toBeNull()
+  })
+
+  it('shows a block whose layout no longer exists so it can be deleted', async () => {
+    let latestValues: Record<string, any> = {}
+
+    render(
+      <Form
+        schema={schema}
+        values={{ blocks: [{ _layout: 'gallery', images: [] }] }}
+        onValuesChange={(values) => (latestValues = values)}
+      />,
+    )
+
+    expect(screen.getByText('Invalid field type.')).toBeTruthy()
+
+    fireEvent.click(screen.getByText('Delete'))
+    await waitFor(() => expect(latestValues.blocks).toEqual([]))
+  })
+})
