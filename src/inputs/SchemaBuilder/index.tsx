@@ -18,7 +18,7 @@ import {
   InputRenderValue,
   InputValidateValue,
 } from '@/types/inputs'
-import { validateInputSchemaFields, validateSchema, validateValues } from '@/utils/inputs'
+import { createId, validateInputSchemaFields, validateSchema, validateValues } from '@/utils/inputs'
 import { validationMessage } from '@/utils/messages'
 import { validationError, validationSuccess } from '@/utils/validation'
 import { Dispatch, Fragment, useCallback, useEffect, useId, useMemo, useState } from 'react'
@@ -52,6 +52,11 @@ export const formatValue: InputFormatValue = (value, schema) => {
 
 export const renderValue: InputRenderValue = (value, schema) => {
   return <>{formatValue(value, schema)}</>
+}
+
+// Let the field's input finish its schema, e.g. giving new flexible layouts their IDs
+const prepareSchema = (input: Input, schema: FieldSchema) => {
+  return input.prepareSchema ? input.prepareSchema(schema) : schema
 }
 
 const Component: InputComponent = function () {
@@ -109,9 +114,10 @@ function CreateValueItem({ type, input, setValue }: { type: string; input: Input
 
   const onSave = useCallback(
     (editorValues: Record<string, any>) => {
-      setValue((old: Array<FieldSchema>) => [...(old || []), { type, ...editorValues }])
+      const field = { id: createId('fld'), type, ...editorValues } as FieldSchema
+      setValue((old: Array<FieldSchema>) => [...(old || []), prepareSchema(input, field)])
     },
-    [setValue, type],
+    [setValue, type, input],
   )
 
   return (
@@ -168,13 +174,15 @@ function EditValueItem({
 
   const onSave = useCallback(
     (editorValues: Record<string, any>) => {
+      // Keep the field's ID, giving one to fields from schemas written without them
+      const field = { id: value.id ?? createId('fld'), type: value.type, ...editorValues } as FieldSchema
       setValue((old: Array<FieldSchema>) => {
         const newValue = [...(old || [])]
-        newValue[index] = { type: value.type, ...editorValues } as FieldSchema
+        newValue[index] = prepareSchema(input, field)
         return newValue
       })
     },
-    [setValue, index, value.type],
+    [setValue, index, input, value.id, value.type],
   )
 
   const onDelete = useCallback(

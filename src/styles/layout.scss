@@ -23,6 +23,11 @@
   > div {
     padding: var(--iight-fieldset-gap, 0.5rem);
     box-sizing: border-box;
+
+    /* Hidden fields take no space, padding included */
+    &:has(> .iight-field > input[type='hidden']) {
+      display: none;
+    }
   }
 }
 

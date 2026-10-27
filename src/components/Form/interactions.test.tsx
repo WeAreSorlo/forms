@@ -2,9 +2,9 @@
 import Form, { FormHandle } from '@/components/Form'
 import { FieldSchema } from '@/types/fields'
 import { ValidationReport } from '@/types/inputs'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { createRef } from 'react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeAll, describe, expect, it } from 'vitest'
 
 ;(globalThis as any).IS_REACT_ACT_ENVIRONMENT = true
 
@@ -443,5 +443,252 @@ describe('flexible interactions', () => {
 
     fireEvent.click(screen.getByText('Delete'))
     await waitFor(() => expect(latestValues.blocks).toEqual([]))
+  })
+})
+
+describe('schema builder interactions', () => {
+  // jsdom has no dialog methods, so the editors open and close by their attribute alone
+  beforeAll(() => {
+    HTMLDialogElement.prototype.showModal = function () {
+      this.open = true
+    }
+    HTMLDialogElement.prototype.close = function () {
+      this.open = false
+    }
+  })
+
+  const schema: Array<FieldSchema> = [{ type: 'schemabuilder', name: 'fields', label: 'Fields' }]
+
+  // The innermost open editor, since a nested schema builder opens its editor inside its parent's
+  const editor = () => within([...document.querySelectorAll<HTMLElement>('dialog[open]')].at(-1)!)
+  const save = () => fireEvent.click(editor().getByRole('button', { name: 'Save' }))
+  const createButton = (container: Pick<typeof screen, 'getByText'>, type: string) => {
+    return container.getByText(type, { selector: 'button > strong' })
+  }
+
+  it('gives a new field an ID and a name that follows its label', async () => {
+    let latestValues: Record<string, any> = {}
+
+    render(<Form schema={schema} onValuesChange={(values) => (latestValues = values)} />)
+
+    fireEvent.click(createButton(screen, 'Text'))
+    fireEvent.change(editor().getByLabelText(/Field Label/), { target: { value: 'First Name' } })
+    await waitFor(() => expect(editor().getByLabelText<HTMLInputElement>(/Field Name/).value).toBe('first_name'))
+    save()
+
+    await waitFor(() => expect(latestValues.fields).toHaveLength(1))
+    expect(latestValues.fields[0]).toMatchObject({ type: 'text', name: 'first_name', label: 'First Name' })
+    expect(latestValues.fields[0].id).toMatch(/^fld_[0-9a-z]{8}$/)
+  })
+
+  it('blocks saving a name that would break dotted paths', async () => {
+    let latestValues: Record<string, any> = {}
+
+    render(<Form schema={schema} onValuesChange={(values) => (latestValues = values)} />)
+
+    fireEvent.click(createButton(screen, 'Text'))
+    fireEvent.change(editor().getByLabelText(/Field Name/), { target: { value: 'address.town' } })
+    save()
+
+    expect(editor().getByText('A valid identifier required, e.g. my_page.')).toBeTruthy()
+    expect(latestValues.fields).toBeUndefined()
+
+    fireEvent.change(editor().getByLabelText(/Field Name/), { target: { value: 'emailOptIn' } })
+    save()
+    await waitFor(() => expect(latestValues.fields?.[0].name).toBe('emailOptIn'))
+  })
+
+  it('keeps IDs as fields are renamed and moved, nested ones included', async () => {
+    let latestValues: Record<string, any> = {}
+
+    render(
+      <Form
+        schema={schema}
+        values={{
+          fields: [
+            { id: 'fld_title', type: 'text', name: 'title', label: 'Title' },
+            {
+              id: 'fld_address',
+              type: 'group',
+              name: 'address',
+              label: 'Address',
+              options: { fields: [{ id: 'fld_town', type: 'text', name: 'town', label: 'Town' }] },
+            },
+          ],
+        }}
+        onValuesChange={(values) => (latestValues = values)}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Title (title)' }))
+    fireEvent.change(editor().getByLabelText(/Field Name/), { target: { value: 'headline' } })
+    save()
+
+    // Rename the town inside the group, saving its editor and then the group's
+    fireEvent.click(screen.getByRole('button', { name: 'Address (address)' }))
+    fireEvent.click(editor().getByRole('button', { name: 'Town (town)' }))
+    fireEvent.change(editor().getByLabelText(/Field Name/), { target: { value: 'city' } })
+    save()
+    save()
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Move up' })[1])
+
+    await waitFor(() => {
+      expect(latestValues.fields.map(({ id, name }: FieldSchema) => [id, name])).toEqual([
+        ['fld_address', 'address'],
+        ['fld_title', 'headline'],
+      ])
+      expect(latestValues.fields[0].options.fields).toMatchObject([{ id: 'fld_town', name: 'city' }])
+    })
+  })
+
+  it('keeps and gives IDs to fields in flexible layouts', async () => {
+    let latestValues: Record<string, any> = {}
+
+    render(
+      <Form
+        schema={schema}
+        values={{
+          fields: [
+            {
+              id: 'fld_blocks',
+              type: 'flexible',
+              name: 'blocks',
+              label: 'Blocks',
+              options: {
+                layouts: [
+                  {
+                    name: 'hero',
+                    label: 'Hero',
+                    fields: [{ id: 'fld_heading', type: 'text', name: 'heading', label: 'Heading' }],
+                  },
+                ],
+              },
+            },
+          ],
+        }}
+        onValuesChange={(values) => (latestValues = values)}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Blocks (blocks)' }))
+    fireEvent.click(editor().getByRole('button', { name: 'Heading (heading)' }))
+    fireEvent.change(editor().getByLabelText(/Field Name/), { target: { value: 'title' } })
+    save()
+
+    fireEvent.click(createButton(editor(), 'Text'))
+    fireEvent.change(editor().getByLabelText(/Field Label/), { target: { value: 'Subtitle' } })
+    await waitFor(() => expect(editor().getByLabelText<HTMLInputElement>(/Field Name/).value).toBe('subtitle'))
+    save()
+    save()
+
+    await waitFor(() => expect(latestValues.fields?.[0].options.layouts[0].fields).toHaveLength(2))
+
+    const [title, subtitle] = latestValues.fields[0].options.layouts[0].fields
+    expect(latestValues.fields[0].id).toBe('fld_blocks')
+    expect(title).toMatchObject({ id: 'fld_heading', name: 'title' })
+    expect(subtitle.id).toMatch(/^fld_[0-9a-z]{8}$/)
+
+    // The layout was written without an ID, so saving gives it one
+    expect(latestValues.fields[0].options.layouts[0].id).toMatch(/^lay_[0-9a-z]{8}$/)
+  })
+
+  it('gives the layouts of a new flexible field their IDs', async () => {
+    let latestValues: Record<string, any> = {}
+
+    render(<Form schema={schema} onValuesChange={(values) => (latestValues = values)} />)
+
+    fireEvent.click(createButton(screen, 'Flexible content'))
+    fireEvent.change(editor().getByLabelText(/Field Label/), { target: { value: 'Blocks' } })
+
+    // The layouts start with one layout, which needs a label and a field
+    fireEvent.change(editor().getByLabelText(/^Label/), { target: { value: 'Hero' } })
+    fireEvent.click(createButton(editor(), 'Text'))
+    fireEvent.change(editor().getByLabelText(/Field Label/), { target: { value: 'Title' } })
+    await waitFor(() => expect(editor().getByLabelText<HTMLInputElement>(/Field Name/).value).toBe('title'))
+    save()
+    save()
+
+    await waitFor(() => expect(latestValues.fields).toHaveLength(1))
+
+    const [hero] = latestValues.fields[0].options.layouts
+    expect(hero).toMatchObject({ name: 'hero', label: 'Hero' })
+    expect(hero.id).toMatch(/^lay_[0-9a-z]{8}$/)
+    expect(hero.fields[0].id).toMatch(/^fld_[0-9a-z]{8}$/)
+  })
+
+  it('keeps layout IDs when another layout is added', async () => {
+    let latestValues: Record<string, any> = {}
+
+    render(
+      <Form
+        schema={schema}
+        values={{
+          fields: [
+            {
+              id: 'fld_blocks',
+              type: 'flexible',
+              name: 'blocks',
+              label: 'Blocks',
+              options: {
+                layouts: [
+                  {
+                    id: 'lay_hero',
+                    name: 'hero',
+                    label: 'Hero',
+                    fields: [{ id: 'fld_heading', type: 'text', name: 'heading', label: 'Heading' }],
+                  },
+                ],
+              },
+            },
+          ],
+        }}
+        onValuesChange={(values) => (latestValues = values)}
+      />,
+    )
+
+    // Adding a layout rebuilds every layout, the layouts' Add row coming after the conditions'
+    fireEvent.click(screen.getByRole('button', { name: 'Blocks (blocks)' }))
+    fireEvent.click(editor().getAllByRole('button', { name: 'Add row' }).at(-1)!)
+    fireEvent.change(editor().getAllByLabelText(/^Label/)[1], { target: { value: 'Quote' } })
+
+    fireEvent.click(editor().getAllByText('Text', { selector: 'button > strong' })[1])
+    fireEvent.change(editor().getByLabelText(/Field Label/), { target: { value: 'Quote text' } })
+    await waitFor(() => expect(editor().getByLabelText<HTMLInputElement>(/Field Name/).value).toBe('quote_text'))
+    save()
+    save()
+
+    await waitFor(() => expect(latestValues.fields?.[0].options.layouts).toHaveLength(2))
+
+    const [hero, quote] = latestValues.fields[0].options.layouts
+    expect(hero).toMatchObject({ id: 'lay_hero', name: 'hero', fields: [{ id: 'fld_heading' }] })
+    expect(quote.name).toBe('quote')
+    expect(quote.id).toMatch(/^lay_[0-9a-z]{8}$/)
+  })
+
+  it('keeps schemas without IDs working, giving a field one when it is edited', async () => {
+    let latestValues: Record<string, any> = {}
+
+    render(
+      <Form
+        schema={schema}
+        values={{
+          fields: [
+            { type: 'text', name: 'FirstName', label: 'First name' },
+            { type: 'text', name: 'utm_source', label: 'Source' },
+          ],
+        }}
+        onValuesChange={(values) => (latestValues = values)}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'First name (FirstName)' }))
+    fireEvent.change(editor().getByLabelText(/Field Label/), { target: { value: 'Given name' } })
+    save()
+
+    // The imported name stays rather than following the new label
+    await waitFor(() => expect(latestValues.fields?.[0]).toMatchObject({ name: 'FirstName', label: 'Given name' }))
+    expect(latestValues.fields[0].id).toMatch(/^fld_[0-9a-z]{8}$/)
+    expect(latestValues.fields[1]).not.toHaveProperty('id')
   })
 })

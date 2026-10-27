@@ -227,8 +227,15 @@ export function pickValues<Values extends Record<string, any> = Record<string, a
   return picked as Partial<Values>
 }
 
+// A short random ID for something the schema builder creates, e.g. fld_k3x9q2mz for a field
+export const createId = (prefix: string) => {
+  const characters = Array.from(crypto.getRandomValues(new Uint8Array(8)), (byte) => (byte % 36).toString(36))
+  return `${prefix}_${characters.join('')}`
+}
+
 // Strip unknown properties from a field schema
 export function validateSchema({
+  id,
   name,
   label,
   required,
@@ -240,6 +247,7 @@ export function validateSchema({
   options,
 }: InputSchema) {
   return {
+    id,
     name,
     label,
     required,
@@ -277,9 +285,14 @@ export const baseInputSchemaFields = (): Array<FieldSchema> => {
     {
       name: 'name',
       label: 'Field Name',
-      type: 'text',
+      type: 'identifier',
       required: true,
       width: 50,
+      // Names are path segments, e.g. address.town, so they can't hold dots or spaces
+      options: {
+        source: 'label',
+        format: 'mixed',
+      },
     },
     {
       name: 'label',

@@ -14,8 +14,10 @@ export default defineConfig({
         rollupOptions: {
             input: {
                 index: path.resolve(__dirname, "public/index.html"),
+                builder: path.resolve(__dirname, "public/builder.html"),
                 marketo: path.resolve(__dirname, "public/marketo.html"),
                 hubspot: path.resolve(__dirname, "public/hubspot.html"),
+                fieldIds: path.resolve(__dirname, "public/field-ids.html"),
             },
         },
     },

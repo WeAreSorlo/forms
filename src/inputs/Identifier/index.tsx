@@ -60,6 +60,10 @@ export const optionFields: InputOptionFields = () => {
             value: 'pascal',
             label: 'Pascal case (MyPage)',
           },
+          {
+            value: 'mixed',
+            label: 'Mixed case (FirstName, utm_source)',
+          },
         ],
       },
     },
@@ -76,11 +80,12 @@ export const optionFields: InputOptionFields = () => {
   ]
 }
 
-const formats = ['kebab', 'snake', 'camel', 'pascal'] as const
+const formats = ['kebab', 'snake', 'camel', 'pascal', 'mixed'] as const
 
 type Format = (typeof formats)[number]
 
-const separators: Record<Format, string> = { kebab: '-', snake: '_', camel: '', pascal: '' }
+// Mixed accepts any of the code styles but generates snake case
+const separators: Record<Format, string> = { kebab: '-', snake: '_', camel: '', pascal: '', mixed: '_' }
 
 const formatOf = (options?: Record<string, any>): Format =>
   formats.includes(options?.format) ? options?.format : 'kebab'
@@ -113,7 +118,12 @@ export function formatIdentifier(text: string, format: Format = 'kebab', unicode
 
 // Whether a value is shaped like the formatter's output: allowed words, joined and cased for the format
 function matchesFormat(value: string, format: Format, unicode: boolean) {
-  const word = unicode ? '[\\p{L}\\p{M}\\p{N}]+' : '[a-zA-Z0-9]+'
+  const letters = unicode ? '\\p{L}\\p{M}\\p{N}' : 'a-zA-Z0-9'
+
+  // Any case and any underscores, as in imported names like FirstName or utm_source__c
+  if (format === 'mixed') return new RegExp(`^[${letters}_]+$`, 'u').test(value)
+
+  const word = `[${letters}]+`
   const separator = separators[format]
   const pattern = separator ? `^${word}(?:${separator}${word})*$` : `^${word}$`
   if (!new RegExp(pattern, 'u').test(value)) return false

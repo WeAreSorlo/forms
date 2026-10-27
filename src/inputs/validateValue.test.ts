@@ -166,6 +166,11 @@ describe('identifier', () => {
       ['snake', ['first_name', 'address_line_2'], ['first-name', 'First_name', 'first__name']],
       ['camel', ['firstName', 'myHTTPServer', 'h1Title'], ['FirstName', 'first_name', 'first name']],
       ['pascal', ['FirstName', 'HTTPServer', 'H1Title'], ['firstName', 'First_Name', 'First Name']],
+      [
+        'mixed',
+        ['FirstName', 'emailOptIn', 'utm_source', 'utm_source__c', 'miscBlankField3TextArea'],
+        ['address.town', 'first name', 'first-name', '_layout', 'HtmlText_2026-05-05T09:52:21.022Z'],
+      ],
     ]
 
     for (const [format, valid, invalid] of cases) {
@@ -188,6 +193,7 @@ describe('identifier', () => {
     expect(messages('snake')).toEqual(['A valid identifier required, e.g. my_page.'])
     expect(messages('camel')).toEqual(['A valid identifier required, e.g. myPage.'])
     expect(messages('pascal')).toEqual(['A valid identifier required, e.g. MyPage.'])
+    expect(messages('mixed')).toEqual(['A valid identifier required, e.g. my_page.'])
   })
 
   it('only accepts letters from other scripts when unicode is set', () => {
@@ -203,6 +209,7 @@ describe('identifier', () => {
     expect(identifier.formatIdentifier('Hello, World!', 'snake')).toBe('hello_world')
     expect(identifier.formatIdentifier('Hello, World!', 'camel')).toBe('helloWorld')
     expect(identifier.formatIdentifier('Hello, World!', 'pascal')).toBe('HelloWorld')
+    expect(identifier.formatIdentifier('Hello, World!', 'mixed')).toBe('hello_world')
     expect(identifier.formatIdentifier('Version 2.0')).toBe('version-2-0')
     expect(identifier.formatIdentifier('')).toBe('')
   })
@@ -243,7 +250,7 @@ describe('identifier', () => {
       'iPhone 15',
     ]
 
-    for (const format of ['kebab', 'snake', 'camel', 'pascal'] as const) {
+    for (const format of ['kebab', 'snake', 'camel', 'pascal', 'mixed'] as const) {
       for (const unicode of [false, true]) {
         for (const text of samples) {
           const value = identifier.formatIdentifier(text, format, unicode)

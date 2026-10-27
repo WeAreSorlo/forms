@@ -8,7 +8,7 @@ An advanced, schema-driven form builder library for React. Forms are described a
 
 ```sh
 npm install
-npm run dev        # start the demo at the vite dev server address
+npm run dev        # list the examples at the vite dev server address
 npm run test       # run the vitest suite
 npm run typecheck  # strict TypeScript check
 npm run build      # build dist/ with tsup
@@ -59,7 +59,7 @@ export default function Example() {
 
 ## Field schema
 
-Every field supports `name` (required), `label`, `required`, `instructions`, `defaultValue`, `readonly`, `disabled`, `width` (percentage), `options`, and `conditions`/`conditionsMode` for conditional logic. The `type` selects the input, and `options` carries input-specific settings:
+Every field supports `name` (required), `id`, `label`, `required`, `instructions`, `defaultValue`, `readonly`, `disabled`, `width` (percentage), `options`, and `conditions`/`conditionsMode` for conditional logic. The `type` selects the input, and `options` carries input-specific settings:
 
 | Type            | Options                                                                     |
 | --------------- | --------------------------------------------------------------------------- |
@@ -71,7 +71,7 @@ Every field supports `name` (required), `label`, `required`, `instructions`, `de
 | `email`         | `placeholder`, `multiple`, `minLength`, `maxLength`                          |
 | `url`           | `placeholder` — http(s) addresses only                                       |
 | `tel`           | `placeholder` — loose phone number validation                                |
-| `identifier`    | `source`, `format` (`kebab`, `snake`, `camel`, `pascal`), `unicode`          |
+| `identifier`    | `source`, `format` (`kebab`, `snake`, `camel`, `pascal`, `mixed`), `unicode` |
 | `date`          | `min`, `max` — value is an ISO date, e.g. `2026-01-15`                       |
 | `time`          | `min`, `max` — value is a 24 hour time, e.g. `13:30`                         |
 | `datetime`      | `min`, `max` — value is a local ISO datetime, e.g. `2026-01-15T13:30`        |
@@ -90,9 +90,11 @@ Every field supports `name` (required), `label`, `required`, `instructions`, `de
 
 Groups nest their values under the group's name, repeaters produce an array of objects, matrices an array of rows of objects, and flexible content an array of blocks. All four can be nested inside each other without limit.
 
+The schema builder gives every field it creates an `id`, e.g. `fld_k3x9q2mz`, that never changes when the field is edited, renamed or moved, so a schema diff can tell a rename from a removal plus an addition. Flexible layouts get one the same way, e.g. `lay_k3x9q2mz`. Values stay keyed by `name`, blocks keep naming their layout in `_layout`, and schemas without IDs keep working; editing such a field in the builder gives it and its layouts IDs. A field's name follows its label until edited, and is a `mixed` identifier, since names are the segments of paths like `address.town` and can't hold dots or spaces.
+
 A `flexible` block is a layout's field values plus `_layout`, the name of the layout it uses, e.g. `[{ _layout: 'hero', title: 'Welcome' }]`, so `_layout` can't be a field name inside a layout. Its messages are keyed like a repeater's, e.g. `blocks.0.title`, and `pickValues` drops blocks whose layout no longer exists.
 
-An `identifier` with a `source`, e.g. `title`, follows that field, found the same way as a condition's `field`, while it is empty or still holds the value it generated. A typed or loaded value never changes by itself. Clearing it picks the source back up when the field loses focus, which is also when an invalid value is tidied into its format. `kebab` (the default) is the URL style and may start with a digit, while `snake`, `camel` and `pascal` are code styles and must start with a letter. Latin accents are always removed, and letters from other scripts are dropped unless `unicode` is set, e.g. `東京-タワー`.
+An `identifier` with a `source`, e.g. `title`, follows that field, found the same way as a condition's `field`, while it is empty or still holds the value it generated. A typed or loaded value never changes by itself. Clearing it picks the source back up when the field loses focus, which is also when an invalid value is tidied into its format. `kebab` (the default) is the URL style and may start with a digit, while `snake`, `camel` and `pascal` are code styles and must start with a letter. `mixed` accepts any of the code styles, or a mix such as `utm_source__c`, and generates snake case. Latin accents are always removed, and letters from other scripts are dropped unless `unicode` is set, e.g. `東京-タワー`.
 
 ## Validation
 
@@ -188,7 +190,7 @@ An input's `validateValue` is the shared source of truth, and the optional `vali
 
 ## Custom inputs
 
-An input is a module implementing the `Input` interface: a default React component plus optional metadata (`name`, `description`, `category`), `validateValue` (with optional `validateClientValue`/`validateServerValue` overrides), `pickValue`, `formatValue`, `renderValue`, and `coreFields`/`optionFields` describing how the schema builder should configure it. The component reads everything it needs from `useFieldContext()`:
+An input is a module implementing the `Input` interface: a default React component plus optional metadata (`name`, `description`, `category`), `validateValue` (with optional `validateClientValue`/`validateServerValue` overrides), `pickValue`, `formatValue`, `renderValue`, `coreFields`/`optionFields` describing how the schema builder should configure it, and `prepareSchema`, which finishes a field's schema when the builder saves it, as the flexible input does to give new layouts their IDs. The component reads everything it needs from `useFieldContext()`:
 
 ```tsx
 import { useFieldContext, validationSuccess } from 'iight'

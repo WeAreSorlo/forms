@@ -2,6 +2,9 @@ import { FieldSchema } from '@/types/fields'
 import { ValidationResponse } from '@/utils/validation'
 
 export interface InputSchema {
+  // A stable ID that never changes when the field is edited, renamed or moved,
+  // so schema diffs can tell a rename from a removal plus an addition
+  id?: string
   name: string
   label?: string
   required?: boolean
@@ -37,6 +40,9 @@ export type InputIcon = () => React.ReactNode
 export type InputCoreFields = (defaultFields: Array<FieldSchema>) => Array<FieldSchema>
 export type InputOptionFields = (defaultFields: Array<FieldSchema>) => Array<FieldSchema>
 
+// Called by the schema builder with a field it is saving, so the input can finish its own options
+export type InputPrepareSchema = (schema: FieldSchema) => FieldSchema
+
 export type ValidationEnvironment = 'client' | 'server'
 
 export type InputValidateValue = (value: any, schema: InputSchema) => InputValidationResponse
@@ -71,6 +77,7 @@ export interface Input {
   icon?: InputIcon
   coreFields?: InputCoreFields
   optionFields?: InputOptionFields
+  prepareSchema?: InputPrepareSchema
   validateValue?: InputValidateValue
   validateClientValue?: InputValidateClientValue
   validateServerValue?: InputValidateServerValue

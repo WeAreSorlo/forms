@@ -75,6 +75,7 @@ export type {
   InputOptionFields,
   InputPickFields,
   InputPickValue,
+  InputPrepareSchema,
   InputRenderValue,
   InputSchema,
   InputValidateChildren,

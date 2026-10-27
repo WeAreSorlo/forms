@@ -85,7 +85,7 @@ export default function Field({
   // Strip unknown properties from the schema
   const schema = useMemo(() => {
     return validateSchema(rawSchema)
-  }, [name, label, required, instructions, defaultValue, readonly, disabled, width, options])
+  }, [rawSchema.id, name, label, required, instructions, defaultValue, readonly, disabled, width, options])
 
   // Fall back to the schema default when no value is set
   if (value === undefined) value = defaultValue

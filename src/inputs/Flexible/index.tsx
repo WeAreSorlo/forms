@@ -9,11 +9,12 @@ import {
   InputName,
   InputOptionFields,
   InputPickValue,
+  InputPrepareSchema,
   InputRenderValue,
   InputValidateChildren,
   InputValidateValue,
 } from '@/types/inputs'
-import { validateSchema } from '@/utils/inputs'
+import { createId, validateSchema } from '@/utils/inputs'
 import { validationMessage } from '@/utils/messages'
 import { isEmptyValue, validationError, validationSuccess } from '@/utils/validation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -23,6 +24,8 @@ import { useTranslation } from 'react-i18next'
 type Block = Record<string, any>
 
 interface Layout {
+  // A stable ID like a field's, e.g. lay_k3x9q2mz, while blocks keep naming their layout in _layout
+  id?: string
   name: string
   label?: string
   fields?: Array<FieldSchema>
@@ -45,6 +48,11 @@ export const optionFields: InputOptionFields = () => {
       options: {
         minimum: 1,
         fields: [
+          // Carries the layout's ID, since adding a layout rebuilds every layout from these fields
+          {
+            name: 'id',
+            type: 'hidden',
+          },
           {
             label: 'Label',
             name: 'label',
@@ -72,6 +80,15 @@ export const optionFields: InputOptionFields = () => {
       },
     },
   ]
+}
+
+// Give layouts added in the schema builder their IDs, keeping the IDs of existing ones
+export const prepareSchema: InputPrepareSchema = (schema) => {
+  const layouts: Array<Layout> = schema.options?.layouts
+  if (!Array.isArray(layouts)) return schema
+
+  const withIds = layouts.map((layout) => ({ ...layout, id: layout?.id || createId('lay') }))
+  return { ...schema, options: { ...schema.options, layouts: withIds } }
 }
 
 // The field's layouts by name, skipping any without one

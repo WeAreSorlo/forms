@@ -1,6 +1,13 @@
 import * as inputs from '@/inputs'
 import { Input, ValidationReport } from '@/types/inputs'
-import { flattenValidationReport, pickValues, validateServerValues, validateValues } from '@/utils/inputs'
+import {
+  baseInputSchemaFields,
+  flattenValidationReport,
+  pickValues,
+  validateSchema,
+  validateServerValues,
+  validateValues,
+} from '@/utils/inputs'
 import { validationError, validationSuccess } from '@/utils/validation'
 import { describe, expect, it } from 'vitest'
 
@@ -365,5 +372,36 @@ describe('pickValues', () => {
     ]
 
     expect(pickValues(schema, { heading: 'junk', pets: 'junk' }, inputs)).toEqual({})
+  })
+})
+
+describe('field ids', () => {
+  it('survive validateSchema, which strips unknown properties', () => {
+    const field = { id: 'fld_title', name: 'title', junk: true }
+
+    expect(validateSchema(field)).toEqual({ id: 'fld_title', name: 'title' })
+  })
+
+  it('leave values keyed by name', () => {
+    const schema = [{ id: 'fld_title', type: 'text', name: 'title', required: true }]
+
+    expect(pickValues(schema, { title: 'Hello', fld_title: 'Nope' }, inputs)).toEqual({ title: 'Hello' })
+    expect(Object.keys(report(schema, {}).fields)).toEqual(['title'])
+  })
+})
+
+describe('field name check', () => {
+  const nameIsValid = (name: any) => report(baseInputSchemaFields(), { name }).fields.name.isValid
+
+  it('rejects empty names and names that break dotted paths', () => {
+    for (const name of [undefined, '', 'address.town', 'first name', ' title']) {
+      expect(nameIsValid(name), String(name)).toBe(false)
+    }
+  })
+
+  it('accepts the mixed styles imported forms use', () => {
+    for (const name of ['FirstName', 'emailOptIn', 'utm_source', 'title']) {
+      expect(nameIsValid(name), name).toBe(true)
+    }
   })
 })
