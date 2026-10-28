@@ -69,6 +69,12 @@ export const validateValue: InputValidateValue = (value, schema) => {
     return validationError(value, validationMessage(schema, 'invalid'))
   }
 
+  // Checkboxes keep the choices' own values
+  const choices: Array<any> = schema.options?.choices || []
+  if (!value.every((item) => choices.some((choice) => choice.value === item))) {
+    return validationError(value, validationMessage(schema, 'choice'))
+  }
+
   return validationSuccess(value)
 }
 

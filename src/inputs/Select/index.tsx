@@ -7,6 +7,7 @@ import {
   InputName,
   InputOptionFields,
   InputRenderValue,
+  InputSchema,
   InputTypeValue,
   InputValidateValue,
 } from '@/types/inputs'
@@ -67,6 +68,13 @@ export const optionFields: InputOptionFields = () => {
   ]
 }
 
+// Option values come from the browser as strings, and option groups hold choices of their own
+const choiceValues = (schema: InputSchema): Array<string> => {
+  const choices: Array<any> = schema.options?.choices || []
+  const values = choices.flatMap((choice) => (choice?.choices?.length > 0 ? choice.choices : [choice]))
+  return values.map((choice) => String(choice.value))
+}
+
 export const validateValue: InputValidateValue = (value, schema) => {
   schema = validateSchema(schema)
 
@@ -83,14 +91,18 @@ export const validateValue: InputValidateValue = (value, schema) => {
     )
   }
 
+  // Check that every selection is one of the choices
+  const values = choiceValues(schema)
+  const selections = schema.options?.multiple ? value : [value]
+  if (!Array.isArray(selections) || !selections.every((selection) => values.includes(selection))) {
+    return validationError(value, validationMessage(schema, 'choice'))
+  }
+
   return validationSuccess(value)
 }
 
-// Option values come from the browser as strings, and option groups hold choices of their own
 export const typeValue: InputTypeValue = (schema) => {
-  const choices: Array<any> = schema.options?.choices || []
-  const values = choices.flatMap((choice) => (choice?.choices?.length > 0 ? choice.choices : [choice]))
-  const union = literalUnion(values.map((choice) => String(choice.value)))
+  const union = literalUnion(choiceValues(schema))
   return schema.options?.multiple ? `Array<${union}>` : union
 }
 

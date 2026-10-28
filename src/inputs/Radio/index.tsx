@@ -66,6 +66,12 @@ export const validateValue: InputValidateValue = (value, schema) => {
     return validationError(value, validationMessage(schema, 'required'))
   }
 
+  // The browser gives radio values as strings
+  const choices: Array<any> = schema.options?.choices || []
+  if (!choices.some((choice) => String(choice.value) === value)) {
+    return validationError(value, validationMessage(schema, 'choice'))
+  }
+
   return validationSuccess(value)
 }
 

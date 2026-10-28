@@ -18,6 +18,7 @@ export default {
       time: 'A valid time required.',
       datetime: 'A valid date and time required.',
       selection: 'At least one selection is required.',
+      choice: 'A valid choice required.',
       children: 'One or more fields are invalid.',
       minItems: 'This field requires a minimum of {{min}} item(s).',
       maxItems: 'This field requires a maximum of {{max}} item(s).',

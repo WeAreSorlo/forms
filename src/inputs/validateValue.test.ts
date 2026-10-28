@@ -127,6 +127,26 @@ describe('select', () => {
     expect(validation.isValid).toBe(false)
     expect(validation.messages).toEqual(['At least one selection is required.'])
   })
+
+  it('accepts only the choices, including those in option groups, as strings', () => {
+    const options = { choices: [{ label: 'Warm', choices: [{ value: 'red' }, { value: 'orange' }] }, { value: 1 }] }
+    expect(select.validateValue('orange', schema({ options })).isValid).toBe(true)
+    expect(select.validateValue('1', schema({ options })).isValid).toBe(true)
+    expect(select.validateValue(1, schema({ options })).isValid).toBe(false)
+    expect(select.validateValue('Warm', schema({ options })).isValid).toBe(false)
+    expect(select.validateValue(['red'], schema({ options })).isValid).toBe(false)
+
+    const validation = select.validateValue('blue', schema({ options }))
+    expect(validation.isValid).toBe(false)
+    expect(validation.messages).toEqual(['A valid choice required.'])
+  })
+
+  it('checks every selection when multiple', () => {
+    const options = { multiple: true, choices: [{ value: 'red' }, { value: 'blue' }] }
+    expect(select.validateValue(['red', 'blue'], schema({ options })).isValid).toBe(true)
+    expect(select.validateValue(['red', 'green'], schema({ options })).isValid).toBe(false)
+    expect(select.validateValue('red', schema({ options })).isValid).toBe(false)
+  })
 })
 
 describe('url', () => {
@@ -359,8 +379,19 @@ describe('radio', () => {
   })
 
   it('requires a selection when required', () => {
-    expect(radio.validateValue('', schema({ required: true })).isValid).toBe(false)
-    expect(radio.validateValue('red', schema({ required: true })).isValid).toBe(true)
+    const options = { choices: [{ value: 'red' }] }
+    expect(radio.validateValue('', schema({ required: true, options })).isValid).toBe(false)
+    expect(radio.validateValue('red', schema({ required: true, options })).isValid).toBe(true)
+  })
+
+  it('accepts only the choices, as the strings the browser gives', () => {
+    const options = { choices: [{ value: 'red' }, { value: 1 }] }
+    expect(radio.validateValue('1', schema({ options })).isValid).toBe(true)
+    expect(radio.validateValue(1, schema({ options })).isValid).toBe(false)
+
+    const validation = radio.validateValue('blue', schema({ options }))
+    expect(validation.isValid).toBe(false)
+    expect(validation.messages).toEqual(['A valid choice required.'])
   })
 })
 
@@ -377,6 +408,16 @@ describe('checkbox', () => {
 
   it('rejects values that are not arrays', () => {
     expect(checkbox.validateValue('red', schema()).isValid).toBe(false)
+  })
+
+  it('accepts only the choices, keeping their own values', () => {
+    const options = { choices: [{ value: 'red' }, { value: 1 }] }
+    expect(checkbox.validateValue(['red', 1], schema({ options })).isValid).toBe(true)
+    expect(checkbox.validateValue(['1'], schema({ options })).isValid).toBe(false)
+
+    const validation = checkbox.validateValue(['red', 'blue'], schema({ options }))
+    expect(validation.isValid).toBe(false)
+    expect(validation.messages).toEqual(['A valid choice required.'])
   })
 })
 
