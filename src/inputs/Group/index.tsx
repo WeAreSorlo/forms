@@ -112,7 +112,7 @@ const Component: InputComponent = function () {
     <FieldScopeContext.Provider value={scopes}>
       <Fieldset
         schema={options?.fields || []}
-        values={value}
+        values={value || {}}
         messages={tempMessages}
         validity={tempValidity}
         onValuesChange={onValuesChange}

@@ -330,7 +330,8 @@ const Component: InputComponent = function () {
 
         return newRow.map((column) => {
           const newColumn = fields.map((field: Column) => {
-            let value = field.defaultValue ?? null
+            // Leave fields without a default unset, as a new flexible block does, so inputs fall back to empty
+            let value = field.defaultValue
             if (typeof column === 'object' && column.hasOwnProperty(field.name)) {
               value = column[field.name]
             }

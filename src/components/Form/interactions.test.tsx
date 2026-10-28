@@ -223,6 +223,53 @@ describe('form interactions', () => {
   })
 })
 
+describe('repeater interactions', () => {
+  // Pricing plans whose button sits in a group
+  const plans = (options: Record<string, any> = {}): Array<FieldSchema> => [
+    {
+      type: 'repeater',
+      name: 'plans',
+      label: 'Plans',
+      options: {
+        ...options,
+        fields: [
+          { type: 'text', name: 'name', label: 'Plan name' },
+          {
+            type: 'group',
+            name: 'button',
+            label: 'Button',
+            options: { fields: [{ type: 'text', name: 'label', label: 'Button label' }] },
+          },
+        ],
+      },
+    },
+  ]
+
+  it('adds a row holding a group', async () => {
+    let latestValues: Record<string, any> = {}
+
+    render(<Form schema={plans()} onValuesChange={(values) => (latestValues = values)} />)
+
+    fireEvent.click(screen.getByText('Add row'))
+    fireEvent.change(screen.getByLabelText(/Button label/), { target: { value: 'Buy now' } })
+
+    // The untouched plan name is left unset, as in a new flexible block
+    await waitFor(() => expect(latestValues.plans).toEqual([{ button: { label: 'Buy now' } }]))
+  })
+
+  it('seeds its minimum rows holding a group', () => {
+    render(<Form schema={plans({ minimum: 1 })} />)
+
+    expect(screen.getByLabelText(/Button label/)).toBeTruthy()
+  })
+
+  it('shows a saved row whose group is null', () => {
+    render(<Form schema={plans()} values={{ plans: [{ name: 'Pro', button: null }] }} />)
+
+    expect(screen.getByLabelText(/Button label/)).toBeTruthy()
+  })
+})
+
 describe('identifier interactions', () => {
   const schema: Array<FieldSchema> = [
     { type: 'text', name: 'title', label: 'Title' },
