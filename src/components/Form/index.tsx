@@ -94,28 +94,29 @@ export default function Form<Values extends Record<string, any> = Record<string,
     if (emit && callbacks.current.onValidityChange) callbacks.current.onValidityChange(next)
   }, [])
 
-  // Adopt controlled props without emitting them back to the parent
+  // Adopt controlled props without emitting them back to the parent. Compare with the state this render shows, as a
+  // child's effect may have changed the refs since, and a parent passing that change back only shows it next render
   useEffect(() => {
     if (defaultSchema === undefined) return
-    if (Object.is(defaultSchema, schemaRef.current)) return
+    if (Object.is(defaultSchema, schema)) return
     commitSchema(defaultSchema)
   }, [defaultSchema, commitSchema])
 
   useEffect(() => {
     if (defaultValues === undefined) return
-    if (Object.is(defaultValues, valuesRef.current)) return
+    if (Object.is(defaultValues, values)) return
     commitValues(defaultValues, false)
   }, [defaultValues, commitValues])
 
   useEffect(() => {
     if (defaultMessages === undefined) return
-    if (Object.is(defaultMessages, messagesRef.current)) return
+    if (Object.is(defaultMessages, messages)) return
     commitMessages(defaultMessages, false)
   }, [defaultMessages, commitMessages])
 
   useEffect(() => {
     if (defaultValidity === undefined) return
-    if (Object.is(defaultValidity, validityRef.current)) return
+    if (Object.is(defaultValidity, validity)) return
     commitValidity(defaultValidity, false)
   }, [defaultValidity, commitValidity])
 

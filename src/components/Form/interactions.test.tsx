@@ -3,7 +3,7 @@ import Form, { FormHandle } from '@/components/Form'
 import { FieldSchema } from '@/types/fields'
 import { ValidationReport } from '@/types/inputs'
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { createRef } from 'react'
+import { createRef, useState } from 'react'
 import { afterEach, beforeAll, describe, expect, it } from 'vitest'
 
 ;(globalThis as any).IS_REACT_ACT_ENVIRONMENT = true
@@ -261,6 +261,34 @@ describe('identifier interactions', () => {
 
     fireEvent.change(title(), { target: { value: 'My Renamed Post' } })
     expect(slug().value).toBe('my-post')
+  })
+
+  it('keeps a generated slug while a parent passes the values back', () => {
+    const ref = createRef<FormHandle>()
+    const requiredSlug = [schema[0], { ...schema[1], required: true }]
+    let saved: Record<string, any> = {}
+
+    function Editor() {
+      const [values, setValues] = useState<Record<string, any>>({})
+      saved = values
+      return <Form ref={ref} schema={requiredSlug} values={values} onValuesChange={setValues} />
+    }
+
+    render(<Editor />)
+
+    // Typed quickly, the second keystroke lands before the parent renders the slug the first one generated
+    act(() => {
+      fireEvent.change(title(), { target: { value: 'Hello' } })
+      fireEvent.change(title(), { target: { value: 'Hello!' } })
+    })
+
+    let report: undefined | ValidationReport
+    act(() => {
+      report = ref.current?.validate()
+    })
+
+    expect(report?.isValid).toBe(true)
+    expect(saved).toEqual({ title: 'Hello!', slug: 'hello' })
   })
 
   it('picks the source back up when the slug is cleared', async () => {
