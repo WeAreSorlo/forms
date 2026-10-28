@@ -347,7 +347,8 @@ const Component: InputComponent = function () {
             return [field.name, value]
           })
 
-          return Object.fromEntries(newColumn)
+          // Keep the cell's other values, such as a choice's nested choices, which no field here shows
+          return { ...(typeof column === 'object' ? column : {}), ...Object.fromEntries(newColumn) }
         })
       })
     },

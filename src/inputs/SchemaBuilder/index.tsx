@@ -5,7 +5,7 @@ import Fieldset, {
   OnValuesChangeCallback,
 } from '@/components/Fieldset'
 import Modal from '@/components/Modal'
-import { FieldReportContext, FieldScopeContext, useFormStaticContext } from '@/context/FormProvider'
+import { FieldReportContext, FieldScopeContext, FormStaticContext, useFormStaticContext } from '@/context/FormProvider'
 import { FieldMessages, FieldSchema } from '@/types/fields'
 import {
   Input,
@@ -21,8 +21,8 @@ import {
 } from '@/types/inputs'
 import { conditionScope, createId, validateInputSchemaFields, validateSchema, validateValues } from '@/utils/inputs'
 import { validationMessage } from '@/utils/messages'
-import { validationError, validationSuccess } from '@/utils/validation'
-import { Dispatch, Fragment, useCallback, useEffect, useId, useMemo, useState } from 'react'
+import { isEmptyValue, validationError, validationSuccess } from '@/utils/validation'
+import { Dispatch, Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 export const name: InputName = () => 'Schema Builder'
@@ -37,6 +37,16 @@ export const coreFields: InputCoreFields = () => {
 
 export const validateValue: InputValidateValue = (value, schema) => {
   schema = validateSchema(schema)
+
+  // Return early if the value is empty and the field is optional, e.g. a group with no fields yet
+  if (!schema.required && isEmptyValue(value)) {
+    return validationSuccess(value)
+  }
+
+  // Check for an empty value
+  if (schema.required && isEmptyValue(value)) {
+    return validationError(value, validationMessage(schema, 'required'))
+  }
 
   if (!Array.isArray(value)) {
     return validationError(value, validationMessage(schema, 'invalid'))
@@ -61,6 +71,23 @@ export const renderValue: InputRenderValue = (value, schema) => {
 // Let the field's input finish its schema, e.g. giving new flexible layouts their IDs
 const prepareSchema = (input: Input, schema: FieldSchema) => {
   return input.prepareSchema ? input.prepareSchema(schema) : schema
+}
+
+// Fill unset fields with their defaults, including those in groups such as options, e.g. a matrix's minimum rows,
+// so the editor saves the values it shows
+const withDefaults = (schema: Array<FieldSchema>, values: Record<string, any>): Record<string, any> => {
+  const merged = { ...values }
+
+  for (const field of schema) {
+    if (field.type === 'group') {
+      const group = withDefaults(field.options?.fields || [], merged[field.name] || {})
+      if (Object.keys(group).length >= 1) merged[field.name] = group
+    } else if (merged[field.name] === undefined && field.defaultValue !== undefined) {
+      merged[field.name] = field.defaultValue
+    }
+  }
+
+  return merged
 }
 
 const Component: InputComponent = function () {
@@ -114,7 +141,8 @@ const Component: InputComponent = function () {
 }
 
 function CreateValueItem({ type, input, setValue }: { type: string; input: Input; setValue: Dispatch<any> }) {
-  const schema = validateInputSchemaFields(input)
+  // Memoised, as a new schema would reset an open editor
+  const schema = useMemo(() => validateInputSchemaFields(input), [input])
 
   const onSave = useCallback(
     (editorValues: Record<string, any>) => {
@@ -178,15 +206,16 @@ function EditValueItem({
 
   const onSave = useCallback(
     (editorValues: Record<string, any>) => {
-      // Keep the field's ID, giving one to fields from schemas written without them
-      const field = { id: value.id ?? createId('fld'), type: value.type, ...editorValues } as FieldSchema
+      // Keep the field's ID and the keys the editor doesn't show, such as readonly, giving an ID to fields from
+      // schemas written without them
+      const field = { id: value.id ?? createId('fld'), ...value, ...editorValues } as FieldSchema
       setValue((old: Array<FieldSchema>) => {
         const newValue = [...(old || [])]
         newValue[index] = prepareSchema(input, field)
         return newValue
       })
     },
-    [setValue, index, input, value.id, value.type],
+    [setValue, index, input, value],
   )
 
   const onDelete = useCallback(
@@ -263,27 +292,22 @@ function SchemaEditor({
   onSave: (value: Record<string, any>) => void
   onCancel?: () => void
 }) {
-  const { inputs } = useFormStaticContext()
+  const staticContext = useFormStaticContext()
+  const { inputs } = staticContext
   const { t } = useTranslation()
-  const id = useId()
 
-  // Merge the schema's default values with the current values
-  const mergedValues = useMemo(() => {
-    const defaultValues = schema.filter((field) => field.defaultValue !== undefined)
-    const defaultEntries = Object.fromEntries(defaultValues.map((field) => [field.name, field.defaultValue]))
-    return { ...defaultEntries, ...(values || {}) }
-  }, [schema, values])
+  const mergedValues = useMemo(() => withDefaults(schema, values || {}), [schema, values])
 
-  const [resetCounter, setResetCounter] = useState(0)
   const [open, setOpen] = useState(false)
   const [tempValue, setTempValue] = useState<Record<string, any>>(mergedValues)
   const [tempMessages, setTempMessages] = useState<Record<string, FieldMessages>>({})
   const [tempValidity, setTempValidity] = useState<Record<string, boolean | undefined>>({})
+  const [validationCounter, setValidationCounter] = useState(0)
 
   const closeModal = () => {
-    setResetCounter((old) => old + 1)
     setTempMessages({})
     setTempValidity({})
+    setValidationCounter(0)
     setOpen(false)
     setTempValue(mergedValues)
   }
@@ -304,27 +328,19 @@ function SchemaEditor({
   const handleSave = (event?: React.MouseEvent<HTMLElement, MouseEvent>) => {
     if (event) event.preventDefault()
 
-    // Validate every field, including nested fields, and block the save while any are invalid
-    const report = validateValues(schema, tempValue, inputs, { environment: 'client' })
-
-    if (!report.isValid) {
-      const newMessages: Record<string, FieldMessages> = {}
-      const newValidity: Record<string, boolean | undefined> = {}
-
-      for (const [field, fieldReport] of Object.entries(report.fields)) {
-        newValidity[field] = fieldReport.isValid
-        newMessages[field] =
-          !fieldReport.isValid && fieldReport.messages.length === 0 ? [t('validation.children')] : fieldReport.messages
-      }
-
-      setTempMessages(newMessages)
-      setTempValidity(newValidity)
+    // Validate every field, including nested fields, and block the save while any are invalid, asking every field
+    // in the editor to show its own messages as a form's validate does
+    if (!validateValues(schema, tempValue, inputs, { environment: 'client' }).isValid) {
+      setValidationCounter((old) => old + 1)
       return
     }
 
     onSave({ ...tempValue })
     closeModal()
   }
+
+  // The editor counts its own validation passes, so fields in an editor opened after the form validated start clean
+  const editorContext = useMemo(() => ({ ...staticContext, validationCounter }), [staticContext, validationCounter])
 
   const editorScopes = useMemo(() => [conditionScope(schema, tempValue || {}, inputs)], [schema, tempValue, inputs])
 
@@ -349,8 +365,9 @@ function SchemaEditor({
     })
   }, [])
 
+  // The button stays mounted when the editor closes, so the browser can return focus to it
   return (
-    <Fragment key={`${id}-${resetCounter}`}>
+    <>
       <button
         className='iight-button'
         type='button'
@@ -366,19 +383,21 @@ function SchemaEditor({
         {open && (
           /* The editor's state is temporary, so keep its reports out of the
              form's messages and evaluate its conditions against its own values */
-          <FieldReportContext.Provider value={undefined}>
-            <FieldScopeContext.Provider value={editorScopes}>
-              <Fieldset
-                schema={schema}
-                values={tempValue}
-                messages={tempMessages}
-                validity={tempValidity}
-                onValuesChange={handleValuesChange}
-                onMessagesChange={handleMessagesChange}
-                onValidityChange={handleValidityChange}
-              />
-            </FieldScopeContext.Provider>
-          </FieldReportContext.Provider>
+          <FormStaticContext.Provider value={editorContext}>
+            <FieldReportContext.Provider value={undefined}>
+              <FieldScopeContext.Provider value={editorScopes}>
+                <Fieldset
+                  schema={schema}
+                  values={tempValue}
+                  messages={tempMessages}
+                  validity={tempValidity}
+                  onValuesChange={handleValuesChange}
+                  onMessagesChange={handleMessagesChange}
+                  onValidityChange={handleValidityChange}
+                />
+              </FieldScopeContext.Provider>
+            </FieldReportContext.Provider>
+          </FormStaticContext.Provider>
         )}
         <button className='iight-button' type='button' onClick={handleCancel}>
           {cancelLabel || t('ui.cancel')}
@@ -387,7 +406,7 @@ function SchemaEditor({
           {saveLabel || t('ui.save')}
         </button>
       </Modal>
-    </Fragment>
+    </>
   )
 }
 

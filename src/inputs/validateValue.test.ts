@@ -12,6 +12,7 @@ import * as password from '@/inputs/Password'
 import * as radio from '@/inputs/Radio'
 import * as range from '@/inputs/Range'
 import * as repeater from '@/inputs/Repeater'
+import * as schemabuilder from '@/inputs/SchemaBuilder'
 import * as select from '@/inputs/Select'
 import * as tel from '@/inputs/Tel'
 import * as text from '@/inputs/Text'
@@ -510,6 +511,16 @@ describe('matrix', () => {
     expect(matrix.validateValue([[{}]], schema({ options: { minimumColumns: 2 } })).isValid).toBe(false)
     expect(matrix.validateValue([[{}, {}]], schema({ options: { maximumColumns: 1 } })).isValid).toBe(false)
     expect(matrix.validateValue([[{}, {}]], schema({ options: { maximumColumns: 2 } })).isValid).toBe(true)
+  })
+})
+
+describe('schemabuilder', () => {
+  it('accepts an empty optional value, such as a group with no fields yet', () => {
+    expect(schemabuilder.validateValue(undefined, schema()).isValid).toBe(true)
+  })
+
+  it('requires a field when required', () => {
+    expect(schemabuilder.validateValue([], schema({ required: true })).messages).toEqual(['This field is required.'])
   })
 })
 

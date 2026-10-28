@@ -725,7 +725,7 @@ describe('schema builder interactions', () => {
     fireEvent.click(createButton(screen, 'Flexible content'))
     fireEvent.change(editor().getByLabelText(/Field Label/), { target: { value: 'Blocks' } })
 
-    // The layouts start with one layout, which needs a label and a field
+    // The layouts start with one layout, which needs a label
     fireEvent.change(editor().getByLabelText(/^Label/), { target: { value: 'Hero' } })
     fireEvent.click(createButton(editor(), 'Text'))
     fireEvent.change(editor().getByLabelText(/Field Label/), { target: { value: 'Title' } })
@@ -814,5 +814,119 @@ describe('schema builder interactions', () => {
     await waitFor(() => expect(latestValues.fields?.[0]).toMatchObject({ name: 'FirstName', label: 'Given name' }))
     expect(latestValues.fields[0].id).toMatch(/^fld_[0-9a-z]{8}$/)
     expect(latestValues.fields[1]).not.toHaveProperty('id')
+  })
+
+  it('keeps the button that opened an editor, so the browser can return focus to it', () => {
+    render(<Form schema={schema} values={{ fields: [{ type: 'text', name: 'title', label: 'Title' }] }} />)
+
+    const edit = screen.getByRole('button', { name: 'Title (title)' })
+    fireEvent.click(edit)
+    fireEvent.click(editor().getByRole('button', { name: 'Cancel' }))
+    expect(screen.getByRole('button', { name: 'Title (title)' })).toBe(edit)
+
+    fireEvent.click(edit)
+    save()
+    expect(screen.getByRole('button', { name: 'Title (title)' })).toBe(edit)
+  })
+
+  it('shows nested fields their own messages when a save is blocked', async () => {
+    const ref = createRef<FormHandle>()
+    let latestValues: Record<string, any> = {}
+
+    render(<Form ref={ref} schema={schema} onValuesChange={(values) => (latestValues = values)} />)
+    act(() => {
+      ref.current!.validate()
+    })
+
+    // An editor opened after the form validated starts without messages
+    fireEvent.click(createButton(screen, 'Boolean (True / False)'))
+    fireEvent.change(editor().getByLabelText(/Field Label/), { target: { value: 'Agree' } })
+    expect(editor().queryAllByText('This field is required.')).toHaveLength(0)
+
+    // The message is required, and sits inside the options group
+    save()
+    await waitFor(() => expect(editor().getByText('This field is required.')).toBeTruthy())
+    expect(latestValues.fields).toBeUndefined()
+
+    fireEvent.change(editor().getByLabelText(/^Message/), { target: { value: 'I agree' } })
+    save()
+    await waitFor(() =>
+      expect(latestValues.fields?.[0]).toMatchObject({ name: 'agree', options: { message: 'I agree' } }),
+    )
+  })
+
+  it('keeps the keys its editor does not show when a field is edited', async () => {
+    let latestValues: Record<string, any> = {}
+    const reference = { id: 'fld_ref', type: 'text', name: 'ref', label: 'Ref', readonly: true, defaultValue: 'REF-1' }
+
+    render(
+      <Form schema={schema} values={{ fields: [reference] }} onValuesChange={(values) => (latestValues = values)} />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ref (ref)' }))
+    fireEvent.change(editor().getByLabelText(/Field Label/), { target: { value: 'Reference' } })
+    save()
+
+    await waitFor(() => expect(latestValues.fields?.[0]).toEqual({ ...reference, label: 'Reference' }))
+  })
+
+  it("keeps a choice's nested choices when another choice is added", async () => {
+    let latestValues: Record<string, any> = {}
+    const grey = { value: 'grey', label: 'Grey', choices: [{ value: 'black', label: 'Black' }] }
+
+    render(
+      <Form
+        schema={schema}
+        values={{
+          fields: [{ id: 'fld_colour', type: 'select', name: 'colour', label: 'Colour', options: { choices: [grey] } }],
+        }}
+        onValuesChange={(values) => (latestValues = values)}
+      />,
+    )
+
+    // Adding a choice rebuilds every choice from the choices' fields, the choices' Add row coming after the conditions'
+    fireEvent.click(screen.getByRole('button', { name: 'Colour (colour)' }))
+    fireEvent.click(editor().getAllByRole('button', { name: 'Add row' }).at(-1)!)
+    fireEvent.change(editor().getAllByLabelText(/^Value/)[1], { target: { value: 'red' } })
+    save()
+
+    await waitFor(() => expect(latestValues.fields?.[0].options.choices).toEqual([grey, { value: 'red' }]))
+  })
+
+  it('saves a new matrix with the limits its editor shows, before it has fields', async () => {
+    let latestValues: Record<string, any> = {}
+
+    render(<Form schema={schema} onValuesChange={(values) => (latestValues = values)} />)
+
+    fireEvent.click(createButton(screen, 'Matrix'))
+    fireEvent.change(editor().getByLabelText(/Field Label/), { target: { value: 'Grid' } })
+    await waitFor(() => expect(editor().getByLabelText<HTMLInputElement>(/Field Name/).value).toBe('grid'))
+    save()
+
+    await waitFor(() => expect(latestValues.fields).toHaveLength(1))
+    expect(latestValues.fields[0].options).toEqual({ minimumRows: 1, minimumColumns: 1, maximumColumns: 1 })
+  })
+
+  it("keeps a new field's edits while the page around it re-renders", () => {
+    // The schema is written inline, so each render passes the form a new one
+    function Page() {
+      const [, setRenders] = useState(0)
+      return (
+        <>
+          <button type='button' onClick={() => setRenders((old) => old + 1)}>
+            Re-render
+          </button>
+          <Form schema={[{ type: 'schemabuilder', name: 'fields', label: 'Fields' }]} />
+        </>
+      )
+    }
+
+    render(<Page />)
+
+    fireEvent.click(createButton(screen, 'Text'))
+    fireEvent.change(editor().getByLabelText(/Field Label/), { target: { value: 'Title' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Re-render' }))
+
+    expect(editor().getByLabelText<HTMLInputElement>(/Field Label/).value).toBe('Title')
   })
 })

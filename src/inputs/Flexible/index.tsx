@@ -49,11 +49,6 @@ export const optionFields: InputOptionFields = () => {
       options: {
         minimum: 1,
         fields: [
-          // Carries the layout's ID, since adding a layout rebuilds every layout from these fields
-          {
-            name: 'id',
-            type: 'hidden',
-          },
           {
             label: 'Label',
             name: 'label',
