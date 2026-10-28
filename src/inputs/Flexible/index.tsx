@@ -190,7 +190,8 @@ function FlexibleBlock({
 
 const Component: InputComponent = function () {
   const { t } = useTranslation()
-  const { schema, options, value, setValue, setMessages, setValid } = useFieldContext()
+  const { schema, options, readonly, disabled, value, setValue, setMessages, setValid } = useFieldContext()
+  const locked = readonly || disabled
 
   const [blockValidity, setBlockValidity] = useState<Record<string, boolean | undefined>>({})
 
@@ -282,7 +283,7 @@ const Component: InputComponent = function () {
             <button
               className='iight-button'
               type='button'
-              disabled={index === 0}
+              disabled={locked || index === 0}
               onClick={(event) => {
                 event.preventDefault()
                 moveBlock(index, -1)
@@ -293,7 +294,7 @@ const Component: InputComponent = function () {
             <button
               className='iight-button'
               type='button'
-              disabled={index === blocks.length - 1}
+              disabled={locked || index === blocks.length - 1}
               onClick={(event) => {
                 event.preventDefault()
                 moveBlock(index, 1)
@@ -304,6 +305,7 @@ const Component: InputComponent = function () {
             <button
               className='iight-button'
               type='button'
+              disabled={locked}
               onClick={(event) => {
                 event.preventDefault()
                 removeBlock(index)
@@ -321,6 +323,7 @@ const Component: InputComponent = function () {
               key={layout.name}
               className='iight-button'
               type='button'
+              disabled={locked}
               onClick={(event) => {
                 event.preventDefault()
                 addBlock(layout)

@@ -930,3 +930,112 @@ describe('schema builder interactions', () => {
     expect(editor().getByLabelText<HTMLInputElement>(/Field Label/).value).toBe('Title')
   })
 })
+
+describe('read-only and disabled fields', () => {
+  const text = (name: string): FieldSchema => ({ type: 'text', name, label: name })
+
+  // A container of every kind inside a group, each holding fields at least two levels down
+  const page = (state: 'readonly' | 'disabled'): Array<FieldSchema> => [
+    {
+      type: 'group',
+      name: 'page',
+      label: 'Page',
+      [state]: true,
+      options: {
+        fields: [
+          text('title'),
+          { type: 'group', name: 'seo', label: 'SEO', options: { fields: [text('description')] } },
+          {
+            type: 'repeater',
+            name: 'links',
+            label: 'Links',
+            options: { fields: [{ type: 'group', name: 'link', label: 'Link', options: { fields: [text('url')] } }] },
+          },
+          {
+            type: 'matrix',
+            name: 'grid',
+            label: 'Grid',
+            options: { fields: [text('cell')], minimumColumns: 1, maximumColumns: 3 },
+          },
+          {
+            type: 'flexible',
+            name: 'blocks',
+            label: 'Blocks',
+            options: {
+              layouts: [
+                {
+                  name: 'quote',
+                  label: 'Quote',
+                  fields: [text('quote'), { type: 'boolean', name: 'wide', label: 'Wide' }],
+                },
+              ],
+            },
+          },
+          { type: 'schemabuilder', name: 'fields', label: 'Fields' },
+        ],
+      },
+    },
+  ]
+
+  const values = {
+    page: {
+      title: 'Home',
+      seo: { description: 'Welcome' },
+      links: [{ link: { url: '/' } }, { link: { url: '/about' } }],
+      grid: [[{ cell: 'a' }, { cell: 'b' }]],
+      blocks: [
+        { _layout: 'quote', quote: 'Hi', wide: false },
+        { _layout: 'quote', quote: 'Bye', wide: true },
+      ],
+      fields: [text('first'), text('second')],
+    },
+  }
+
+  it.each(['readonly', 'disabled'] as const)('passes %s to every field inside a container', (state) => {
+    render(<Form schema={page(state)} values={values} />)
+
+    const textboxes = screen.getAllByRole<HTMLInputElement>('textbox')
+    expect(textboxes.map((input) => input.value)).toEqual(['Home', 'Welcome', '/', '/about', 'a', 'b', 'Hi', 'Bye'])
+    for (const input of textboxes) expect(input[state === 'readonly' ? 'readOnly' : 'disabled']).toBe(true)
+
+    // Checkboxes have no read-only state, so they show as disabled for both
+    for (const checkbox of screen.getAllByRole<HTMLInputElement>('checkbox')) expect(checkbox.disabled).toBe(true)
+  })
+
+  it.each(['readonly', 'disabled'] as const)("disables a %s container's buttons", (state) => {
+    render(<Form schema={page(state)} values={values} />)
+
+    // Including the buttons in the schema builder's closed editors
+    const buttons = screen.getAllByRole<HTMLButtonElement>('button', { hidden: true })
+    expect(buttons.map((button) => button.textContent)).toEqual(
+      expect.arrayContaining([
+        ...['Add row', 'Remove row', 'Add column', 'Remove column'],
+        ...['Add Quote', 'Move up', 'Move down', 'Delete'],
+        ...['first (first)', 'Save'],
+      ]),
+    )
+
+    // Only the editors' Cancel buttons stay enabled, as they change nothing
+    const enabled = buttons.filter((button) => !button.disabled).map((button) => button.textContent)
+    expect(new Set(enabled)).toEqual(new Set(['Cancel']))
+  })
+
+  it('keeps a read-only boolean from changing', () => {
+    let latestValues: Record<string, any> = {}
+
+    render(
+      <Form
+        schema={[{ type: 'boolean', name: 'agree', label: 'Agree', readonly: true }]}
+        values={{ agree: true }}
+        onValuesChange={(values) => (latestValues = values)}
+      />,
+    )
+
+    const checkbox = screen.getByRole<HTMLInputElement>('checkbox')
+    expect(checkbox.disabled).toBe(true)
+
+    // A click, unlike fireEvent's dispatched event, does nothing on a disabled control, as in a browser
+    act(() => checkbox.click())
+    expect(latestValues.agree).toBeUndefined()
+  })
+})

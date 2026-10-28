@@ -181,6 +181,8 @@ function EditValueItem({
   setValue: Dispatch<any>
 }) {
   const { t } = useTranslation()
+  const { readonly, disabled } = useFieldContext()
+  const locked = readonly || disabled
   const schema = useMemo(() => validateInputSchemaFields(input), [input])
 
   const values = useMemo(() => {
@@ -249,7 +251,7 @@ function EditValueItem({
       <button
         className='iight-button'
         type='button'
-        disabled={index === 0}
+        disabled={locked || index === 0}
         onClick={(event) => {
           event.preventDefault()
           onMove(-1)
@@ -260,7 +262,7 @@ function EditValueItem({
       <button
         className='iight-button'
         type='button'
-        disabled={index === total - 1}
+        disabled={locked || index === total - 1}
         onClick={(event) => {
           event.preventDefault()
           onMove(1)
@@ -268,7 +270,7 @@ function EditValueItem({
       >
         {t('ui.moveDown')}
       </button>
-      <button className='iight-button' type='button' onClick={onDelete}>
+      <button className='iight-button' type='button' disabled={locked} onClick={onDelete}>
         {t('ui.delete')}
       </button>
     </>
@@ -295,6 +297,8 @@ function SchemaEditor({
   const staticContext = useFormStaticContext()
   const { inputs } = staticContext
   const { t } = useTranslation()
+  const { readonly, disabled } = useFieldContext()
+  const locked = readonly || disabled
 
   const mergedValues = useMemo(() => withDefaults(schema, values || {}), [schema, values])
 
@@ -371,6 +375,7 @@ function SchemaEditor({
       <button
         className='iight-button'
         type='button'
+        disabled={locked}
         onClick={(event) => {
           event.preventDefault()
           setOpen((old) => !old)
@@ -402,7 +407,7 @@ function SchemaEditor({
         <button className='iight-button' type='button' onClick={handleCancel}>
           {cancelLabel || t('ui.cancel')}
         </button>
-        <button className='iight-button' type='button' onClick={handleSave}>
+        <button className='iight-button' type='button' disabled={locked} onClick={handleSave}>
           {saveLabel || t('ui.save')}
         </button>
       </Modal>

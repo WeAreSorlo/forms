@@ -80,11 +80,16 @@ export default function Field({
   children,
   ...rawSchema
 }: FieldProps) {
-  const { name, label, required, instructions, defaultValue, readonly, disabled, width, options } = rawSchema
+  const { name, label, required, instructions, defaultValue, width, options } = rawSchema
+
+  // A read-only or disabled container passes its state to every field inside it
+  const parent = useContext(FieldContext)
+  const readonly = parent?.readonly || rawSchema.readonly
+  const disabled = parent?.disabled || rawSchema.disabled
 
   // Strip unknown properties from the schema
   const schema = useMemo(() => {
-    return validateSchema(rawSchema)
+    return validateSchema({ ...rawSchema, readonly, disabled })
   }, [rawSchema.id, name, label, required, instructions, defaultValue, readonly, disabled, width, options])
 
   // Fall back to the schema default when no value is set

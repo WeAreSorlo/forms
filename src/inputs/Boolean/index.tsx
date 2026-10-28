@@ -78,8 +78,7 @@ const Component: InputComponent = function () {
         checked={!!value}
         onChange={(event) => doValidation(event.target.checked)}
         required={required}
-        readOnly={readonly}
-        disabled={disabled}
+        disabled={disabled || readonly}
       />
       <label htmlFor={id}>{options?.message}</label>
     </div>

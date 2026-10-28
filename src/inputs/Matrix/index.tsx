@@ -249,7 +249,8 @@ function MatrixCell({
 
 const Component: InputComponent = function () {
   const { t } = useTranslation()
-  const { schema, options, value, setValue, setMessages, setValid } = useFieldContext()
+  const { schema, options, readonly, disabled, value, setValue, setMessages, setValid } = useFieldContext()
+  const locked = readonly || disabled
 
   const [cellMessages, setCellMessages] = useState<Record<string, Record<string, FieldMessages>>>({})
   const [cellValidity, setCellValidity] = useState<Record<string, Record<string, boolean | undefined>>>({})
@@ -502,6 +503,7 @@ const Component: InputComponent = function () {
                     <button
                       className='iight-button'
                       type='button'
+                      disabled={locked}
                       onClick={(event) => {
                         event.preventDefault()
                         removeColumn(columnIndex)
@@ -527,6 +529,7 @@ const Component: InputComponent = function () {
                 <button
                   className='iight-button'
                   type='button'
+                  disabled={locked}
                   onClick={(event) => {
                     event.preventDefault()
                     addColumn()
@@ -546,6 +549,7 @@ const Component: InputComponent = function () {
                     <button
                       className='iight-button'
                       type='button'
+                      disabled={locked}
                       onClick={(event) => {
                         event.preventDefault()
                         removeRow(rowIndex)
@@ -583,6 +587,7 @@ const Component: InputComponent = function () {
                 <button
                   className='iight-button'
                   type='button'
+                  disabled={locked}
                   onClick={(event) => {
                     event.preventDefault()
                     addRow()
