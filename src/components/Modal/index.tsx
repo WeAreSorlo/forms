@@ -23,25 +23,22 @@ export default function Modal({ open, header, footer, closeButton, onOpen, onClo
     }
   }, [dialogRef])
 
-  const CloseButton = () => {
-    return (
-      <>
-        {closeButton === true && (
-          <button
-            className='iight-button'
-            type='button'
-            onClick={(event) => {
-              event.preventDefault()
-              handleClose()
-            }}
-          >
-            {t('ui.close')}
-          </button>
-        )}
-        {closeButton !== true && closeButton}
-      </>
+  // An element, not a component made here, which React would rebuild on every render, losing a focused button
+  const close =
+    closeButton === true ? (
+      <button
+        className='iight-button'
+        type='button'
+        onClick={(event) => {
+          event.preventDefault()
+          handleClose()
+        }}
+      >
+        {t('ui.close')}
+      </button>
+    ) : (
+      closeButton
     )
-  }
 
   // Open dialog with JS api gives us the ::backdrop psuedo element
   // @link https://developer.mozilla.org/en-US/docs/Web/HTML/Element/dialog#open
@@ -75,11 +72,11 @@ export default function Modal({ open, header, footer, closeButton, onOpen, onClo
       {header && (
         <div className='iight-modal__header' id={headerId}>
           {header}
-          <CloseButton />
+          {close}
         </div>
       )}
 
-      {!header && <CloseButton />}
+      {!header && close}
 
       <div className='iight-modal__body'>{children}</div>
 

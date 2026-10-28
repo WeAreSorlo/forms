@@ -120,7 +120,9 @@
   }
 }
 
+/* Its padding counts within the width, so it fits a phone's screen */
 .iight-modal {
+  box-sizing: border-box;
   width: 100%;
   max-width: 40rem;
 }
