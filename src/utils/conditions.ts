@@ -1,6 +1,6 @@
 import { FieldCondition, FieldSchema } from '@/types/fields'
 import { isEmptyValue } from '@/utils/validation'
-import isEqual from 'lodash/isEqual'
+import isEqual from 'lodash/isEqual.js'
 
 // The stack of value scopes a condition can see, from the form's root values
 // down to the nearest group, repeater item or matrix cell
