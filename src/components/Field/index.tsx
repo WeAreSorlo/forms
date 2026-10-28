@@ -7,7 +7,7 @@ import {
 import { FieldMessages } from '@/types/fields'
 import { InputSchema, InputValidateValue, InputValidationResponse } from '@/types/inputs'
 import { validateSchema } from '@/utils/inputs'
-import { isEqual } from 'lodash'
+import isEqual from 'lodash/isEqual'
 import { SetStateAction, createContext, useCallback, useContext, useEffect, useId, useMemo, useRef } from 'react'
 
 interface Context {

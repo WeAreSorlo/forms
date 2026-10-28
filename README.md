@@ -167,6 +167,24 @@ interface Profile {
 
 Deliberately, there is no compile time typing of individual field paths: schemas are runtime data — often built at runtime by the schema builder itself — so the type system cannot know what fields exist. The generics type the container, not the schema.
 
+When a schema is known ahead of time, `schemaToTypeScript` writes that type for you, ready to save in a `.d.ts` file. For the schema in [Usage](#usage):
+
+```ts
+import { inputs, schemaToTypeScript } from 'iight'
+
+schemaToTypeScript(schema, inputs, { name: 'profile' })
+// export type Profile = {
+//   first_name: string
+//   last_name: string
+//   email: string
+//   pets?: Array<{
+//     petname: string
+//   }>
+// }
+```
+
+Required fields become required properties, while optional fields and fields that conditions can hide become optional. The name is written in Pascal case, flexible blocks become a union you can narrow by checking `_layout`, and fields whose input has no `typeValue` (see [Custom inputs](#custom-inputs)) are typed as `unknown`.
+
 ## Server side validation
 
 The same schema validates a request body on a server. `pickValues` reduces the posted values to only the fields the schema defines (nested fields included, with hidden fields forced back to their fixed values), and `validateServerValues` returns the same `ValidationReport` shape as the client:
@@ -207,6 +225,8 @@ export default function Component() {
 Register it per form: `<Form inputs={{ shout: shoutModule }} ... />`. Custom types are then available to schemas and appear in the schema builder.
 
 A custom input that nests other fields can also export `validateChildren(value, schema, validateFields)` — this is how `validateValues` and `validate()` walk into it, and it is exactly what the core group, repeater and matrix inputs do; nothing about containers is special-cased. Return the results of `validateFields` without inspecting them, as they may be promises during server validation. The matching `pickValue(value, schema, pickFields)` lets a container recurse for `pickValues` in the same way.
+
+For `schemaToTypeScript`, an input describes the type of the value `pickValue` returns with `typeValue(schema, typeFields)`. It returns the type as a string, such as `'string'` or `'Array<"red" | "blue">'`, and may name a type you declare beside the generated one. An input without a value returns `undefined` and is left out, as the content input does. A container types its nested fields with `typeFields`, which returns an object type, so the core group's hook is `(schema, typeFields) => typeFields(schema.options?.fields || [])`.
 
 ## Styling and theming
 

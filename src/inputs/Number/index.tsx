@@ -7,6 +7,7 @@ import {
   InputName,
   InputOptionFields,
   InputRenderValue,
+  InputTypeValue,
   InputValidateValue,
 } from '@/types/inputs'
 import { validateSchema } from '@/utils/inputs'
@@ -87,6 +88,8 @@ export const validateValue: InputValidateValue = (value, schema) => {
   // Return success
   return validationSuccess(value)
 }
+
+export const typeValue: InputTypeValue = () => 'number'
 
 export const formatValue: InputFormatValue = (value, schema) => {
   schema = validateSchema(schema)

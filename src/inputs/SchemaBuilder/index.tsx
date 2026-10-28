@@ -16,6 +16,7 @@ import {
   InputFormatValue,
   InputName,
   InputRenderValue,
+  InputTypeValue,
   InputValidateValue,
 } from '@/types/inputs'
 import { createId, validateInputSchemaFields, validateSchema, validateValues } from '@/utils/inputs'
@@ -43,6 +44,9 @@ export const validateValue: InputValidateValue = (value, schema) => {
 
   return validationSuccess(value)
 }
+
+// A list of field schemas
+export const typeValue: InputTypeValue = () => 'Array<Record<string, unknown>>'
 
 export const formatValue: InputFormatValue = (value, schema) => {
   schema = validateSchema(schema)

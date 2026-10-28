@@ -24,6 +24,7 @@ export {
 } from '@/utils/inputs'
 export { evaluateCondition, evaluateConditions, normaliseConditions, resolveConditionValue } from '@/utils/conditions'
 export { validationMessage } from '@/utils/messages'
+export { schemaToTypeScript } from '@/utils/typescript'
 export {
   isEmail,
   isEmptyValue,
@@ -78,6 +79,8 @@ export type {
   InputPrepareSchema,
   InputRenderValue,
   InputSchema,
+  InputTypeFields,
+  InputTypeValue,
   InputValidateChildren,
   InputValidateClientValue,
   InputValidateFields,

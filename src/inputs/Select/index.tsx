@@ -7,10 +7,12 @@ import {
   InputName,
   InputOptionFields,
   InputRenderValue,
+  InputTypeValue,
   InputValidateValue,
 } from '@/types/inputs'
 import { validateSchema } from '@/utils/inputs'
 import { validationMessage } from '@/utils/messages'
+import { literalUnion } from '@/utils/typescript'
 import { isEmptyValue, validationError, validationSuccess } from '@/utils/validation'
 import { Fragment, useCallback } from 'react'
 
@@ -82,6 +84,14 @@ export const validateValue: InputValidateValue = (value, schema) => {
   }
 
   return validationSuccess(value)
+}
+
+// Option values come from the browser as strings, and option groups hold choices of their own
+export const typeValue: InputTypeValue = (schema) => {
+  const choices: Array<any> = schema.options?.choices || []
+  const values = choices.flatMap((choice) => (choice?.choices?.length > 0 ? choice.choices : [choice]))
+  const union = literalUnion(values.map((choice) => String(choice.value)))
+  return schema.options?.multiple ? `Array<${union}>` : union
 }
 
 export const formatValue: InputFormatValue = (value, schema) => {

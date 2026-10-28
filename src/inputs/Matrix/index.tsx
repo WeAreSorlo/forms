@@ -15,6 +15,7 @@ import {
   InputOptionFields,
   InputPickValue,
   InputRenderValue,
+  InputTypeValue,
   InputValidateChildren,
   InputValidateValue,
 } from '@/types/inputs'
@@ -146,6 +147,11 @@ export const pickValue: InputPickValue = (value, schema, pickFields) => {
   return value.map((row) => {
     return (Array.isArray(row) ? row : []).map((column) => pickFields(schema.options?.fields || [], column || {}))
   })
+}
+
+// Type every column of every row as an object of the nested fields
+export const typeValue: InputTypeValue = (schema, typeFields) => {
+  return `Array<Array<${typeFields(schema.options?.fields || [])}>>`
 }
 
 export const formatValue: InputFormatValue = (value, schema) => {

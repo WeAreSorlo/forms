@@ -11,6 +11,7 @@ import {
   InputPickValue,
   InputPrepareSchema,
   InputRenderValue,
+  InputTypeValue,
   InputValidateChildren,
   InputValidateValue,
 } from '@/types/inputs'
@@ -133,6 +134,14 @@ export const pickValue: InputPickValue = (value, schema, pickFields) => {
   return value
     .filter((block) => layouts.has(block?._layout))
     .map((block) => ({ ...pickFields(layouts.get(block._layout)?.fields || [], block), _layout: block._layout }))
+}
+
+// A union of every layout's blocks, so checking _layout narrows a block to its layout's fields
+export const typeValue: InputTypeValue = (schema, typeFields) => {
+  const blocks = [...layoutsOf(schema.options).values()].map((layout) => {
+    return `{ _layout: ${JSON.stringify(layout.name)} } & ${typeFields(layout.fields || [])}`
+  })
+  return `Array<${blocks.join(' | ') || 'never'}>`
 }
 
 export const formatValue: InputFormatValue = (value, schema) => {

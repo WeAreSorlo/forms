@@ -69,6 +69,11 @@ export type InputValidateChildren = (
 export type InputPickFields = (schema: Array<FieldSchema>, values: Record<string, any>) => Record<string, any>
 export type InputPickValue = (value: any, schema: InputSchema, pickFields: InputPickFields) => any
 
+// Types a list of nested fields as an object type, e.g. '{ title: string }'
+export type InputTypeFields = (schema: Array<FieldSchema>) => string
+// The TypeScript type of the value pickValue returns, e.g. 'string', or undefined for an input without a value
+export type InputTypeValue = (schema: InputSchema, typeFields: InputTypeFields) => string | undefined
+
 export interface Input {
   default: InputComponent
   name?: InputName
@@ -83,6 +88,7 @@ export interface Input {
   validateServerValue?: InputValidateServerValue
   validateChildren?: InputValidateChildren
   pickValue?: InputPickValue
+  typeValue?: InputTypeValue
   formatValue?: InputFormatValue
   renderValue?: InputRenderValue
 }

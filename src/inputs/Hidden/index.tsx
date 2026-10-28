@@ -9,6 +9,7 @@ import {
   InputOptionFields,
   InputPickValue,
   InputRenderValue,
+  InputTypeValue,
 } from '@/types/inputs'
 import { useEffect } from 'react'
 
@@ -36,6 +37,12 @@ export const optionFields: InputOptionFields = () => {
 // The schema's fixed value always wins over a posted value
 export const pickValue: InputPickValue = (value, schema) => {
   return schema.options?.value ?? value
+}
+
+// The fixed value's literal type, or anything posted when there is no fixed value
+export const typeValue: InputTypeValue = (schema) => {
+  const value = schema.options?.value
+  return value == null ? 'unknown' : JSON.stringify(value)
 }
 
 export const formatValue: InputFormatValue = (value) => {

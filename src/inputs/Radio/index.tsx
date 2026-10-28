@@ -7,10 +7,12 @@ import {
   InputName,
   InputOptionFields,
   InputRenderValue,
+  InputTypeValue,
   InputValidateValue,
 } from '@/types/inputs'
 import { validateSchema } from '@/utils/inputs'
 import { validationMessage } from '@/utils/messages'
+import { literalUnion } from '@/utils/typescript'
 import { isEmptyValue, validationError, validationSuccess } from '@/utils/validation'
 import { useCallback } from 'react'
 
@@ -65,6 +67,12 @@ export const validateValue: InputValidateValue = (value, schema) => {
   }
 
   return validationSuccess(value)
+}
+
+// The browser gives radio values as strings
+export const typeValue: InputTypeValue = (schema) => {
+  const choices: Array<any> = schema.options?.choices || []
+  return literalUnion(choices.map((choice) => String(choice.value)))
 }
 
 export const formatValue: InputFormatValue = (value, schema) => {

@@ -11,6 +11,7 @@ import {
   InputOptionFields,
   InputPickValue,
   InputRenderValue,
+  InputTypeValue,
   InputValidateChildren,
   InputValidateValue,
 } from '@/types/inputs'
@@ -120,6 +121,9 @@ export const pickValue: InputPickValue = (value, schema, pickFields) => {
   if (!Array.isArray(value)) return undefined
   return value.map((item) => pickFields(schema.options?.fields || [], item || {}))
 }
+
+// Type every item as an object of the nested fields
+export const typeValue: InputTypeValue = (schema, typeFields) => `Array<${typeFields(schema.options?.fields || [])}>`
 
 export const formatValue: InputFormatValue = (value, schema) => {
   schema = validateSchema(schema)
