@@ -246,6 +246,8 @@ import 'iight/styles/themes/default.scss' // a theme: defines the tokens
 
 A custom theme is a copy of `themes/default.scss` with a new class name (keeping the `iight-theme-` prefix so the skin activates) and different token values — no selectors, just tokens, so plain CSS works too. Because themes are class-scoped, different forms on one page can use different themes, and single tokens can be overridden inline or in state scopes (for example `.iight-invalid` remaps `--iight-messages-color` to `--iight-color-error`).
 
+Buttons have two variants beside the plain `iight-button`: add `iight-button--primary` for a form's or dialog's main action, and `iight-button--danger` for one that can't be undone. Their `--iight-button-primary-*` and `--iight-button-danger-*` tokens set their colours at rest and on hover. `--iight-color-accent` colours primary buttons in both built-in themes, and every form's checkboxes, radios and ranges through `accent-color`.
+
 ## i18n
 
 All user-facing strings run through an isolated i18next instance (`src/i18n.ts`) with translations in `src/translations`, so the host application's own i18next setup is never touched.

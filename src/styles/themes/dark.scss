@@ -30,6 +30,7 @@
   --iight-color-focus: #60a5fa;
   --iight-color-error: #f87171;
   --iight-color-success: #4ade80;
+  --iight-color-accent: #60a5fa;
 
   /* States */
   --iight-focus-outline: var(--iight-size-px) solid var(--iight-color-focus);
@@ -96,6 +97,18 @@
   --iight-button-padding: var(--iight-size-1) var(--iight-size-2);
   --iight-button-color-hover: inherit;
   --iight-button-background-hover: var(--iight-color-background-subtle);
+
+  /* Button variants */
+  --iight-button-primary-color: #111827;
+  --iight-button-primary-background: var(--iight-color-accent);
+  --iight-button-primary-border-color: var(--iight-color-accent);
+  --iight-button-primary-color-hover: #111827;
+  --iight-button-primary-background-hover: #93c5fd;
+  --iight-button-danger-color: var(--iight-color-error);
+  --iight-button-danger-background: var(--iight-button-background);
+  --iight-button-danger-border-color: var(--iight-color-border);
+  --iight-button-danger-color-hover: #111827;
+  --iight-button-danger-background-hover: var(--iight-color-error);
 
   /* Messages list */
   --iight-messages-font-family: inherit;

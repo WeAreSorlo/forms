@@ -270,7 +270,7 @@ function EditValueItem({
       >
         {t('ui.moveDown')}
       </button>
-      <button className='iight-button' type='button' disabled={locked} onClick={onDelete}>
+      <button className='iight-button iight-button--danger' type='button' disabled={locked} onClick={onDelete}>
         {t('ui.delete')}
       </button>
     </>
@@ -407,7 +407,7 @@ function SchemaEditor({
         <button className='iight-button' type='button' onClick={handleCancel}>
           {cancelLabel || t('ui.cancel')}
         </button>
-        <button className='iight-button' type='button' disabled={locked} onClick={handleSave}>
+        <button className='iight-button iight-button--primary' type='button' disabled={locked} onClick={handleSave}>
           {saveLabel || t('ui.save')}
         </button>
       </Modal>

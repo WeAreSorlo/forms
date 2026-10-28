@@ -14,6 +14,7 @@
     line-height: var(--iight-line-height);
     color: var(--iight-form-color);
     background: var(--iight-form-background);
+    accent-color: var(--iight-color-accent);
   }
 
   .iight-field {
@@ -129,6 +130,32 @@
     &:disabled {
       cursor: not-allowed;
       opacity: var(--iight-disabled-opacity);
+    }
+  }
+
+  /* A form or dialog's one main action */
+  .iight-button--primary {
+    color: var(--iight-button-primary-color);
+    background: var(--iight-button-primary-background);
+    border-color: var(--iight-button-primary-border-color);
+
+    &:hover:not(:disabled) {
+      color: var(--iight-button-primary-color-hover);
+      background: var(--iight-button-primary-background-hover);
+      border-color: var(--iight-button-primary-background-hover);
+    }
+  }
+
+  /* An action that can't be undone */
+  .iight-button--danger {
+    color: var(--iight-button-danger-color);
+    background: var(--iight-button-danger-background);
+    border-color: var(--iight-button-danger-border-color);
+
+    &:hover:not(:disabled) {
+      color: var(--iight-button-danger-color-hover);
+      background: var(--iight-button-danger-background-hover);
+      border-color: var(--iight-button-danger-background-hover);
     }
   }
 
