@@ -373,6 +373,32 @@ describe('pickValues', () => {
 
     expect(pickValues(schema, { heading: 'junk', pets: 'junk' }, inputs)).toEqual({})
   })
+
+  it('keeps values as their validators return them, at any depth', () => {
+    const schema = [
+      { type: 'number', name: 'age' },
+      { type: 'boolean', name: 'newsletter' },
+      { type: 'boolean', name: 'terms' },
+      {
+        type: 'repeater',
+        name: 'pets',
+        options: { fields: [{ type: 'range', name: 'legs' }] },
+      },
+    ]
+
+    // As a plain HTML form posts them, where an unchecked box is left out
+    const picked = pickValues(schema, { age: '42', newsletter: 'on', pets: [{ legs: '4' }] }, inputs)
+
+    expect(picked).toEqual({ age: 42, newsletter: true, terms: false, pets: [{ legs: 4 }] })
+  })
+
+  it('keeps an invalid number for validation to reject', async () => {
+    const schema = [{ type: 'number', name: 'age' }]
+    const picked = pickValues(schema, { age: 'abc' }, inputs)
+
+    expect(picked.age).toBeNaN()
+    expect((await validateServerValues(schema, picked, inputs)).isValid).toBe(false)
+  })
 })
 
 describe('field ids', () => {

@@ -35,7 +35,8 @@ export const optionFields: InputOptionFields = () => {
 export const validateValue: InputValidateValue = (value, schema) => {
   schema = validateSchema(schema)
 
-  value = [true, 1, 'yes', '1', 'true'].includes(typeof value === 'string' ? value.trim().toLowerCase() : value)
+  // 'on' is what a browser posts for a checked box without a value attribute
+  value = [true, 1, 'yes', '1', 'true', 'on'].includes(typeof value === 'string' ? value.trim().toLowerCase() : value)
 
   // A required boolean must be checked
   if (schema.required && !value) {

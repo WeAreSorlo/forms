@@ -519,6 +519,7 @@ describe('boolean', () => {
     expect(boolean.validateValue('yes', schema()).value).toBe(true)
     expect(boolean.validateValue('TRUE', schema()).value).toBe(true)
     expect(boolean.validateValue(1, schema()).value).toBe(true)
+    expect(boolean.validateValue('on', schema()).value).toBe(true)
     expect(boolean.validateValue('no', schema()).value).toBe(false)
   })
 

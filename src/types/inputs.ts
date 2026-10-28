@@ -71,7 +71,7 @@ export type InputPickValue = (value: any, schema: InputSchema, pickFields: Input
 
 // Types a list of nested fields as an object type, e.g. '{ title: string }'
 export type InputTypeFields = (schema: Array<FieldSchema>) => string
-// The TypeScript type of the value pickValue returns, e.g. 'string', or undefined for an input without a value
+// The TypeScript type of the value pickValues keeps, e.g. 'string', or undefined for an input without a value
 export type InputTypeValue = (schema: InputSchema, typeFields: InputTypeFields) => string | undefined
 
 export interface Input {

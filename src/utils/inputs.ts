@@ -218,6 +218,9 @@ export function pickValues<Values extends Record<string, any> = Record<string, a
     let value = values?.[field.name]
     if (value === undefined) value = field.defaultValue
 
+    // Keep the value the input's validator returns, as a form does, so a posted '5' for a number becomes 5
+    if (input?.validateValue) value = input.validateValue(value, field).value
+
     const pickedValue = input?.pickValue ? input.pickValue(value, field, pickFields) : value
     if (pickedValue === undefined) continue
 
