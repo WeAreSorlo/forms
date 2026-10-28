@@ -17,7 +17,7 @@ import i18n from '@/i18n'
 import * as coreInputs from '@/inputs'
 import { FieldMessages } from '@/types/fields'
 import { Input, ValidationReport } from '@/types/inputs'
-import { flattenValidationReport, validateValues } from '@/utils/inputs'
+import { conditionScope, flattenValidationReport, validateValues } from '@/utils/inputs'
 import { SetStateAction, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { I18nextProvider } from 'react-i18next'
 
@@ -298,7 +298,10 @@ export default function Form<Values extends Record<string, any> = Record<string,
     }
   }, [onFieldReport])
 
-  const scopeContextValue = useMemo(() => [values], [values])
+  const scopeContextValue = useMemo(
+    () => [conditionScope(schema, values, mergedInputs)],
+    [schema, values, mergedInputs],
+  )
 
   return (
     <I18nextProvider i18n={i18n}>

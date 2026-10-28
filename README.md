@@ -148,7 +148,7 @@ conditions: [
 ]
 ```
 
-Operators: `equals`, `notEquals`, `contains`, `notContains`, `startsWith`, `greaterThan`, `lessThan`, `empty`, `notEmpty`. Equality compares loosely (`'18'` matches `18`), since values written in the schema builder are strings.
+Operators: `equals`, `notEquals`, `contains`, `notContains`, `startsWith`, `greaterThan`, `lessThan`, `empty`, `notEmpty`. Equality compares loosely (`'18'` matches `18`), since values written in the schema builder are strings. Fields are compared by their validated values, with schema defaults applied, so a checkbox posted as `'on'` matches `true` and an untouched one matches `false`, on the client and the server alike.
 
 A condition's `field` is a dotted path resolved against the nearest value scope first, then outwards to the form's root — so inside a repeater item, `species` finds the sibling field in the same item, while `address.town` falls through to the root values, and `pets.0.petname` works from the root. The closest scope wins when names collide. The schema builder exposes conditions on every field under "Conditional logic".
 

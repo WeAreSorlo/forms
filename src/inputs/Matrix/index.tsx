@@ -4,7 +4,12 @@ import Fieldset, {
   OnValidityChangeCallback,
   OnValuesChangeCallback,
 } from '@/components/Fieldset'
-import { FieldReportContext, FieldReportContextValue, FieldScopeContext } from '@/context/FormProvider'
+import {
+  FieldReportContext,
+  FieldReportContextValue,
+  FieldScopeContext,
+  useFormStaticContext,
+} from '@/context/FormProvider'
 import { FieldMessages, FieldSchema } from '@/types/fields'
 import {
   InputCategory,
@@ -19,7 +24,7 @@ import {
   InputValidateChildren,
   InputValidateValue,
 } from '@/types/inputs'
-import { validateSchema } from '@/utils/inputs'
+import { conditionScope, validateSchema } from '@/utils/inputs'
 import { validationMessage } from '@/utils/messages'
 import { isEmptyValue, validationError, validationSuccess } from '@/utils/validation'
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
@@ -198,8 +203,11 @@ function MatrixCell({
   }, [parentReport, rowIndex, columnIndex])
 
   // Extend the condition scopes with the cell's own values
+  const { inputs } = useFormStaticContext()
   const parentScopes = useContext(FieldScopeContext)
-  const scopes = useMemo(() => [...(parentScopes || []), column || {}], [parentScopes, column])
+  const scopes = useMemo(() => {
+    return [...(parentScopes || []), conditionScope(fields, column || {}, inputs)]
+  }, [parentScopes, fields, column, inputs])
 
   const onValuesChange: OnValuesChangeCallback = useCallback(
     (field, fieldValue) => {

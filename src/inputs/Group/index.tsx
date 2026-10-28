@@ -4,7 +4,7 @@ import Fieldset, {
   OnValidityChangeCallback,
   OnValuesChangeCallback,
 } from '@/components/Fieldset'
-import { FieldScopeContext } from '@/context/FormProvider'
+import { FieldScopeContext, useFormStaticContext } from '@/context/FormProvider'
 import { FieldMessages } from '@/types/fields'
 import {
   InputCategory,
@@ -20,7 +20,7 @@ import {
   InputValidateChildren,
   InputValidateValue,
 } from '@/types/inputs'
-import { validateSchema } from '@/utils/inputs'
+import { conditionScope, validateSchema } from '@/utils/inputs'
 import { validationSuccess } from '@/utils/validation'
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
@@ -75,13 +75,16 @@ export const renderValue: InputRenderValue = (value, schema) => {
 
 const Component: InputComponent = function () {
   const { options, value, setValue, setValid } = useFieldContext()
+  const { inputs } = useFormStaticContext()
 
   const [tempMessages, setTempMessages] = useState<Record<string, FieldMessages>>({})
   const [tempValidity, setTempValidity] = useState<Record<string, boolean | undefined>>({})
 
   // Extend the condition scopes with the group's own values
   const parentScopes = useContext(FieldScopeContext)
-  const scopes = useMemo(() => [...(parentScopes || []), value || {}], [parentScopes, value])
+  const scopes = useMemo(() => {
+    return [...(parentScopes || []), conditionScope(options?.fields || [], value || {}, inputs)]
+  }, [parentScopes, options?.fields, value, inputs])
 
   // Mark the group itself invalid when any nested field is invalid
   useEffect(() => {

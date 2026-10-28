@@ -289,6 +289,50 @@ describe('conditional fields', () => {
   })
 })
 
+describe('conditions on posted values', () => {
+  const schema = [
+    { type: 'boolean', name: 'featured' },
+    {
+      type: 'text',
+      name: 'note',
+      required: true,
+      conditions: [{ field: 'featured', operator: 'equals' as const, value: true }],
+    },
+  ]
+
+  // A plain HTML post must show, validate and pick the same fields as the typed values it stands for
+  const expectSameAsTyped = async (schema: Array<any>, posted: Record<string, any>, typed: Record<string, any>) => {
+    expect(pickValues(schema, posted, inputs)).toEqual(typed)
+    expect(pickValues(schema, typed, inputs)).toEqual(typed)
+    expect(validateValues(schema, posted, inputs)).toEqual(validateValues(schema, typed, inputs))
+    expect(await validateServerValues(schema, posted, inputs)).toEqual(
+      await validateServerValues(schema, typed, inputs),
+    )
+  }
+
+  it("matches a checked box posted as 'on' against true", async () => {
+    await expectSameAsTyped(schema, { featured: 'on', note: 'hi' }, { featured: true, note: 'hi' })
+  })
+
+  it('matches nested values, and dotted paths into them, the same way', async () => {
+    const nested = [
+      { type: 'repeater', name: 'posts', options: { fields: schema } },
+      {
+        type: 'text',
+        name: 'pinned',
+        conditions: [{ field: 'posts.0.featured', operator: 'equals' as const, value: true }],
+      },
+    ]
+
+    // The second post's box is unchecked, so the browser leaves it out
+    await expectSameAsTyped(
+      nested,
+      { posts: [{ featured: 'on', note: 'hi' }, { note: 'draft' }], pinned: 'yes' },
+      { posts: [{ featured: true, note: 'hi' }, { featured: false }], pinned: 'yes' },
+    )
+  })
+})
+
 describe('pickValues', () => {
   it('strips values not defined by the schema', () => {
     const schema = [

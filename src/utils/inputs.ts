@@ -53,6 +53,44 @@ const resolveReportChildren = async (children: ValidationReportChildren): Promis
   return resolved
 }
 
+// A field's value as pickValues keeps it, letting the input pick its own nested values
+const pickFieldValue = (
+  field: FieldSchema,
+  values: Record<string, any>,
+  inputs: Record<string, Input>,
+  pickFields: InputPickFields,
+): any => {
+  const input = inputs?.[field.type]
+
+  // Fall back to the schema default when no value is set
+  let value = values?.[field.name]
+  if (value === undefined) value = field.defaultValue
+
+  // Keep the value the input's validator returns, as a form does, so a posted '5' for a number becomes 5
+  if (input?.validateValue) value = input.validateValue(value, field).value
+
+  return input?.pickValue ? input.pickValue(value, field, pickFields) : value
+}
+
+// Conditions see each field's value as pickValues keeps it, shown or not, so a posted 'on' meets a condition on true
+export const conditionScope = (
+  schema: Array<FieldSchema>,
+  values: Record<string, any>,
+  inputs: Record<string, Input>,
+): Record<string, any> => {
+  const scope: Record<string, any> = { ...values }
+  const scopeFields: InputPickFields = (childSchema, childValues) => conditionScope(childSchema, childValues, inputs)
+
+  for (const field of schema) {
+    const value = pickFieldValue(field, values, inputs, scopeFields)
+
+    // An unset field stays out, so a condition still falls through to an outer field of the same name
+    if (value !== undefined) scope[field.name] = value
+  }
+
+  return scope
+}
+
 // Validate a set of values against a schema, letting each input walk its own nested fields
 export function validateValues<Values extends Record<string, any> = Record<string, any>>(
   schema: Array<FieldSchema>,
@@ -61,10 +99,11 @@ export function validateValues<Values extends Record<string, any> = Record<strin
   options: ValidateValuesOptions = {},
 ): ValidationReport {
   const fields: Record<string, FieldValidationReport> = {}
-  const scopes = options.scopes || [values]
+  const scopes = options.scopes || [conditionScope(schema, values, inputs)]
 
   const validateFields: InputValidateFields = (childSchema, childValues) => {
-    return validateValues(childSchema, childValues, inputs, { ...options, scopes: [...scopes, childValues] })
+    const childScopes = [...scopes, conditionScope(childSchema, childValues, inputs)]
+    return validateValues(childSchema, childValues, inputs, { ...options, scopes: childScopes })
   }
 
   for (const field of schema) {
@@ -113,10 +152,11 @@ export async function validateServerValues<Values extends Record<string, any> = 
   options: ValidateValuesOptions = {},
 ): Promise<ValidationReport> {
   const fields: Record<string, FieldValidationReport> = {}
-  const scopes = options.scopes || [values]
+  const scopes = options.scopes || [conditionScope(schema, values, inputs)]
 
   const validateFields: InputValidateFields = (childSchema, childValues) => {
-    return validateServerValues(childSchema, childValues, inputs, { ...options, scopes: [...scopes, childValues] })
+    const childScopes = [...scopes, conditionScope(childSchema, childValues, inputs)]
+    return validateServerValues(childSchema, childValues, inputs, { ...options, scopes: childScopes })
   }
 
   for (const field of schema) {
@@ -202,26 +242,18 @@ export function pickValues<Values extends Record<string, any> = Record<string, a
   options: { scopes?: ConditionScopes } = {},
 ): Partial<Values> {
   const picked: Record<string, any> = {}
-  const scopes = options.scopes || [values]
+  const scopes = options.scopes || [conditionScope(schema, values, inputs)]
 
   const pickFields: InputPickFields = (childSchema, childValues) => {
-    return pickValues(childSchema, childValues, inputs, { scopes: [...scopes, childValues] })
+    const childScopes = [...scopes, conditionScope(childSchema, childValues, inputs)]
+    return pickValues(childSchema, childValues, inputs, { scopes: childScopes })
   }
 
   for (const field of schema) {
-    const input = inputs?.[field.type]
-
     // Skip fields hidden by their conditions
     if (!evaluateConditions(field, scopes)) continue
 
-    // Fall back to the schema default when no value is set
-    let value = values?.[field.name]
-    if (value === undefined) value = field.defaultValue
-
-    // Keep the value the input's validator returns, as a form does, so a posted '5' for a number becomes 5
-    if (input?.validateValue) value = input.validateValue(value, field).value
-
-    const pickedValue = input?.pickValue ? input.pickValue(value, field, pickFields) : value
+    const pickedValue = pickFieldValue(field, values, inputs, pickFields)
     if (pickedValue === undefined) continue
 
     picked[field.name] = pickedValue

@@ -19,7 +19,7 @@ import {
   InputTypeValue,
   InputValidateValue,
 } from '@/types/inputs'
-import { createId, validateInputSchemaFields, validateSchema, validateValues } from '@/utils/inputs'
+import { conditionScope, createId, validateInputSchemaFields, validateSchema, validateValues } from '@/utils/inputs'
 import { validationMessage } from '@/utils/messages'
 import { validationError, validationSuccess } from '@/utils/validation'
 import { Dispatch, Fragment, useCallback, useEffect, useId, useMemo, useState } from 'react'
@@ -326,7 +326,7 @@ function SchemaEditor({
     closeModal()
   }
 
-  const editorScopes = useMemo(() => [tempValue || {}], [tempValue])
+  const editorScopes = useMemo(() => [conditionScope(schema, tempValue || {}, inputs)], [schema, tempValue, inputs])
 
   const handleValuesChange: OnValuesChangeCallback = useCallback((field, value) => {
     setTempValue((old) => {

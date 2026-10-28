@@ -7,7 +7,7 @@ import { FieldScopeContext, useFormStaticContext } from '@/context/FormProvider'
 import { FieldMessages, FieldSchema } from '@/types/fields'
 import { InputComponent, InputValidateValue } from '@/types/inputs'
 import { evaluateConditions } from '@/utils/conditions'
-import { resolveValidateValue } from '@/utils/inputs'
+import { conditionScope, resolveValidateValue } from '@/utils/inputs'
 import { memo, useCallback, useContext } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -37,7 +37,7 @@ export default function Fieldset({
   const { inputs } = useFormStaticContext()
 
   // Hide fields whose conditions do not match the surrounding values
-  const scopes = useContext(FieldScopeContext) || [values]
+  const scopes = useContext(FieldScopeContext) || [conditionScope(schema, values, inputs)]
 
   return (
     <div className='iight-fieldset'>

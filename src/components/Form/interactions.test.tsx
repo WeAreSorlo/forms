@@ -187,6 +187,55 @@ describe('form interactions', () => {
     })
   })
 
+  it('matches conditions against defaults and untouched fields, as validation does', () => {
+    const ref = createRef<FormHandle>()
+
+    render(
+      <Form
+        ref={ref}
+        schema={[
+          { type: 'boolean', name: 'featured', label: 'Featured', defaultValue: true, options: { message: 'Yes' } },
+          {
+            type: 'text',
+            name: 'note',
+            label: 'Note',
+            required: true,
+            conditions: [{ field: 'featured', operator: 'equals', value: true }],
+          },
+          {
+            type: 'repeater',
+            name: 'links',
+            label: 'Links',
+            options: {
+              fields: [
+                { type: 'boolean', name: 'external', label: 'External', options: { message: 'Opens elsewhere' } },
+                {
+                  type: 'text',
+                  name: 'rel',
+                  label: 'Rel',
+                  conditions: [{ field: 'external', operator: 'equals', value: false }],
+                },
+              ],
+            },
+          },
+        ]}
+        values={{ links: [{}] }}
+      />,
+    )
+
+    // The default checks the box, and the item's untouched box counts as unchecked
+    expect(screen.getByLabelText(/Note/)).toBeTruthy()
+    expect(screen.getByLabelText(/Rel/)).toBeTruthy()
+
+    // Validation counts the same fields, so the required note is on screen to fill in
+    let report: undefined | ValidationReport
+    act(() => {
+      report = ref.current?.validate()
+    })
+
+    expect(report?.fields.note?.isValid).toBe(false)
+  })
+
   it('removes path entries when fields unmount', async () => {
     const ref = createRef<FormHandle>()
     let latestMessages: Record<string, any> = {}
