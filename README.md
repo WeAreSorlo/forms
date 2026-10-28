@@ -108,6 +108,8 @@ const report = validateValues(schema, values, inputs)
 
 Container fields aggregate: a group, repeater or matrix is marked invalid while any nested field is invalid, and repeaters/matrices also validate their own item, row and column bounds.
 
+To save values that aren't finished, such as a draft or one step of a long form, pass `{ allowIncomplete: true }` to `validate()`, `validateValues` or `validateServerValues`. It leaves out the checks an unfinished value fails, in nested fields too: `required`, and the `minLength`, `minimum`, `minimumRows` and `minimumColumns` options. Formats, maximums and ranges such as a number's `min` still apply, and `validate()` still shows every field's messages. Each input is given its schema with those cleared, so a custom input that uses the same names needs no changes.
+
 Validation messages can be overridden per field through `options.messages`, keyed by the built in message names (`required`, `invalid`, `minLength`, `min`, `email`, and so on), with `{{min}}`-style parameters interpolated:
 
 ```ts

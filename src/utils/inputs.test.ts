@@ -242,6 +242,125 @@ describe('environment validators', () => {
   })
 })
 
+describe('incomplete values', () => {
+  const incomplete = { allowIncomplete: true }
+
+  it('leave out required fields and minimums, keeping formats, maximums and ranges', async () => {
+    const schema = [
+      { type: 'text', name: 'title', required: true },
+      { type: 'textarea', name: 'summary', options: { minLength: 10 } },
+      { type: 'password', name: 'secret', options: { maxLength: 4 } },
+      { type: 'email', name: 'email', required: true },
+      { type: 'number', name: 'rating', required: true, options: { min: 1, max: 5 } },
+      { type: 'checkbox', name: 'tags', required: true, options: { choices: [{ value: 'news', label: 'News' }] } },
+      { type: 'boolean', name: 'agree', required: true },
+    ]
+    const values = { summary: 'Short', secret: 'toolong', email: 'nope', rating: 0 }
+    const kept = {
+      secret: ['This field requires a maximum of 4 character(s).'],
+      email: ['A valid email address required.'],
+      rating: ['This field requires a minimum value of 1.'],
+    }
+
+    expect(flattenValidationReport(validateValues(schema, values, inputs, incomplete)).messages).toEqual(kept)
+    expect(flattenValidationReport(await validateServerValues(schema, values, inputs, incomplete)).messages).toEqual(
+      kept,
+    )
+
+    // Without the option, the unfinished fields fail too
+    expect(Object.keys(flattenValidationReport(report(schema, values)).messages)).toEqual(
+      schema.map((field) => field.name),
+    )
+  })
+
+  it("reach the fields inside every container, keeping a container's other checks", async () => {
+    const schema = [
+      { type: 'group', name: 'address', options: { fields: [{ type: 'text', name: 'town', required: true }] } },
+      {
+        type: 'repeater',
+        name: 'pets',
+        required: true,
+        options: { minimum: 2, fields: [{ type: 'text', name: 'petname', required: true }] },
+      },
+      { type: 'repeater', name: 'links', options: { maximum: 1, fields: [{ type: 'url', name: 'url' }] } },
+      {
+        type: 'matrix',
+        name: 'grid',
+        options: { minimumRows: 2, minimumColumns: 2, fields: [{ type: 'number', name: 'amount', required: true }] },
+      },
+      {
+        type: 'flexible',
+        name: 'blocks',
+        required: true,
+        options: {
+          layouts: [
+            {
+              name: 'hero',
+              fields: [
+                { type: 'text', name: 'title', required: true },
+                { type: 'email', name: 'contact' },
+              ],
+            },
+          ],
+        },
+      },
+      { type: 'flexible', name: 'aside', options: { layouts: [{ name: 'hero' }] } },
+      { type: 'schemabuilder', name: 'fields', required: true },
+    ]
+    const values = {
+      address: {},
+      pets: [{ petname: '' }],
+      links: [{ url: 'https://example.com' }, { url: 'https://example.org' }],
+      grid: [[{ amount: '' }]],
+      blocks: [{ _layout: 'hero', contact: 'nope' }],
+      aside: [{ _layout: 'gone' }],
+    }
+    const kept = {
+      links: ['This field requires a maximum of 1 item(s).'],
+      'blocks.0.contact': ['A valid email address required.'],
+      aside: ['Invalid value.'],
+    }
+
+    expect(flattenValidationReport(validateValues(schema, values, inputs, incomplete)).messages).toEqual(kept)
+    expect(flattenValidationReport(await validateServerValues(schema, values, inputs, incomplete)).messages).toEqual(
+      kept,
+    )
+
+    // Without the option, the unfinished ones fail too
+    expect(flattenValidationReport(report(schema, values)).messages).toMatchObject({
+      'address.town': ['This field is required.'],
+      pets: ['This field requires a minimum of 2 item(s).'],
+      grid: ['This field requires a minimum of 2 row(s).'],
+      'blocks.0.title': ['This field is required.'],
+      fields: ['This field is required.'],
+    })
+  })
+
+  it('give custom inputs the same schema, server validators included', async () => {
+    // A count only the server can check, e.g. of records that still exist
+    const records: Input = {
+      default: () => null,
+      validateServerValue: async (value, schema) => {
+        const count = Array.isArray(value) ? value.length : 0
+        if (schema.required && count === 0) return validationError(value, 'Required.')
+        if (count < (schema.options?.minimum ?? 0)) return validationError(value, 'Too few.')
+        if (count > (schema.options?.maximum ?? Infinity)) return validationError(value, 'Too many.')
+        return validationSuccess(value)
+      },
+    }
+
+    const schema = [
+      { type: 'records', name: 'authors', required: true, options: { minimum: 2 } },
+      { type: 'records', name: 'editors', required: true },
+      { type: 'records', name: 'tags', options: { maximum: 1 } },
+    ]
+    const values = { authors: ['a'], editors: [], tags: ['a', 'b'] }
+    const result = await validateServerValues(schema, values, { ...inputs, records }, incomplete)
+
+    expect(flattenValidationReport(result).messages).toEqual({ tags: ['Too many.'] })
+  })
+})
+
 describe('conditional fields', () => {
   const schema = [
     { type: 'boolean', name: 'has_pets' },

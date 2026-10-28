@@ -17,12 +17,12 @@ import i18n from '@/i18n'
 import * as coreInputs from '@/inputs'
 import { FieldMessages } from '@/types/fields'
 import { Input, ValidationReport } from '@/types/inputs'
-import { conditionScope, flattenValidationReport, validateValues } from '@/utils/inputs'
+import { conditionScope, flattenValidationReport, ValidateValuesOptions, validateValues } from '@/utils/inputs'
 import { SetStateAction, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { I18nextProvider } from 'react-i18next'
 
 export interface FormHandle {
-  validate: () => ValidationReport
+  validate: (options?: Pick<ValidateValuesOptions, 'allowIncomplete'>) => ValidationReport
   applyReport: (report: ValidationReport) => void
 }
 
@@ -188,11 +188,18 @@ export default function Form<Values extends Record<string, any> = Record<string,
   )
 
   // Validate the current values against the schema, and ask every rendered
-  // field to re-run its own validation so all messages are displayed
-  const validate = useCallback(() => {
-    setValidationCounter((old) => old + 1)
-    return validateValues(schemaRef.current, valuesRef.current, mergedInputs, { environment: 'client' })
-  }, [mergedInputs])
+  // field to re-run its own validation so all messages are displayed, even
+  // those allowIncomplete leaves out of the report
+  const validate = useCallback(
+    (options: Pick<ValidateValuesOptions, 'allowIncomplete'> = {}) => {
+      setValidationCounter((old) => old + 1)
+      return validateValues(schemaRef.current, valuesRef.current, mergedInputs, {
+        environment: 'client',
+        allowIncomplete: options.allowIncomplete,
+      })
+    },
+    [mergedInputs],
+  )
 
   // Apply an external validation report, e.g. one returned by a server, and
   // show its messages inline until each field next reports for itself

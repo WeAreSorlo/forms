@@ -2,6 +2,7 @@
 import Form, { FormHandle } from '@/components/Form'
 import { FieldSchema } from '@/types/fields'
 import { ValidationReport } from '@/types/inputs'
+import { flattenValidationReport } from '@/utils/inputs'
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { createRef, useState } from 'react'
 import { afterEach, beforeAll, describe, expect, it } from 'vitest'
@@ -269,6 +270,52 @@ describe('form interactions', () => {
     await waitFor(() => {
       expect(latestMessages['pets.0.petname']).toBeUndefined()
     })
+  })
+
+  it('validates incomplete values, still showing what they are missing', async () => {
+    const ref = createRef<FormHandle>()
+    let latestMessages: Record<string, any> = {}
+
+    const schema: Array<FieldSchema> = [
+      { type: 'text', name: 'title', label: 'Title', required: true },
+      { type: 'text', name: 'summary', label: 'Summary', options: { minLength: 10 } },
+      {
+        type: 'group',
+        name: 'link',
+        label: 'Link',
+        options: { fields: [{ type: 'url', name: 'url', label: 'URL', required: true }] },
+      },
+    ]
+    const form = (values: Record<string, any>) => (
+      <Form ref={ref} schema={schema} values={values} onMessagesChange={(messages) => (latestMessages = messages)} />
+    )
+
+    const { rerender } = render(form({ summary: 'Short', link: {} }))
+
+    let report: undefined | ValidationReport
+    act(() => {
+      report = ref.current?.validate({ allowIncomplete: true })
+    })
+
+    // Nothing unfinished fails the report, while every field shows its messages
+    expect(report?.isValid).toBe(true)
+    await waitFor(() => {
+      expect(latestMessages['title']).toEqual(['This field is required.'])
+      expect(latestMessages['summary']).toEqual(['This field requires a minimum of 10 character(s).'])
+      expect(latestMessages['link.url']).toEqual(['This field is required.'])
+    })
+
+    act(() => {
+      report = ref.current?.validate()
+    })
+    expect(report?.isValid).toBe(false)
+
+    // A format still fails it, nested ones included
+    rerender(form({ link: { url: 'nope' } }))
+    act(() => {
+      report = ref.current?.validate({ allowIncomplete: true })
+    })
+    expect(flattenValidationReport(report!).messages).toEqual({ 'link.url': ['A valid URL required.'] })
   })
 })
 

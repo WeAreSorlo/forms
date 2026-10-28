@@ -17,6 +17,15 @@ import { validationSuccess } from '@/utils/validation'
 export interface ValidateValuesOptions {
   environment?: ValidationEnvironment
   scopes?: ConditionScopes
+  // Leave out the checks a value fails only because it isn't finished, e.g. to save a draft or a step of a form
+  allowIncomplete?: boolean
+}
+
+// A field's schema without the checks an unfinished value fails: required, and the minimum length and count options.
+// Formats, maximums and ranges such as a number's min still apply
+const incompleteSchema = (field: FieldSchema): FieldSchema => {
+  const { minLength, minimum, minimumRows, minimumColumns, ...options } = field.options || {}
+  return { ...field, required: false, options }
 }
 
 // Resolve the validator for an environment, falling back to the shared validateValue
@@ -116,8 +125,10 @@ export function validateValues<Values extends Record<string, any> = Record<strin
     let value = values?.[field.name]
     if (value === undefined) value = field.defaultValue
 
+    const fieldSchema = options.allowIncomplete ? incompleteSchema(field) : field
+
     const validate = resolveValidateValue(input, options.environment)
-    const validation = validate ? validate(value, field) : validationSuccess(value)
+    const validation = validate ? validate(value, fieldSchema) : validationSuccess(value)
 
     if (validation instanceof Promise) {
       throw new Error('The validator returned a promise, use validateServerValues instead')
@@ -130,7 +141,7 @@ export function validateValues<Values extends Record<string, any> = Record<strin
 
     // Let the input validate its nested fields
     if (input?.validateChildren) {
-      const children = input.validateChildren(value, field, validateFields)
+      const children = input.validateChildren(value, fieldSchema, validateFields)
       report.children = children
       if (!childrenAreValid(children)) report.isValid = false
     }
@@ -169,8 +180,10 @@ export async function validateServerValues<Values extends Record<string, any> = 
     let value = values?.[field.name]
     if (value === undefined) value = field.defaultValue
 
+    const fieldSchema = options.allowIncomplete ? incompleteSchema(field) : field
+
     const validate = resolveValidateValue(input, 'server')
-    const validation = validate ? await validate(value, field) : validationSuccess(value)
+    const validation = validate ? await validate(value, fieldSchema) : validationSuccess(value)
 
     const report: FieldValidationReport = {
       isValid: validation.isValid !== false,
@@ -179,7 +192,7 @@ export async function validateServerValues<Values extends Record<string, any> = 
 
     // Let the input validate its nested fields
     if (input?.validateChildren) {
-      const children = await resolveReportChildren(input.validateChildren(value, field, validateFields))
+      const children = await resolveReportChildren(input.validateChildren(value, fieldSchema, validateFields))
       report.children = children
       if (!childrenAreValid(children)) report.isValid = false
     }
