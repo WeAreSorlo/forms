@@ -19,10 +19,12 @@ import {
   InputTypeValue,
   InputValidateValue,
 } from '@/types/inputs'
+import { normaliseConditions } from '@/utils/conditions'
 import { conditionScope, createId, validateInputSchemaFields, validateSchema, validateValues } from '@/utils/inputs'
 import { validationMessage } from '@/utils/messages'
 import { isEmptyValue, validationError, validationSuccess } from '@/utils/validation'
-import { Dispatch, Fragment, useCallback, useEffect, useMemo, useState } from 'react'
+import isEqual from 'lodash/isEqual.js'
+import { Dispatch, Fragment, createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 export const name: InputName = () => 'Schema Builder'
@@ -90,6 +92,65 @@ const withDefaults = (schema: Array<FieldSchema>, values: Record<string, any>): 
   return merged
 }
 
+// The fields at each level around a field being edited, outermost first, which its conditions can test. An editor
+// adds the fields beside its own, so a builder inside it, such as a group's, reaches those as well as its own.
+const LevelsContext = createContext<Array<Array<FieldSchema>>>([])
+
+// A rule's type for a field, by its input. Choice fields give their choices instead, and other fields are text.
+const ruleTypes: Record<string, string> = {
+  boolean: 'boolean',
+  number: 'number',
+  range: 'number',
+  date: 'date',
+  datetime: 'date',
+}
+
+// What a field's conditions can test, nearest first, the way conditions resolve a path: the fields beside it, then
+// those of each level around it. A group's fields are tested through it, e.g. address.town. Fields without a value,
+// such as content, are left out.
+const conditionChoices = (levels: Array<Array<FieldSchema>>, inputs: Record<string, Input>) => {
+  const choices = new Map<string, Record<string, any>>()
+
+  const add = (fields: Array<FieldSchema>, path: string, label: string) => {
+    for (const field of fields) {
+      const input = inputs[field?.type]
+      if (!field?.name || choices.has(path + field.name)) continue
+
+      if (field.type === 'group') {
+        add(field.options?.fields || [], `${path}${field.name}.`, `${label}${field.label || field.name} › `)
+      } else if (!input?.typeValue || input.typeValue(field, () => '') !== undefined) {
+        const listed: Array<any> = field.options?.choices || []
+        const optionChoices = listed.flatMap((choice) => (choice?.choices?.length ? choice.choices : [choice]))
+        choices.set(path + field.name, {
+          value: path + field.name,
+          label: label + (field.label || field.name),
+          ...(['select', 'radio', 'checkbox'].includes(field.type)
+            ? { choices: optionChoices.map((choice) => ({ value: choice?.value, label: choice?.label })) }
+            : { type: ruleTypes[field.type] || 'text' }),
+        })
+      }
+    }
+  }
+
+  for (const fields of [...levels].reverse()) add(fields, '', '')
+  return [...choices.values()]
+}
+
+// The schema of a field's editor, listing what its conditional logic can test. Keyed by the list's contents, so an
+// equal list never resets an open editor.
+const useEditorSchema = (input: Input, levels: Array<Array<FieldSchema>>) => {
+  const { inputs } = useFormStaticContext()
+  const fieldChoices = conditionChoices(levels, inputs)
+  const key = JSON.stringify(fieldChoices)
+
+  return useMemo(() => {
+    return validateInputSchemaFields(input).map((field) => {
+      if (field.name !== 'conditions' || field.type !== 'conditions') return field
+      return { ...field, options: { ...field.options, fieldChoices } }
+    })
+  }, [input, key])
+}
+
 const Component: InputComponent = function () {
   const { inputs } = useFormStaticContext()
   const { t } = useTranslation()
@@ -117,6 +178,7 @@ const Component: InputComponent = function () {
                   {isValidType && (
                     <EditValueItem
                       index={valueIndex}
+                      fields={value}
                       total={value.length}
                       input={valueInput}
                       value={valueSchema}
@@ -133,16 +195,36 @@ const Component: InputComponent = function () {
       {/* Add new */}
       <div>
         {inputEntries.map(([type, input], inputIndex) => {
-          return <CreateValueItem key={inputIndex} type={type} input={input} setValue={setValue} />
+          return (
+            <CreateValueItem
+              key={inputIndex}
+              type={type}
+              input={input}
+              fields={Array.isArray(value) ? value : []}
+              setValue={setValue}
+            />
+          )
         })}
       </div>
     </div>
   )
 }
 
-function CreateValueItem({ type, input, setValue }: { type: string; input: Input; setValue: Dispatch<any> }) {
-  // Memoised, as a new schema would reset an open editor
-  const schema = useMemo(() => validateInputSchemaFields(input), [input])
+function CreateValueItem({
+  type,
+  input,
+  fields,
+  setValue,
+}: {
+  type: string
+  input: Input
+  fields: Array<FieldSchema>
+  setValue: Dispatch<any>
+}) {
+  // A new field's conditions can test every field in the builder
+  const outer = useContext(LevelsContext)
+  const levels = useMemo(() => [...outer, fields], [outer, fields])
+  const schema = useEditorSchema(input, levels)
 
   const onSave = useCallback(
     (editorValues: Record<string, any>) => {
@@ -153,28 +235,32 @@ function CreateValueItem({ type, input, setValue }: { type: string; input: Input
   )
 
   return (
-    <SchemaEditor
-      schema={schema}
-      onSave={onSave}
-      label={
-        <>
-          <strong>{input?.name?.() || type}</strong>
-          <br />
-          <span>{input?.description?.()}</span>
-        </>
-      }
-    />
+    <LevelsContext.Provider value={levels}>
+      <SchemaEditor
+        schema={schema}
+        onSave={onSave}
+        label={
+          <>
+            <strong>{input?.name?.() || type}</strong>
+            <br />
+            <span>{input?.description?.()}</span>
+          </>
+        }
+      />
+    </LevelsContext.Provider>
   )
 }
 
 function EditValueItem({
   index,
+  fields,
   total,
   value,
   input,
   setValue,
 }: {
   index: number
+  fields: Array<FieldSchema>
   total: number
   value: FieldSchema
   input: Input
@@ -183,16 +269,23 @@ function EditValueItem({
   const { t } = useTranslation()
   const { readonly, disabled } = useFieldContext()
   const locked = readonly || disabled
-  const schema = useMemo(() => validateInputSchemaFields(input), [input])
+
+  // Its conditions can test the fields beside it, but not itself
+  const outer = useContext(LevelsContext)
+  const levels = useMemo(() => [...outer, fields.toSpliced(index, 1)], [outer, fields, index])
+  const schema = useEditorSchema(input, levels)
+
+  // Conditions show as groups whatever shape they were written in, such as a flat list with conditionsMode
+  const conditions = useMemo(() => value.conditions && normaliseConditions(value).map((rules) => ({ rules })), [value])
 
   const values = useMemo(() => {
-    const valueRecord: Record<string, any> = value
+    const valueRecord: Record<string, any> = { ...value, conditions }
     return Object.fromEntries(
       schema.map((item) => {
         return [item.name, valueRecord[item.name] ?? item.defaultValue]
       }),
     )
-  }, [schema, value])
+  }, [schema, value, conditions])
 
   const label = useMemo(() => {
     if (value.name && value.label) {
@@ -209,15 +302,21 @@ function EditValueItem({
   const onSave = useCallback(
     (editorValues: Record<string, any>) => {
       // Keep the field's ID and the keys the editor doesn't show, such as readonly, giving an ID to fields from
-      // schemas written without them
-      const field = { id: value.id ?? createId('fld'), ...value, ...editorValues } as FieldSchema
+      // schemas written without them. Conditions stay as they were written unless they're edited, which saves them
+      // as groups that need no conditionsMode.
+      const { conditionsMode, ...rest } = value
+      const field = (
+        isEqual(editorValues.conditions ?? [], conditions ?? [])
+          ? { id: value.id ?? createId('fld'), ...value, ...editorValues, conditions: value.conditions }
+          : { id: value.id ?? createId('fld'), ...rest, ...editorValues }
+      ) as FieldSchema
       setValue((old: Array<FieldSchema>) => {
         const newValue = [...(old || [])]
         newValue[index] = prepareSchema(input, field)
         return newValue
       })
     },
-    [setValue, index, input, value],
+    [setValue, index, input, value, conditions],
   )
 
   const onDelete = useCallback(
@@ -246,7 +345,7 @@ function EditValueItem({
   )
 
   return (
-    <>
+    <LevelsContext.Provider value={levels}>
       <SchemaEditor schema={schema} values={values} onSave={onSave} label={label} />
       <button
         className='iight-button'
@@ -273,7 +372,7 @@ function EditValueItem({
       <button className='iight-button iight-button--danger' type='button' disabled={locked} onClick={onDelete}>
         {t('ui.delete')}
       </button>
-    </>
+    </LevelsContext.Provider>
   )
 }
 

@@ -185,6 +185,51 @@
     }
   }
 
+  /* The And and Or between a condition's rules and groups, as text that doesn't look like their buttons */
+  .iight-input__conditions-and,
+  .iight-input__conditions-or {
+    align-items: center;
+    gap: var(--iight-size-2);
+
+    span {
+      position: relative;
+      font-size: var(--iight-instructions-font-size);
+      color: var(--iight-color-muted);
+      padding: 0 var(--iight-size-2);
+    }
+  }
+
+  /* A line after Or divides the groups */
+  .iight-input__conditions-or::after {
+    content: '';
+    flex: 1;
+    border-top: var(--iight-size-px) solid var(--iight-color-border);
+  }
+
+  /* A line through And joins the rules above and below it */
+  .iight-input__conditions-and span::before,
+  .iight-input__conditions-and span::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    height: var(--iight-fieldset-gap);
+    border-left: var(--iight-size-px) solid var(--iight-color-border);
+  }
+
+  .iight-input__conditions-and span::before {
+    bottom: 100%;
+  }
+
+  .iight-input__conditions-and span::after {
+    top: 100%;
+  }
+
+  /* Removing a rule is quieter than adding one */
+  .iight-input__conditions-remove {
+    background: transparent;
+    border-color: transparent;
+  }
+
   .iight-modal {
     color: var(--iight-modal-color);
     background: var(--iight-modal-background);

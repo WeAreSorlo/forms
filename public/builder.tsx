@@ -382,6 +382,8 @@ const App = () => {
         name: 'phone',
         label: 'Phone number',
         width: 50,
+        // A flat list of rules, which the builder's conditional logic shows as a group
+        conditions: [{ field: 'contact_method', operator: 'equals', value: 'phone' }],
         options: {
           placeholder: 'e.g. +44 7700 900123',
         },
@@ -467,6 +469,28 @@ const App = () => {
         name: 'theme_color',
         label: 'Theme color',
         width: 50,
+      },
+      {
+        type: 'conditions',
+        name: 'banner_audience',
+        label: 'Show the banner to visitors',
+        instructions: 'Any group can match, and every rule in it must.',
+        options: {
+          fieldChoices: [
+            { value: 'visitor.country', label: 'Country', example: 'United Kingdom' },
+            { value: 'visitor.age', label: 'Age', type: 'number', example: '18' },
+            { value: 'visitor.member', label: 'Member', type: 'boolean' },
+            { value: 'visitor.joined', label: 'Joined', type: 'date' },
+            {
+              value: 'visitor.plan',
+              label: 'Plan',
+              choices: [
+                { value: 'free', label: 'Free' },
+                { value: 'pro', label: 'Pro' },
+              ],
+            },
+          ],
+        },
       },
       {
         type: 'text',

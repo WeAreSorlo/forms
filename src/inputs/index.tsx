@@ -1,6 +1,7 @@
 import * as boolean from './Boolean'
 import * as checkbox from './Checkbox'
 import * as color from './Color'
+import * as conditions from './Conditions'
 import * as content from './Content'
 import * as date from './Date'
 import * as datetime from './Datetime'
@@ -27,6 +28,7 @@ export {
   boolean,
   checkbox,
   color,
+  conditions,
   content,
   date,
   datetime,

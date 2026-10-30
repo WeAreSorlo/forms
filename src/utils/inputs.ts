@@ -375,59 +375,12 @@ export const baseInputSchemaFields = (): Array<FieldSchema> => {
       },
     },
     {
+      // The schema builder lists the fields its rules can test as the input's fieldChoices
       name: 'conditions',
       label: 'Conditional logic',
-      type: 'repeater',
+      type: 'conditions',
       required: false,
       instructions: 'Show this field when any group below has all of its rules matching.',
-      options: {
-        fields: [
-          {
-            name: 'rules',
-            label: 'Rules',
-            type: 'repeater',
-            options: {
-              minimum: 1,
-              fields: [
-                {
-                  name: 'field',
-                  label: 'Field',
-                  type: 'text',
-                  required: true,
-                  width: 33.333,
-                },
-                {
-                  name: 'operator',
-                  label: 'Operator',
-                  type: 'select',
-                  required: true,
-                  width: 33.333,
-                  options: {
-                    choices: [
-                      { value: 'equals', label: 'Equals' },
-                      { value: 'notEquals', label: 'Not equals' },
-                      { value: 'contains', label: 'Contains' },
-                      { value: 'notContains', label: 'Not contains' },
-                      { value: 'startsWith', label: 'Starts with' },
-                      { value: 'greaterThan', label: 'Greater than' },
-                      { value: 'lessThan', label: 'Less than' },
-                      { value: 'empty', label: 'Is empty' },
-                      { value: 'notEmpty', label: 'Is not empty' },
-                    ],
-                  },
-                },
-                {
-                  name: 'value',
-                  label: 'Value',
-                  type: 'text',
-                  required: false,
-                  width: 33.333,
-                },
-              ],
-            },
-          },
-        ],
-      },
     },
   ]
 }

@@ -51,6 +51,14 @@ describe('typeValue', () => {
     expect(typeOf('select', { choices, multiple: true })).toBe('Array<"red" | "1">')
   })
 
+  it('types conditions as groups of rules', () => {
+    const operator =
+      '"equals" | "notEquals" | "contains" | "notContains" | "startsWith" | "greaterThan" | "lessThan" | "empty" | "notEmpty"'
+    expect(typeOf('conditions')).toBe(
+      `Array<{ rules: Array<{ field: string; operator: ${operator}; value?: unknown }> }>`,
+    )
+  })
+
   it('types checkboxes as a list of their values', () => {
     expect(typeOf('checkbox', { choices })).toBe('Array<"red" | 1>')
   })

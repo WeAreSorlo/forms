@@ -1,6 +1,7 @@
 import * as boolean from '@/inputs/Boolean'
 import * as checkbox from '@/inputs/Checkbox'
 import * as color from '@/inputs/Color'
+import * as conditions from '@/inputs/Conditions'
 import * as date from '@/inputs/Date'
 import * as datetime from '@/inputs/Datetime'
 import * as email from '@/inputs/Email'
@@ -537,5 +538,48 @@ describe('boolean', () => {
   it('must be checked when required', () => {
     expect(boolean.validateValue(false, schema({ required: true })).isValid).toBe(false)
     expect(boolean.validateValue(true, schema({ required: true })).isValid).toBe(true)
+  })
+})
+
+describe('conditions', () => {
+  const rule = { field: 'country', operator: 'equals', value: 'UK' }
+
+  it('accepts no conditions, which match everything, unless required', () => {
+    expect(conditions.validateValue(undefined, schema()).isValid).toBe(true)
+    expect(conditions.validateValue([], schema()).isValid).toBe(true)
+    expect(conditions.validateValue([], schema({ required: true })).messages).toEqual(['This field is required.'])
+  })
+
+  it('accepts groups of rules', () => {
+    expect(conditions.validateValue([{ rules: [rule] }, { rules: [rule, rule] }], schema()).isValid).toBe(true)
+  })
+
+  it('rejects other shapes, and groups without rules, which would always match', () => {
+    for (const value of ['nope', [rule], [[rule]], [{ rules: [] }], [{ rules: ['nope'] }], [null]]) {
+      expect(conditions.validateValue(value, schema()).messages, JSON.stringify(value)).toEqual(['Invalid value.'])
+    }
+  })
+
+  it('reads as a sentence, with the labels of fields and their values', () => {
+    const fieldChoices = [
+      { value: 'entry.category', label: 'Category', choices: [{ value: 'news', label: 'News' }] },
+      { value: 'submission.spam', label: 'Spam', type: 'boolean' },
+      { value: 'entry.published', label: 'Published', type: 'date' },
+    ]
+    const value = [
+      {
+        rules: [
+          { field: 'entry.category', operator: 'equals', value: 'news' },
+          { field: 'entry.published', operator: 'greaterThan', value: '2026-10-01' },
+        ],
+      },
+      { rules: [{ field: 'submission.spam', operator: 'equals', value: false }] },
+      { rules: [{ field: 'media.mime', operator: 'notEmpty' }] },
+    ]
+
+    expect(conditions.formatValue(value, schema({ options: { fieldChoices } }))).toBe(
+      'Category equals News and Published is after 2026-10-01, or Spam equals No, or media.mime is not empty',
+    )
+    expect(conditions.formatValue('nope', schema())).toBeNull()
   })
 })

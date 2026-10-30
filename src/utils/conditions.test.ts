@@ -58,6 +58,26 @@ describe('evaluateCondition', () => {
     expect(evaluateCondition({ field: 'nope', operator: 'greaterThan', value: 18 }, scopes)).toBe(false)
   })
 
+  it('orders ISO dates, date-times and times, which never compared before', () => {
+    const dates = [{ day: '2026-10-30', at: '2026-10-30T13:30', time: '09:15', year: '2026' }]
+    const rule = (field: string, operator: 'greaterThan' | 'lessThan', value: any) => {
+      return evaluateCondition({ field, operator, value }, dates)
+    }
+
+    expect(rule('day', 'greaterThan', '2026-10-01')).toBe(true)
+    expect(rule('day', 'lessThan', '2026-10-01')).toBe(false)
+    expect(rule('day', 'lessThan', '2026-11-01T00:00')).toBe(true)
+    // A date-time falls after the start of its own day
+    expect(rule('at', 'greaterThan', '2026-10-30')).toBe(true)
+    expect(rule('at', 'lessThan', '2026-10-31')).toBe(true)
+    expect(rule('time', 'lessThan', '13:30')).toBe(true)
+    expect(rule('time', 'greaterThan', '13:30:00')).toBe(false)
+    // Anything else compares as numbers, as before, so a year still orders and a date never meets a time
+    expect(rule('year', 'greaterThan', 2025)).toBe(true)
+    expect(rule('day', 'greaterThan', '09:00')).toBe(false)
+    expect(rule('day', 'greaterThan', 5)).toBe(false)
+  })
+
   it('supports empty checks', () => {
     expect(evaluateCondition({ field: 'empty', operator: 'empty' }, scopes)).toBe(true)
     expect(evaluateCondition({ field: 'bio', operator: 'notEmpty' }, scopes)).toBe(true)

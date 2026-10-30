@@ -36,6 +36,7 @@ describe('optionFields', () => {
       select: ['choices', 'placeholder', 'multiple'],
       radio: ['choices'],
       checkbox: ['choices'],
+      conditions: ['fieldChoices'],
       boolean: ['message'],
       group: ['fields'],
       repeater: ['fields', 'minimum', 'maximum', 'direction'],

@@ -81,6 +81,7 @@ Every field supports `name` (required), `id`, `label`, `required`, `instructions
 | `select`        | `choices` (`{ value, label }` items), `placeholder`, `multiple`              |
 | `radio`         | `choices` — single choice without a dropdown                                 |
 | `checkbox`      | `choices` — multiple choice, value is an array                               |
+| `conditions`    | `fieldChoices` — the paths rules test; value is `[{ rules: [...] }]`         |
 | `group`         | `fields` (nested field schemas)                                              |
 | `repeater`      | `fields`, `minimum`, `maximum`, `direction` (`y` vertical / `x` horizontal)  |
 | `matrix`        | `fields`, `minimumRows`, `maximumRows`, `minimumColumns`, `maximumColumns`   |
@@ -93,6 +94,8 @@ Groups nest their values under the group's name, repeaters produce an array of o
 The schema builder gives every field it creates an `id`, e.g. `fld_k3x9q2mz`, that never changes when the field is edited, renamed or moved, so a schema diff can tell a rename from a removal plus an addition. Flexible layouts get one the same way, e.g. `lay_k3x9q2mz`. Values stay keyed by `name`, blocks keep naming their layout in `_layout`, and schemas without IDs keep working; editing such a field in the builder gives it and its layouts IDs. A field's name follows its label until edited, and is a `mixed` identifier, since names are the segments of paths like `address.town` and can't hold dots or spaces.
 
 A `flexible` block is a layout's field values plus `_layout`, the name of the layout it uses, e.g. `[{ _layout: 'hero', title: 'Welcome' }]`, so `_layout` can't be a field name inside a layout. Its messages are keyed like a repeater's, e.g. `blocks.0.title`, and `pickValues` drops blocks whose layout no longer exists.
+
+A `conditions` field edits the value conditional logic takes, groups of rules where any group matches when all of its rules do, e.g. `[{ rules: [{ field: 'country', operator: 'equals', value: 'UK' }] }]`. Its `fieldChoices` lists what rules can test, each `{ value, label, type, choices, example }`: `value` is a dotted path, `type` (`text`, `number`, `date` or `boolean`) picks the operators and the value's control, `choices` (`{ value, label }` items) make the value a select, and `example` shows under the value, e.g. `example.com` as "e.g. example.com". A rule needs a field, an operator that suits it and, except for `empty` and `notEmpty`, a value, and its messages are keyed like `conditions.0.rules.1.value`. A saved rule on a field that isn't listed shows as it is, with a message. Without `fieldChoices`, a rule's field is a dotted path typed in, with all nine operators. Values compare as text, so a boolean's `'false'` shows as No.
 
 An `identifier` with a `source`, e.g. `title`, follows that field, found the same way as a condition's `field`, while it is empty or still holds the value it generated. A typed or loaded value never changes by itself. Clearing it picks the source back up when the field loses focus, which is also when an invalid value is tidied into its format. `kebab` (the default) is the URL style and may start with a digit, while `snake`, `camel` and `pascal` are code styles and must start with a letter. `mixed` accepts any of the code styles, or a mix such as `utm_source__c`, and generates snake case. Latin accents are always removed, and letters from other scripts are dropped unless `unicode` is set, e.g. `東京-タワー`.
 
@@ -150,9 +153,9 @@ conditions: [
 ]
 ```
 
-Operators: `equals`, `notEquals`, `contains`, `notContains`, `startsWith`, `greaterThan`, `lessThan`, `empty`, `notEmpty`. Equality compares loosely (`'18'` matches `18`), since values written in the schema builder are strings. Fields are compared by their validated values, with schema defaults applied, so a checkbox posted as `'on'` matches `true` and an untouched one matches `false`, on the client and the server alike.
+Operators: `equals`, `notEquals`, `contains`, `notContains`, `startsWith`, `greaterThan`, `lessThan`, `empty`, `notEmpty`. Equality compares loosely (`'18'` matches `18`), since values written in the schema builder are strings. `greaterThan` and `lessThan` order numbers, and also ISO dates, date-times and times such as `2026-01-15`, `2026-01-15T13:30` and `13:30`, which compare as text, so a date-time falls after the start of its day. Fields are compared by their validated values, with schema defaults applied, so a checkbox posted as `'on'` matches `true` and an untouched one matches `false`, on the client and the server alike.
 
-A condition's `field` is a dotted path resolved against the nearest value scope first, then outwards to the form's root — so inside a repeater item, `species` finds the sibling field in the same item, while `address.town` falls through to the root values, and `pets.0.petname` works from the root. The closest scope wins when names collide. The schema builder exposes conditions on every field under "Conditional logic".
+A condition's `field` is a dotted path resolved against the nearest value scope first, then outwards to the form's root — so inside a repeater item, `species` finds the sibling field in the same item, while `address.town` falls through to the root values, and `pets.0.petname` works from the root. The closest scope wins when names collide. The schema builder edits every field's conditions under "Conditional logic", with the `conditions` input listing what they can reach: the fields beside it, the fields in groups beside it as `address.town`, and the fields of each level around it. Conditions written in any of the shapes above show as groups, and stay as written unless they're edited.
 
 ## TypeScript
 

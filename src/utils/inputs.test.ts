@@ -564,6 +564,106 @@ describe('pickValues', () => {
   })
 })
 
+describe('conditions', () => {
+  const fieldChoices = [
+    { value: 'title', label: 'Title', example: 'Hello' },
+    { value: 'spam', label: 'Spam', type: 'boolean' },
+    { value: 'age', label: 'Age', type: 'number' },
+    { value: 'published', label: 'Published', type: 'date' },
+    { value: 'category', label: 'Category', choices: [{ value: 'news', label: 'News' }] },
+  ]
+  const schema = [{ type: 'conditions', name: 'conditions', options: { fieldChoices } }]
+  const messagesOf = (rules: Array<Record<string, any>>, options = {}) => {
+    return flattenValidationReport(validateValues(schema, { conditions: [{ rules }] }, inputs, options)).messages
+  }
+
+  it("checks each rule, keying its messages by the rule's place", () => {
+    const report = validateValues(schema, { conditions: [{ rules: [{ field: 'title', operator: 'equals' }] }] }, inputs)
+
+    expect(report.isValid).toBe(false)
+    expect(flattenValidationReport(report).messages).toEqual({
+      'conditions.0.rules.0.value': ['This field is required.'],
+    })
+  })
+
+  it('accepts listed fields with operators and values that suit them', () => {
+    const rules = [
+      { field: 'title', operator: 'startsWith', value: 'Hello' },
+      { field: 'spam', operator: 'equals', value: 'false' },
+      { field: 'spam', operator: 'notEquals', value: true },
+      { field: 'age', operator: 'greaterThan', value: 18 },
+      { field: 'published', operator: 'lessThan', value: '2026-10-30' },
+      { field: 'category', operator: 'contains', value: 'news' },
+      { field: 'title', operator: 'empty' },
+    ]
+    expect(messagesOf(rules)).toEqual({})
+  })
+
+  it("flags a field that isn't listed, an operator that doesn't suit it and a value it can't hold", () => {
+    const rules = [
+      { field: 'nope', operator: 'equals', value: 'x' },
+      { field: 'spam', operator: 'contains', value: 'maybe' },
+      { field: 'age', operator: 'equals', value: 'old' },
+      { field: 'published', operator: 'equals', value: 'Tuesday' },
+      { field: 'category', operator: 'equals', value: 'sport' },
+    ]
+    expect(messagesOf(rules)).toEqual({
+      'conditions.0.rules.0.field': ['A valid choice required.'],
+      'conditions.0.rules.1.operator': ['A valid choice required.'],
+      'conditions.0.rules.1.value': ['A valid choice required.'],
+      'conditions.0.rules.2.value': ['Invalid value.'],
+      'conditions.0.rules.3.value': ['A valid date required.'],
+      'conditions.0.rules.4.value': ['A valid choice required.'],
+    })
+  })
+
+  it('asks only for the field of a rule that has none, as its operator and value wait for it', () => {
+    expect(messagesOf([{}])).toEqual({ 'conditions.0.rules.0.field': ['This field is required.'] })
+  })
+
+  it('takes any dotted path and all nine operators without fieldChoices', () => {
+    const free = [{ type: 'conditions', name: 'conditions' }]
+    const conditions = [{ rules: [{ field: 'pets.0.petname', operator: 'greaterThan', value: 'R' }, {}] }]
+
+    expect(flattenValidationReport(validateValues(free, { conditions }, inputs)).messages).toEqual({
+      'conditions.0.rules.1.field': ['This field is required.'],
+      'conditions.0.rules.1.operator': ['This field is required.'],
+      'conditions.0.rules.1.value': ['This field is required.'],
+    })
+  })
+
+  it("leaves out what an unfinished rule is missing, but not what's wrong with it", async () => {
+    const rules = [{ field: 'title', operator: 'equals' }, { field: 'nope' }]
+    const expected = { 'conditions.0.rules.1.field': ['A valid choice required.'] }
+
+    expect(messagesOf(rules, { allowIncomplete: true })).toEqual(expected)
+    const report = await validateServerValues(schema, { conditions: [{ rules }] }, inputs, { allowIncomplete: true })
+    expect(flattenValidationReport(report).messages).toEqual(expected)
+  })
+
+  it('waits for asynchronous server validators inside rules', async () => {
+    const select = { ...inputs.select, validateServerValue: async () => validationError('', 'Not today.') }
+    const report = await validateServerValues(
+      schema,
+      { conditions: [{ rules: [{ field: 'title', operator: 'equals', value: 'x' }] }] },
+      { ...inputs, select },
+    )
+
+    expect(report.isValid).toBe(false)
+    expect(flattenValidationReport(report).messages).toEqual({
+      'conditions.0.rules.0.field': ['Not today.'],
+      'conditions.0.rules.0.operator': ['Not today.'],
+    })
+  })
+
+  it("keeps only each rule's field, operator and value", () => {
+    const conditions = [{ rules: [{ field: 'title', operator: 'equals', value: 'x', junk: 1 }, { field: 'spam' }] }]
+    expect(pickValues(schema, { conditions }, inputs)).toEqual({
+      conditions: [{ rules: [{ field: 'title', operator: 'equals', value: 'x' }, { field: 'spam' }] }],
+    })
+  })
+})
+
 describe('field ids', () => {
   it('survive validateSchema, which strips unknown properties', () => {
     const field = { id: 'fld_title', name: 'title', junk: true }

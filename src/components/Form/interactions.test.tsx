@@ -954,6 +954,72 @@ describe('schema builder interactions', () => {
     expect(latestValues.fields[0].options).toEqual({ minimumRows: 1, minimumColumns: 1, maximumColumns: 1 })
   })
 
+  it('lists the fields conditions can reach, and keeps conditions as they were written unless edited', async () => {
+    let latestValues: Record<string, any> = {}
+    const kind = {
+      type: 'select',
+      name: 'kind',
+      label: 'Kind',
+      options: { choices: [{ value: 'link', label: 'Link' }] },
+    }
+    const address = {
+      type: 'group',
+      name: 'address',
+      label: 'Address',
+      options: { fields: [{ type: 'text', name: 'town', label: 'Town' }] },
+    }
+    // A flat list of rules, as type files hold them
+    const url = {
+      type: 'text',
+      name: 'url',
+      label: 'URL',
+      conditions: [{ field: 'kind', operator: 'equals', value: 'link' }],
+    }
+
+    render(
+      <Form
+        schema={schema}
+        values={{ fields: [kind, address, url] }}
+        onValuesChange={(values) => (latestValues = values)}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'URL (url)' }))
+    const field = editor().getByRole<HTMLSelectElement>('combobox', { name: 'Field for rule 1 of group 1' })
+    expect([...field.options].map((option) => option.textContent)).toEqual(['Select…', 'Kind', 'Address › Town'])
+    expect(field.value).toBe('kind')
+    const value = editor().getByRole<HTMLSelectElement>('combobox', { name: 'Value for rule 1 of group 1' })
+    expect(value.selectedOptions[0].textContent).toBe('Link')
+
+    save()
+    await waitFor(() => expect(latestValues.fields?.[2]).toMatchObject({ label: 'URL' }))
+    expect(latestValues.fields[2].conditions).toEqual(url.conditions)
+
+    // An edit saves them as groups
+    fireEvent.click(screen.getByRole('button', { name: 'URL (url)' }))
+    fireEvent.click(editor().getByRole('button', { name: 'Or: add a group' }))
+    fireEvent.change(editor().getByRole('combobox', { name: 'Field for rule 1 of group 2' }), {
+      target: { value: 'address.town' },
+    })
+    fireEvent.change(editor().getByRole('combobox', { name: 'Operator for rule 1 of group 2' }), {
+      target: { value: 'notEmpty' },
+    })
+    save()
+    await waitFor(() =>
+      expect(latestValues.fields[2].conditions).toEqual([
+        { rules: [url.conditions[0]] },
+        { rules: [{ field: 'address.town', operator: 'notEmpty' }] },
+      ]),
+    )
+
+    // A field inside the group reaches the fields beside it, then those around the group
+    fireEvent.click(screen.getByRole('button', { name: 'Address (address)' }))
+    fireEvent.click(editor().getByRole('button', { name: 'Town (town)' }))
+    fireEvent.click(editor().getByRole('button', { name: 'Add a rule' }))
+    const inner = editor().getByRole<HTMLSelectElement>('combobox', { name: 'Field for rule 1 of group 1' })
+    expect([...inner.options].map((option) => option.textContent)).toEqual(['Select…', 'Kind', 'URL'])
+  })
+
   it("keeps a new field's edits while the page around it re-renders", () => {
     // The schema is written inline, so each render passes the form a new one
     function Page() {
@@ -975,6 +1041,159 @@ describe('schema builder interactions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Re-render' }))
 
     expect(editor().getByLabelText<HTMLInputElement>(/Field Label/).value).toBe('Title')
+  })
+})
+
+describe('conditions interactions', () => {
+  const fieldChoices = [
+    { value: 'title', label: 'Title', example: 'Hello' },
+    { value: 'spam', label: 'Spam', type: 'boolean' },
+    { value: 'category', label: 'Category', choices: [{ value: 'news', label: 'News' }] },
+  ]
+  const schema: Array<FieldSchema> = [
+    { type: 'conditions', name: 'conditions', label: 'Only if', options: { fieldChoices } },
+  ]
+  const control = (column: string, rule: number, group = 1) => {
+    return screen.getByLabelText<HTMLSelectElement>(`${column} for rule ${rule} of group ${group}`)
+  }
+
+  it("shows saved rules, with values as text and a field that isn't listed as it is", () => {
+    const conditions = [
+      {
+        rules: [
+          { field: 'spam', operator: 'equals', value: 'false' },
+          { field: 'spam', operator: 'equals', value: true },
+          { field: 'gone', operator: 'startsWith', value: 'x' },
+        ],
+      },
+    ]
+    render(<Form schema={schema} values={{ conditions }} />)
+
+    expect(control('Value', 1).selectedOptions[0].textContent).toBe('No')
+    expect(control('Value', 2).selectedOptions[0].textContent).toBe('Yes')
+    expect(control('Field', 3).value).toBe('gone')
+    expect(screen.getByRole('alert').textContent).toBe('A valid choice required.')
+    expect(screen.getByRole('group', { name: 'Only if' })).toBeTruthy()
+    expect(screen.getByRole('group', { name: 'Group 1' })).toBeTruthy()
+  })
+
+  it("adds rules and groups, focusing the new rule's field, and removes them", async () => {
+    let latestValues: Record<string, any> = {}
+    render(<Form schema={schema} onValuesChange={(values) => (latestValues = values)} />)
+
+    // No conditions is a value of its own, so there's no rule until one is added
+    fireEvent.click(screen.getByRole('button', { name: 'Add a rule' }))
+    expect(document.activeElement).toBe(control('Field', 1))
+    expect(control('Operator', 1).disabled).toBe(true)
+    expect(control('Value', 1).disabled).toBe(true)
+
+    // Picking a field starts its operator at equals, with the field's example under its value
+    fireEvent.change(control('Field', 1), { target: { value: 'title' } })
+    expect(control('Operator', 1).value).toBe('equals')
+    expect(control('Value', 1).disabled).toBe(false)
+    expect(screen.getByText('e.g. Hello')).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: 'And: add a rule after rule 1 of group 1' }))
+    expect(document.activeElement).toBe(control('Field', 2))
+
+    // Only the last rule can start another group
+    expect(screen.getAllByRole('button', { name: 'Or: add a group' })).toHaveLength(1)
+    fireEvent.click(screen.getByRole('button', { name: 'Or: add a group' }))
+    expect(document.activeElement).toBe(control('Field', 1, 2))
+    await waitFor(() =>
+      expect(latestValues.conditions).toEqual([
+        { rules: [{ field: 'title', operator: 'equals' }, {}] },
+        { rules: [{}] },
+      ]),
+    )
+
+    // Focus goes to the rule that took the removed one's place, and a group goes with its last rule
+    fireEvent.click(screen.getByRole('button', { name: 'Remove rule 2 of group 1' }))
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Remove rule 1 of group 2' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Remove rule 1 of group 2' }))
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Remove rule 1 of group 1' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Remove rule 1 of group 1' }))
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Add a rule' }))
+    await waitFor(() => expect(latestValues.conditions).toEqual([]))
+  })
+
+  it('has no value to compare for empty and notEmpty', () => {
+    render(
+      <Form
+        schema={schema}
+        values={{ conditions: [{ rules: [{ field: 'title', operator: 'equals', value: 'x' }] }] }}
+      />,
+    )
+
+    fireEvent.change(control('Operator', 1), { target: { value: 'notEmpty' } })
+    expect(screen.queryByRole('textbox', { name: 'Value for rule 1 of group 1' })).toBeNull()
+  })
+
+  it("shows each control's messages under it, keyed by its path, once the form validates", async () => {
+    const ref = createRef<FormHandle>()
+    let latestMessages: Record<string, any> = {}
+    render(
+      <Form
+        ref={ref}
+        schema={schema}
+        values={{ conditions: [{ rules: [{ field: 'title', operator: 'equals' }] }] }}
+        onMessagesChange={(messages) => (latestMessages = messages)}
+      />,
+    )
+
+    // An unfinished rule says what it's missing only once the form validates
+    expect(screen.queryByRole('alert')).toBeNull()
+    act(() => {
+      expect(ref.current!.validate().isValid).toBe(false)
+    })
+    await waitFor(() => expect(latestMessages['conditions.0.rules.0.value']).toEqual(['This field is required.']))
+    expect(control('Value', 1).getAttribute('aria-invalid')).toBe('true')
+    expect(control('Value', 1).closest('.iight-field')!.querySelector('.iight-messages')!.textContent).toBe(
+      'This field is required.',
+    )
+
+    // A server's report shows under the control it names, until the rule changes
+    const report = {
+      isValid: false,
+      fields: {
+        conditions: {
+          isValid: false,
+          messages: [],
+          children: [
+            {
+              isValid: false,
+              fields: {
+                rules: {
+                  isValid: false,
+                  messages: [],
+                  children: [{ isValid: false, fields: { value: { isValid: false, messages: ['Too long.'] } } }],
+                },
+              },
+            },
+          ],
+        },
+      },
+    }
+    act(() => ref.current!.applyReport(report))
+    expect(screen.getByRole('alert').textContent).toBe('Too long.')
+
+    fireEvent.change(control('Value', 1), { target: { value: 'Hello' } })
+    expect(screen.queryByRole('alert')).toBeNull()
+    await waitFor(() => expect(latestMessages['conditions.0.rules.0.value']).toEqual([]))
+  })
+
+  it.each(['readonly', 'disabled'] as const)('keeps its buttons visible but disabled when %s', (state) => {
+    render(
+      <Form
+        schema={[{ ...schema[0], [state]: true }]}
+        values={{ conditions: [{ rules: [{ field: 'title', operator: 'equals', value: 'x' }] }] }}
+      />,
+    )
+
+    const buttons = screen.getAllByRole<HTMLButtonElement>('button')
+    expect(buttons.map((button) => button.textContent)).toEqual(['And', 'Or', '×'])
+    for (const button of buttons) expect(button.disabled).toBe(true)
+    expect(control('Field', 1).disabled).toBe(true)
   })
 })
 

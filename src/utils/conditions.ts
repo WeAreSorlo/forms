@@ -15,6 +15,17 @@ const looseEquals = (a: any, b: any): boolean => {
   return String(a) === String(b)
 }
 
+// ISO dates and date-times, e.g. 2026-01-15 and 2026-01-15T13:30, or times of day, e.g. 13:30
+const isoDate = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})?)?$/
+const isoTime = /^\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/
+
+// Two dates, or two times, which order as text, so a date-time falls after the start of its day
+// shortcut: compares as text, so times in different time zones misorder, parse them if sites mix zones
+const bothIso = (a: any, b: any) => {
+  if (typeof a !== 'string' || typeof b !== 'string') return false
+  return (isoDate.test(a) && isoDate.test(b)) || (isoTime.test(a) && isoTime.test(b))
+}
+
 // Resolve a dotted path against the nearest scope containing its first
 // segment, falling outwards to the form's root values
 export function resolveConditionValue(path: string, scopes: ConditionScopes): any {
@@ -48,9 +59,9 @@ export function evaluateCondition(condition: FieldCondition, scopes: ConditionSc
     case 'startsWith':
       return typeof value === 'string' && value.startsWith(String(condition.value))
     case 'greaterThan':
-      return Number(value) > Number(condition.value)
+      return bothIso(value, condition.value) ? value > condition.value : Number(value) > Number(condition.value)
     case 'lessThan':
-      return Number(value) < Number(condition.value)
+      return bothIso(value, condition.value) ? value < condition.value : Number(value) < Number(condition.value)
     case 'empty':
       return isEmptyValue(value)
     case 'notEmpty':

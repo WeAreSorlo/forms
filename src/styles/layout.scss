@@ -120,6 +120,67 @@
   }
 }
 
+/* Text only screen readers need, such as the rule a condition's control belongs to. In a wide space a condition's
+   labels are too, as the headings above its rules name their columns. */
+.iight-visually-hidden,
+.iight-input__conditions-rule > .iight-field > .iight-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Conditions: a row of field, operator, value and buttons for each rule, under headings shown once */
+.iight-input__conditions {
+  container-type: inline-size;
+}
+
+.iight-input__conditions-head,
+.iight-input__conditions-rule {
+  display: grid;
+  grid-template-columns: 28% 24% minmax(0, 1fr) auto;
+  gap: var(--iight-fieldset-gap, 0.5rem);
+  align-items: start;
+}
+
+.iight-input__conditions-actions {
+  display: flex;
+  gap: var(--iight-choice-gap, 0.5rem);
+}
+
+/* The And between a group's rules and the Or between groups */
+.iight-input__conditions-and,
+.iight-input__conditions-or {
+  display: flex;
+  padding: var(--iight-fieldset-gap, 0.5rem) 0;
+}
+
+.iight-input__conditions-or {
+  padding: calc(2 * var(--iight-fieldset-gap, 0.5rem)) 0;
+}
+
+/* In a narrow space each rule's controls stack with their labels, and its buttons share a line */
+@container (max-width: 36rem) {
+  .iight-input__conditions-head {
+    display: none;
+  }
+
+  .iight-input__conditions-rule {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .iight-input__conditions-rule > .iight-field > .iight-label {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
+  }
+}
+
 /* Its padding counts within the width, so it fits a phone's screen */
 .iight-modal {
   box-sizing: border-box;
