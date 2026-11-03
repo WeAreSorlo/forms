@@ -1,6 +1,6 @@
 {
   "name": "iight",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -19,6 +19,7 @@
   },
   "scripts": {
     "build": "tsup",
+    "prepack": "npm run build",
     "dev": "vite",
     "format": "prettier ./src ./examples --check",
     "format:fix": "prettier ./src ./examples --write",
