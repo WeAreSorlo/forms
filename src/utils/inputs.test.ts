@@ -161,6 +161,47 @@ describe('validateValues', () => {
     expect(result.fields.pets.isValid).toBe(false)
     expect(result.fields.pets.messages).toEqual(['This field requires a minimum of 2 item(s).'])
   })
+
+  it("leaves a list's items unchecked while the list fails its own check", async () => {
+    const petname = { type: 'text', name: 'petname', required: true }
+    const schema = [
+      { type: 'repeater', name: 'most', options: { maximum: 1, fields: [petname] } },
+      { type: 'repeater', name: 'least', options: { minimum: 3, fields: [petname] } },
+      { type: 'matrix', name: 'grid', options: { maximumRows: 1, fields: [petname] } },
+      { type: 'flexible', name: 'blocks', options: { layouts: [{ name: 'hero', fields: [petname] }] } },
+      { type: 'repeater', name: 'within', options: { maximum: 2, fields: [petname] } },
+    ]
+    const values = {
+      most: [{}, {}],
+      least: [{}, {}],
+      grid: [[{}], [{}]],
+      blocks: [{ _layout: 'hero' }, { _layout: 'gone' }],
+      within: [{}, { petname: 'Rex' }],
+    }
+    const expected = {
+      most: ['This field requires a maximum of 1 item(s).'],
+      least: ['This field requires a minimum of 3 item(s).'],
+      grid: ['This field requires a maximum of 1 row(s).'],
+      blocks: ['Invalid value.'],
+      'within.0.petname': ['This field is required.'],
+    }
+
+    for (const result of [report(schema, values), await validateServerValues(schema, values, inputs)]) {
+      expect(result.isValid).toBe(false)
+      expect(flattenValidationReport(result).messages).toEqual(expected)
+      for (const name of ['most', 'least', 'grid', 'blocks']) expect(result.fields[name].children).toBeUndefined()
+      expect(result.fields.within.children).toHaveLength(2)
+    }
+
+    // allowIncomplete drops the minimum, so an unfinished list still checks its items
+    const draft = validateValues(
+      [{ type: 'repeater', name: 'least', options: { minimum: 3, fields: [{ type: 'email', name: 'email' }] } }],
+      { least: [{ email: 'nope' }] },
+      inputs,
+      { allowIncomplete: true },
+    )
+    expect(flattenValidationReport(draft).messages).toEqual({ 'least.0.email': ['A valid email address required.'] })
+  })
 })
 
 describe('environment validators', () => {

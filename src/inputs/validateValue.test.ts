@@ -513,6 +513,19 @@ describe('matrix', () => {
     expect(matrix.validateValue([[{}, {}]], schema({ options: { maximumColumns: 1 } })).isValid).toBe(false)
     expect(matrix.validateValue([[{}, {}]], schema({ options: { maximumColumns: 2 } })).isValid).toBe(true)
   })
+
+  it('enforces the column bounds in every row, not only the first', () => {
+    const rows = (...lengths: Array<number>) => lengths.map((length) => Array.from({ length }, () => ({})))
+    expect(matrix.validateValue(rows(2, 2, 3), schema({ options: { maximumColumns: 2 } })).messages).toEqual([
+      'This field requires a maximum of 2 column(s).',
+    ])
+    expect(matrix.validateValue(rows(2, 1), schema({ options: { minimumColumns: 2 } })).messages).toEqual([
+      'This field requires a minimum of 2 column(s).',
+    ])
+    expect(
+      matrix.validateValue(rows(2, 2), schema({ options: { minimumColumns: 2, maximumColumns: 2 } })).isValid,
+    ).toBe(true)
+  })
 })
 
 describe('schemabuilder', () => {

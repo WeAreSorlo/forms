@@ -139,8 +139,9 @@ export function validateValues<Values extends Record<string, any> = Record<strin
       messages: validation.messages,
     }
 
-    // Let the input validate its nested fields
-    if (input?.validateChildren) {
+    // Let the input validate its nested fields, once the field passes its own check, so a list over its maximum
+    // reports that alone rather than every item too
+    if (input?.validateChildren && report.isValid) {
       const children = input.validateChildren(value, fieldSchema, validateFields)
       report.children = children
       if (!childrenAreValid(children)) report.isValid = false
@@ -190,8 +191,8 @@ export async function validateServerValues<Values extends Record<string, any> = 
       messages: validation.messages,
     }
 
-    // Let the input validate its nested fields
-    if (input?.validateChildren) {
+    // Let the input validate its nested fields, once the field passes its own check
+    if (input?.validateChildren && report.isValid) {
       const children = await resolveReportChildren(input.validateChildren(value, fieldSchema, validateFields))
       report.children = children
       if (!childrenAreValid(children)) report.isValid = false

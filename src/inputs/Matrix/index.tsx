@@ -122,16 +122,14 @@ export const validateValue: InputValidateValue = (value, schema) => {
     return validationError(value, validationMessage(schema, 'maxRows', { max: maxRows }))
   }
 
-  // Validate the minimum and maximum number of columns
-  const columns = value[0]?.length || 0
-
+  // Validate the minimum and maximum number of columns, in every row
   const minColumns = schema.options?.minimumColumns
-  if (typeof minColumns === 'number' && value.length >= 1 && columns < minColumns) {
+  if (typeof minColumns === 'number' && value.some((row) => row.length < minColumns)) {
     return validationError(value, validationMessage(schema, 'minColumns', { min: minColumns }))
   }
 
   const maxColumns = schema.options?.maximumColumns
-  if (typeof maxColumns === 'number' && columns > maxColumns) {
+  if (typeof maxColumns === 'number' && value.some((row) => row.length > maxColumns)) {
     return validationError(value, validationMessage(schema, 'maxColumns', { max: maxColumns }))
   }
 

@@ -109,7 +109,7 @@ import { inputs, validateValues } from 'iight'
 const report = validateValues(schema, values, inputs)
 ```
 
-Container fields aggregate: a group, repeater or matrix is marked invalid while any nested field is invalid, and repeaters/matrices also validate their own item, row and column bounds.
+Container fields aggregate: a group, repeater or matrix is marked invalid while any nested field is invalid, and repeaters/matrices also validate their own item, row and column bounds. A container that fails its own check, such as a repeater over its `maximum` or a flexible field with an unknown layout, reports only that and leaves its items unchecked, so a long list makes one message rather than one per item. `validate()` still shows the messages of the items on the page.
 
 To save values that aren't finished, such as a draft or one step of a long form, pass `{ allowIncomplete: true }` to `validate()`, `validateValues` or `validateServerValues`. It leaves out the checks an unfinished value fails, in nested fields too: `required`, and the `minLength`, `minimum`, `minimumRows` and `minimumColumns` options. Formats, maximums and ranges such as a number's `min` still apply, and `validate()` still shows every field's messages. Each input is given its schema with those cleared, so a custom input that uses the same names needs no changes.
 
@@ -211,6 +211,8 @@ app.post('/submit', async (request, response) => {
 
 An input's `validateValue` is the shared source of truth, and the optional `validateClientValue` and `validateServerValue` take priority in their own environment — the client resolves `validateClientValue ?? validateValue` and the server resolves `validateServerValue ?? validateValue`, so a client only validator can never weaken the server's checks. Server validators may be asynchronous (for example a database uniqueness check), which is why `validateServerValues` returns a promise; the synchronous `validateValues` accepts an `{ environment }` option for fully synchronous setups and throws if a validator returns a promise.
 
+On a public endpoint, cap the body's size and the number of items in lists that have no `maximum`, since `pickValues` and `validateServerValues` walk every item that's posted.
+
 ## Custom inputs
 
 An input is a module implementing the `Input` interface: a default React component plus optional metadata (`name`, `description`, `category`), `validateValue` (with optional `validateClientValue`/`validateServerValue` overrides), `pickValue`, `formatValue`, `renderValue`, `coreFields`/`optionFields` describing how the schema builder should configure it, and `prepareSchema`, which finishes a field's schema when the builder saves it, as the flexible input does to give new layouts their IDs. The component reads everything it needs from `useFieldContext()`:
@@ -229,7 +231,7 @@ export default function Component() {
 
 Register it per form: `<Form inputs={{ shout: shoutModule }} ... />`. Custom types are then available to schemas and appear in the schema builder.
 
-A custom input that nests other fields can also export `validateChildren(value, schema, validateFields)` — this is how `validateValues` and `validate()` walk into it, and it is exactly what the core group, repeater and matrix inputs do; nothing about containers is special-cased. Return the results of `validateFields` without inspecting them, as they may be promises during server validation. The matching `pickValue(value, schema, pickFields)` lets a container recurse for `pickValues` in the same way.
+A custom input that nests other fields can also export `validateChildren(value, schema, validateFields)` — this is how `validateValues` and `validate()` walk into it, and it is exactly what the core group, repeater and matrix inputs do; nothing about containers is special-cased. It's called once the field's own `validateValue` passes. Return the results of `validateFields` without inspecting them, as they may be promises during server validation. The matching `pickValue(value, schema, pickFields)` lets a container recurse for `pickValues` in the same way.
 
 For `schemaToTypeScript`, an input describes the type of its value, as `pickValues` keeps it, with `typeValue(schema, typeFields)`. It returns the type as a string, such as `'string'` or `'Array<"red" | "blue">'`, and may name a type you declare beside the generated one. An input without a value returns `undefined` and is left out, as the content input does. A container types its nested fields with `typeFields`, which returns an object type, so the core group's hook is `(schema, typeFields) => typeFields(schema.options?.fields || [])`.
 
