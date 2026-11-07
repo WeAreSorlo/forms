@@ -263,7 +263,7 @@ const Component: InputComponent = function () {
   }, [validation, blockValidity, setMessages, setValid])
 
   return (
-    <div className='iight-input__flexible'>
+    <div className='sorlo-input__flexible'>
       {blocks.map((block, index) => {
         const layout = layouts.get(block?._layout)
 
@@ -281,7 +281,7 @@ const Component: InputComponent = function () {
             )}
             {!layout && <div>{t('ui.invalidFieldType')}</div>}
             <button
-              className='iight-button'
+              className='sorlo-button'
               type='button'
               disabled={locked || index === 0}
               onClick={(event) => {
@@ -292,7 +292,7 @@ const Component: InputComponent = function () {
               {t('ui.moveUp')}
             </button>
             <button
-              className='iight-button'
+              className='sorlo-button'
               type='button'
               disabled={locked || index === blocks.length - 1}
               onClick={(event) => {
@@ -303,7 +303,7 @@ const Component: InputComponent = function () {
               {t('ui.moveDown')}
             </button>
             <button
-              className='iight-button'
+              className='sorlo-button'
               type='button'
               disabled={locked}
               onClick={(event) => {
@@ -321,7 +321,7 @@ const Component: InputComponent = function () {
           return (
             <button
               key={layout.name}
-              className='iight-button'
+              className='sorlo-button'
               type='button'
               disabled={locked}
               onClick={(event) => {

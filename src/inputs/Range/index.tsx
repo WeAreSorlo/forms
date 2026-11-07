@@ -112,9 +112,9 @@ const Component: InputComponent = function () {
   )
 
   return (
-    <div className='iight-input__range'>
+    <div className='sorlo-input__range'>
       <input
-        className='iight-input'
+        className='sorlo-input'
         id={id}
         {...aria}
         type='range'
@@ -126,7 +126,7 @@ const Component: InputComponent = function () {
         max={options?.max}
         step={options?.step}
       />
-      {value !== '' && value !== undefined && <span className='iight-input__range-value'>{value}</span>}
+      {value !== '' && value !== undefined && <span className='sorlo-input__range-value'>{value}</span>}
     </div>
   )
 }

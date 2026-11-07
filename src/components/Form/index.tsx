@@ -319,7 +319,7 @@ export default function Form<Values extends Record<string, any> = Record<string,
               <FieldScopeContext.Provider value={scopeContextValue}>
                 {/* Prevent implicit submissions from reloading the page */}
                 <form
-                  className={`iight-form${className ? ` ${className}` : ''}`}
+                  className={`sorlo-form${className ? ` ${className}` : ''}`}
                   onSubmit={(event) => event.preventDefault()}
                 >
                   <Fieldset

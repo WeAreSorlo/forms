@@ -163,10 +163,10 @@ const Component: InputComponent = function () {
   }, [inputs])
 
   return (
-    <div className='iight-input__schemabuilder'>
+    <div className='sorlo-input__schemabuilder'>
       {/* Edit */}
       {Array.isArray(value) && value.length > 0 && (
-        <div className='iight-fieldset'>
+        <div className='sorlo-fieldset'>
           {value.map((valueSchema: FieldSchema, valueIndex) => {
             const isValidType = valueSchema.type in inputs
             const valueInput = inputs[valueSchema.type]
@@ -348,7 +348,7 @@ function EditValueItem({
     <LevelsContext.Provider value={levels}>
       <SchemaEditor schema={schema} values={values} onSave={onSave} label={label} />
       <button
-        className='iight-button'
+        className='sorlo-button'
         type='button'
         disabled={locked || index === 0}
         onClick={(event) => {
@@ -359,7 +359,7 @@ function EditValueItem({
         {t('ui.moveUp')}
       </button>
       <button
-        className='iight-button'
+        className='sorlo-button'
         type='button'
         disabled={locked || index === total - 1}
         onClick={(event) => {
@@ -369,7 +369,7 @@ function EditValueItem({
       >
         {t('ui.moveDown')}
       </button>
-      <button className='iight-button iight-button--danger' type='button' disabled={locked} onClick={onDelete}>
+      <button className='sorlo-button sorlo-button--danger' type='button' disabled={locked} onClick={onDelete}>
         {t('ui.delete')}
       </button>
     </LevelsContext.Provider>
@@ -472,7 +472,7 @@ function SchemaEditor({
   return (
     <>
       <button
-        className='iight-button'
+        className='sorlo-button'
         type='button'
         disabled={locked}
         onClick={(event) => {
@@ -503,10 +503,10 @@ function SchemaEditor({
             </FieldReportContext.Provider>
           </FormStaticContext.Provider>
         )}
-        <button className='iight-button' type='button' onClick={handleCancel}>
+        <button className='sorlo-button' type='button' onClick={handleCancel}>
           {cancelLabel || t('ui.cancel')}
         </button>
-        <button className='iight-button iight-button--primary' type='button' disabled={locked} onClick={handleSave}>
+        <button className='sorlo-button sorlo-button--primary' type='button' disabled={locked} onClick={handleSave}>
           {saveLabel || t('ui.save')}
         </button>
       </Modal>

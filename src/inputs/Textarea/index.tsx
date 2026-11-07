@@ -116,9 +116,9 @@ const Component: InputComponent = function () {
   )
 
   return (
-    <div className='iight-input__textarea'>
+    <div className='sorlo-input__textarea'>
       <textarea
-        className='iight-input'
+        className='sorlo-input'
         id={id}
         {...aria}
         value={value}

@@ -1,144 +1,144 @@
 /*
  * The default theme: a neutral light look. A theme is nothing more than a
- * scoped set of --iight-* tokens consumed by base.scss, so a custom theme
+ * scoped set of --sorlo-* tokens consumed by base.scss, so a custom theme
  * is made by copying this file and renaming the class.
  */
 
-.iight-theme-default {
-  --iight-font-family: inherit;
-  --iight-font-size: 1rem;
-  --iight-line-height: 1.5;
-  --iight-form-color: #1f2937;
-  --iight-form-background: transparent;
+.sorlo-theme-default {
+  --sorlo-font-family: inherit;
+  --sorlo-font-size: 1rem;
+  --sorlo-line-height: 1.5;
+  --sorlo-form-color: #1f2937;
+  --sorlo-form-background: transparent;
 
   /* Sizing utilities */
-  --iight-size-px: 1px;
-  --iight-size-1: 0.25rem; // 4px
-  --iight-size-2: 0.5rem; // 8px
-  --iight-size-3: 0.75rem; // 12px
-  --iight-size-4: 1rem; // 16px
+  --sorlo-size-px: 1px;
+  --sorlo-size-1: 0.25rem; // 4px
+  --sorlo-size-2: 0.5rem; // 8px
+  --sorlo-size-3: 0.75rem; // 12px
+  --sorlo-size-4: 1rem; // 16px
 
   /* Weights */
-  --iight-font-weight-normal: 400;
-  --iight-font-weight-bold: 600;
+  --sorlo-font-weight-normal: 400;
+  --sorlo-font-weight-bold: 600;
 
   /* Color utilities */
-  --iight-color-base: #1f2937;
-  --iight-color-muted: #6b7280;
-  --iight-color-background: #ffffff;
-  --iight-color-background-subtle: #f3f4f6;
-  --iight-color-border: #d1d5db;
-  --iight-color-focus: #2563eb;
-  --iight-color-error: #dc2626;
-  --iight-color-success: #16a34a;
-  --iight-color-accent: #2563eb;
+  --sorlo-color-base: #1f2937;
+  --sorlo-color-muted: #6b7280;
+  --sorlo-color-background: #ffffff;
+  --sorlo-color-background-subtle: #f3f4f6;
+  --sorlo-color-border: #d1d5db;
+  --sorlo-color-focus: #2563eb;
+  --sorlo-color-error: #dc2626;
+  --sorlo-color-success: #16a34a;
+  --sorlo-color-accent: #2563eb;
 
   /* States */
-  --iight-focus-outline: var(--iight-size-px) solid var(--iight-color-focus);
-  --iight-focus-outline-offset: var(--iight-size-px);
-  --iight-disabled-opacity: 0.5;
-  --iight-required-color: var(--iight-color-error);
+  --sorlo-focus-outline: var(--sorlo-size-px) solid var(--sorlo-color-focus);
+  --sorlo-focus-outline-offset: var(--sorlo-size-px);
+  --sorlo-disabled-opacity: 0.5;
+  --sorlo-required-color: var(--sorlo-color-error);
 
   /* Spacing */
-  --iight-fieldset-gap: var(--iight-size-2);
-  --iight-field-gap: var(--iight-size-1);
-  --iight-choice-gap: var(--iight-size-2);
+  --sorlo-fieldset-gap: var(--sorlo-size-2);
+  --sorlo-field-gap: var(--sorlo-size-1);
+  --sorlo-choice-gap: var(--sorlo-size-2);
 
   /* Fields (input, label, validation container) */
-  --iight-field-font-family: inherit;
-  --iight-field-font-size: inherit;
-  --iight-field-font-weight: inherit;
-  --iight-field-line-height: inherit;
-  --iight-field-color: inherit;
-  --iight-field-background: transparent;
-  --iight-field-border: none;
-  --iight-field-border-radius: 0;
-  --iight-field-padding: 0;
-  --iight-field-margin: 0;
+  --sorlo-field-font-family: inherit;
+  --sorlo-field-font-size: inherit;
+  --sorlo-field-font-weight: inherit;
+  --sorlo-field-line-height: inherit;
+  --sorlo-field-color: inherit;
+  --sorlo-field-background: transparent;
+  --sorlo-field-border: none;
+  --sorlo-field-border-radius: 0;
+  --sorlo-field-padding: 0;
+  --sorlo-field-margin: 0;
 
   /* Labels */
-  --iight-label-font-family: inherit;
-  --iight-label-font-size: 0.875rem;
-  --iight-label-font-weight: var(--iight-font-weight-bold);
-  --iight-label-line-height: inherit;
-  --iight-label-color: inherit;
+  --sorlo-label-font-family: inherit;
+  --sorlo-label-font-size: 0.875rem;
+  --sorlo-label-font-weight: var(--sorlo-font-weight-bold);
+  --sorlo-label-line-height: inherit;
+  --sorlo-label-color: inherit;
 
   /* Instructions */
-  --iight-instructions-font-family: inherit;
-  --iight-instructions-font-size: 0.875rem;
-  --iight-instructions-font-weight: inherit;
-  --iight-instructions-line-height: inherit;
-  --iight-instructions-color: var(--iight-color-muted);
+  --sorlo-instructions-font-family: inherit;
+  --sorlo-instructions-font-size: 0.875rem;
+  --sorlo-instructions-font-weight: inherit;
+  --sorlo-instructions-line-height: inherit;
+  --sorlo-instructions-color: var(--sorlo-color-muted);
 
   /* Inputs */
-  --iight-input-font-family: inherit;
-  --iight-input-font-size: inherit;
-  --iight-input-font-weight: inherit;
-  --iight-input-line-height: inherit;
-  --iight-input-color: inherit;
-  --iight-input-background: var(--iight-color-background);
-  --iight-input-border: var(--iight-size-px) solid var(--iight-color-border);
-  --iight-input-border-radius: var(--iight-size-1);
-  --iight-input-padding: var(--iight-size-1) var(--iight-size-2);
-  --iight-input-margin: 0;
-  --iight-input-border-color-invalid: var(--iight-color-error);
-  --iight-input-border-color-valid: var(--iight-color-border);
-  --iight-input-color-disabled: var(--iight-color-muted);
-  --iight-input-background-disabled: var(--iight-color-background-subtle);
+  --sorlo-input-font-family: inherit;
+  --sorlo-input-font-size: inherit;
+  --sorlo-input-font-weight: inherit;
+  --sorlo-input-line-height: inherit;
+  --sorlo-input-color: inherit;
+  --sorlo-input-background: var(--sorlo-color-background);
+  --sorlo-input-border: var(--sorlo-size-px) solid var(--sorlo-color-border);
+  --sorlo-input-border-radius: var(--sorlo-size-1);
+  --sorlo-input-padding: var(--sorlo-size-1) var(--sorlo-size-2);
+  --sorlo-input-margin: 0;
+  --sorlo-input-border-color-invalid: var(--sorlo-color-error);
+  --sorlo-input-border-color-valid: var(--sorlo-color-border);
+  --sorlo-input-color-disabled: var(--sorlo-color-muted);
+  --sorlo-input-background-disabled: var(--sorlo-color-background-subtle);
 
   /* Buttons */
-  --iight-button-font-family: inherit;
-  --iight-button-font-size: 0.875rem;
-  --iight-button-font-weight: var(--iight-font-weight-normal);
-  --iight-button-line-height: inherit;
-  --iight-button-color: inherit;
-  --iight-button-background: var(--iight-color-background-subtle);
-  --iight-button-border: var(--iight-size-px) solid var(--iight-color-border);
-  --iight-button-border-radius: var(--iight-size-1);
-  --iight-button-padding: var(--iight-size-1) var(--iight-size-2);
-  --iight-button-color-hover: inherit;
-  --iight-button-background-hover: #e5e7eb;
+  --sorlo-button-font-family: inherit;
+  --sorlo-button-font-size: 0.875rem;
+  --sorlo-button-font-weight: var(--sorlo-font-weight-normal);
+  --sorlo-button-line-height: inherit;
+  --sorlo-button-color: inherit;
+  --sorlo-button-background: var(--sorlo-color-background-subtle);
+  --sorlo-button-border: var(--sorlo-size-px) solid var(--sorlo-color-border);
+  --sorlo-button-border-radius: var(--sorlo-size-1);
+  --sorlo-button-padding: var(--sorlo-size-1) var(--sorlo-size-2);
+  --sorlo-button-color-hover: inherit;
+  --sorlo-button-background-hover: #e5e7eb;
 
   /* Button variants */
-  --iight-button-primary-color: #ffffff;
-  --iight-button-primary-background: var(--iight-color-accent);
-  --iight-button-primary-border-color: var(--iight-color-accent);
-  --iight-button-primary-color-hover: #ffffff;
-  --iight-button-primary-background-hover: #1d4ed8;
-  --iight-button-danger-color: #b91c1c;
-  --iight-button-danger-background: var(--iight-button-background);
-  --iight-button-danger-border-color: var(--iight-color-border);
-  --iight-button-danger-color-hover: #ffffff;
-  --iight-button-danger-background-hover: #b91c1c;
+  --sorlo-button-primary-color: #ffffff;
+  --sorlo-button-primary-background: var(--sorlo-color-accent);
+  --sorlo-button-primary-border-color: var(--sorlo-color-accent);
+  --sorlo-button-primary-color-hover: #ffffff;
+  --sorlo-button-primary-background-hover: #1d4ed8;
+  --sorlo-button-danger-color: #b91c1c;
+  --sorlo-button-danger-background: var(--sorlo-button-background);
+  --sorlo-button-danger-border-color: var(--sorlo-color-border);
+  --sorlo-button-danger-color-hover: #ffffff;
+  --sorlo-button-danger-background-hover: #b91c1c;
 
   /* Messages list */
-  --iight-messages-font-family: inherit;
-  --iight-messages-font-size: 0.875rem;
-  --iight-messages-font-weight: inherit;
-  --iight-messages-line-height: inherit;
-  --iight-messages-color: var(--iight-color-base);
-  --iight-messages-background: transparent;
-  --iight-messages-border: none;
-  --iight-messages-border-radius: var(--iight-size-1);
-  --iight-messages-padding: 0 0 0 1.25em;
-  --iight-messages-margin: 0;
+  --sorlo-messages-font-family: inherit;
+  --sorlo-messages-font-size: 0.875rem;
+  --sorlo-messages-font-weight: inherit;
+  --sorlo-messages-line-height: inherit;
+  --sorlo-messages-color: var(--sorlo-color-base);
+  --sorlo-messages-background: transparent;
+  --sorlo-messages-border: none;
+  --sorlo-messages-border-radius: var(--sorlo-size-1);
+  --sorlo-messages-padding: 0 0 0 1.25em;
+  --sorlo-messages-margin: 0;
 
   /* Content blocks */
-  --iight-content-font-size: 0.875rem;
-  --iight-content-color: var(--iight-color-muted);
+  --sorlo-content-font-size: 0.875rem;
+  --sorlo-content-color: var(--sorlo-color-muted);
 
   /* Matrix tables */
-  --iight-matrix-cell-padding: var(--iight-size-1);
-  --iight-matrix-border: var(--iight-size-px) solid var(--iight-color-border);
-  --iight-matrix-header-background: var(--iight-color-background-subtle);
-  --iight-matrix-header-color: inherit;
+  --sorlo-matrix-cell-padding: var(--sorlo-size-1);
+  --sorlo-matrix-border: var(--sorlo-size-px) solid var(--sorlo-color-border);
+  --sorlo-matrix-header-background: var(--sorlo-color-background-subtle);
+  --sorlo-matrix-header-color: inherit;
 
   /* Modals */
-  --iight-modal-color: var(--iight-color-base);
-  --iight-modal-background: var(--iight-color-background);
-  --iight-modal-border: none;
-  --iight-modal-border-radius: var(--iight-size-2);
-  --iight-modal-padding: var(--iight-size-4);
-  --iight-modal-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-  --iight-modal-backdrop: rgba(17, 24, 39, 0.5);
+  --sorlo-modal-color: var(--sorlo-color-base);
+  --sorlo-modal-background: var(--sorlo-color-background);
+  --sorlo-modal-border: none;
+  --sorlo-modal-border-radius: var(--sorlo-size-2);
+  --sorlo-modal-padding: var(--sorlo-size-4);
+  --sorlo-modal-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  --sorlo-modal-backdrop: rgba(17, 24, 39, 0.5);
 }

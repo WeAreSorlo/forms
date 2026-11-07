@@ -5,7 +5,7 @@
  * base.scss and themes.
  */
 
-.iight-form {
+.sorlo-form {
   &,
   *,
   *:before,
@@ -14,85 +14,85 @@
   }
 }
 
-.iight-fieldset {
+.sorlo-fieldset {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  margin: calc(0px - var(--iight-fieldset-gap, 0.5rem));
+  margin: calc(0px - var(--sorlo-fieldset-gap, 0.5rem));
 
   > div {
-    padding: var(--iight-fieldset-gap, 0.5rem);
+    padding: var(--sorlo-fieldset-gap, 0.5rem);
     box-sizing: border-box;
 
     /* Hidden fields take no space, padding included */
-    &:has(> .iight-field > input[type='hidden']) {
+    &:has(> .sorlo-field > input[type='hidden']) {
       display: none;
     }
   }
 }
 
-.iight-field {
+.sorlo-field {
   display: flex;
   flex-direction: column;
-  gap: var(--iight-field-gap, 0.25rem);
+  gap: var(--sorlo-field-gap, 0.25rem);
 }
 
-.iight-label {
+.sorlo-label {
   display: block;
 }
 
-.iight-messages {
+.sorlo-messages {
   margin: 0;
 }
 
-.iight-input {
+.sorlo-input {
   width: 100%;
   display: block;
 }
 
 /* Choice inputs sit inline with their labels */
-.iight-input__boolean,
-.iight-input__radio > div,
-.iight-input__checkbox > div {
+.sorlo-input__boolean,
+.sorlo-input__radio > div,
+.sorlo-input__checkbox > div {
   display: flex;
   align-items: center;
-  gap: var(--iight-choice-gap, 0.5rem);
+  gap: var(--sorlo-choice-gap, 0.5rem);
 
-  .iight-input {
+  .sorlo-input {
     display: inline-block;
     width: auto;
   }
 }
 
-.iight-input__radio,
-.iight-input__checkbox {
+.sorlo-input__radio,
+.sorlo-input__checkbox {
   display: flex;
   flex-direction: column;
-  gap: var(--iight-choice-gap, 0.25rem);
+  gap: var(--sorlo-choice-gap, 0.25rem);
 }
 
-.iight-input__color .iight-input {
+.sorlo-input__color .sorlo-input {
   width: 4rem;
 }
 
-.iight-input__range {
+.sorlo-input__range {
   display: flex;
   align-items: center;
-  gap: var(--iight-choice-gap, 0.5rem);
+  gap: var(--sorlo-choice-gap, 0.5rem);
 
-  .iight-input {
+  .sorlo-input {
     flex: 1;
     width: auto;
   }
 }
 
-.iight-input__range-value {
+.sorlo-input__range-value {
   min-width: 2em;
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-.iight-input__matrix {
+.sorlo-input__matrix {
   overflow-x: auto;
 
   table {
@@ -104,26 +104,26 @@
   td {
     text-align: left;
     vertical-align: top;
-    padding: var(--iight-matrix-cell-padding, 0.25rem);
+    padding: var(--sorlo-matrix-cell-padding, 0.25rem);
   }
 }
 
-.iight-input__schemabuilder {
+.sorlo-input__schemabuilder {
   > div:last-child {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--iight-fieldset-gap, 0.5rem);
+    gap: var(--sorlo-fieldset-gap, 0.5rem);
   }
 
-  .iight-button {
+  .sorlo-button {
     text-align: left;
   }
 }
 
 /* Text only screen readers need, such as the rule a condition's control belongs to. In a wide space a condition's
    labels are too, as the headings above its rules name their columns. */
-.iight-visually-hidden,
-.iight-input__conditions-rule > .iight-field > .iight-label {
+.sorlo-visually-hidden,
+.sorlo-input__conditions-rule > .sorlo-field > .sorlo-label {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -133,45 +133,45 @@
 }
 
 /* Conditions: a row of field, operator, value and buttons for each rule, under headings shown once */
-.iight-input__conditions {
+.sorlo-input__conditions {
   container-type: inline-size;
 }
 
-.iight-input__conditions-head,
-.iight-input__conditions-rule {
+.sorlo-input__conditions-head,
+.sorlo-input__conditions-rule {
   display: grid;
   grid-template-columns: 28% 24% minmax(0, 1fr) auto;
-  gap: var(--iight-fieldset-gap, 0.5rem);
+  gap: var(--sorlo-fieldset-gap, 0.5rem);
   align-items: start;
 }
 
-.iight-input__conditions-actions {
+.sorlo-input__conditions-actions {
   display: flex;
-  gap: var(--iight-choice-gap, 0.5rem);
+  gap: var(--sorlo-choice-gap, 0.5rem);
 }
 
 /* The And between a group's rules and the Or between groups */
-.iight-input__conditions-and,
-.iight-input__conditions-or {
+.sorlo-input__conditions-and,
+.sorlo-input__conditions-or {
   display: flex;
-  padding: var(--iight-fieldset-gap, 0.5rem) 0;
+  padding: var(--sorlo-fieldset-gap, 0.5rem) 0;
 }
 
-.iight-input__conditions-or {
-  padding: calc(2 * var(--iight-fieldset-gap, 0.5rem)) 0;
+.sorlo-input__conditions-or {
+  padding: calc(2 * var(--sorlo-fieldset-gap, 0.5rem)) 0;
 }
 
 /* In a narrow space each rule's controls stack with their labels, and its buttons share a line */
 @container (max-width: 36rem) {
-  .iight-input__conditions-head {
+  .sorlo-input__conditions-head {
     display: none;
   }
 
-  .iight-input__conditions-rule {
+  .sorlo-input__conditions-rule {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .iight-input__conditions-rule > .iight-field > .iight-label {
+  .sorlo-input__conditions-rule > .sorlo-field > .sorlo-label {
     position: static;
     width: auto;
     height: auto;
@@ -182,15 +182,15 @@
 }
 
 /* Its padding counts within the width, so it fits a phone's screen */
-.iight-modal {
+.sorlo-modal {
   box-sizing: border-box;
   width: 100%;
   max-width: 40rem;
 }
 
-.iight-modal__header {
+.sorlo-modal__header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: var(--iight-fieldset-gap, 0.5rem);
+  gap: var(--sorlo-fieldset-gap, 0.5rem);
 }

@@ -140,9 +140,9 @@ const Component: InputComponent = function () {
   const multiple = options?.multiple || false
 
   return (
-    <div className='iight-input__select'>
+    <div className='sorlo-input__select'>
       <select
-        className='iight-input'
+        className='sorlo-input'
         id={id}
         {...aria}
         value={multiple && !Array.isArray(value) ? [value] : value}

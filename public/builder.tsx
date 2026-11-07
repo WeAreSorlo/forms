@@ -7,7 +7,7 @@ import React, { useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 
 const App = () => {
-  const [theme, setTheme] = useState('iight-theme-default')
+  const [theme, setTheme] = useState('sorlo-theme-default')
   const rightFormRef = useRef<FormHandle>(null)
   const [rightFormReport, setRightFormReport] = useState<null | ValidationReport>(null)
   const [rightFormValues, setRightFormValues] = useState<Record<string, any>>({})
@@ -498,7 +498,7 @@ const App = () => {
         label: 'Reference code',
         instructions: 'Read only, populated from the schema default value.',
         readonly: true,
-        defaultValue: 'IIGHT-0001',
+        defaultValue: 'SORLO-0001',
       },
       {
         type: 'hidden',
@@ -533,8 +533,8 @@ const App = () => {
           Theme{' '}
           <select value={theme} onChange={(event) => setTheme(event.target.value)}>
             <option value=''>Scaffolding only</option>
-            <option value='iight-theme-default'>Default</option>
-            <option value='iight-theme-dark'>Dark</option>
+            <option value='sorlo-theme-default'>Default</option>
+            <option value='sorlo-theme-dark'>Dark</option>
           </select>
         </label>
       </div>

@@ -40,7 +40,7 @@ export default function Fieldset({
   const scopes = useContext(FieldScopeContext) || [conditionScope(schema, values, inputs)]
 
   return (
-    <div className='iight-fieldset'>
+    <div className='sorlo-fieldset'>
       {schema.map((fieldSchema, fieldIndex) => {
         if (!evaluateConditions(fieldSchema, scopes)) return null
 

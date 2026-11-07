@@ -237,22 +237,22 @@ export default function Field({
     <FieldContext.Provider value={contextValue}>
       <FieldReportContext.Provider value={childReport}>
         <div style={{ width: width ? `${width}%` : '100%' }}>
-          <div className={`iight-field${isValid ? ' iight-valid' : ''}${isInvalid ? ' iight-invalid' : ''}`}>
-            <div className='iight-meta'>
+          <div className={`sorlo-field${isValid ? ' sorlo-valid' : ''}${isInvalid ? ' sorlo-invalid' : ''}`}>
+            <div className='sorlo-meta'>
               {label && (
-                <label className='iight-label' id={labelId} htmlFor={id}>
+                <label className='sorlo-label' id={labelId} htmlFor={id}>
                   {label}
                   {required && <span aria-hidden='true'>*</span>}
                 </label>
               )}
               {instructions && (
-                <div className='iight-instructions' id={instructionsId}>
+                <div className='sorlo-instructions' id={instructionsId}>
                   {instructions}
                 </div>
               )}
             </div>
             {displayMessages.length > 0 && (
-              <ul className='iight-messages' id={messagesId} role='alert'>
+              <ul className='sorlo-messages' id={messagesId} role='alert'>
                 {displayMessages.map((message, messageIndex) => {
                   return <li key={messageIndex}>{message}</li>
                 })}

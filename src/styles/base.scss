@@ -1,245 +1,245 @@
 /*
- * Skin styles: maps the --iight-* theme tokens onto the library's class
+ * Skin styles: maps the --sorlo-* theme tokens onto the library's class
  * names. Every rule is scoped to an active theme (any class starting with
- * iight-theme-), so without a theme this file changes nothing at all and
+ * sorlo-theme-), so without a theme this file changes nothing at all and
  * the browser's default styles are left intact. The token contract for
  * building themes lives here.
  */
 
-[class*='iight-theme-'] {
-  &.iight-form,
-  .iight-form {
-    font-family: var(--iight-font-family);
-    font-size: var(--iight-font-size);
-    line-height: var(--iight-line-height);
-    color: var(--iight-form-color);
-    background: var(--iight-form-background);
-    accent-color: var(--iight-color-accent);
+[class*='sorlo-theme-'] {
+  &.sorlo-form,
+  .sorlo-form {
+    font-family: var(--sorlo-font-family);
+    font-size: var(--sorlo-font-size);
+    line-height: var(--sorlo-line-height);
+    color: var(--sorlo-form-color);
+    background: var(--sorlo-form-background);
+    accent-color: var(--sorlo-color-accent);
   }
 
-  .iight-field {
-    font-family: var(--iight-field-font-family);
-    font-size: var(--iight-field-font-size);
-    font-weight: var(--iight-field-font-weight);
-    line-height: var(--iight-field-line-height);
-    color: var(--iight-field-color);
-    background: var(--iight-field-background);
-    border: var(--iight-field-border);
-    border-radius: var(--iight-field-border-radius);
-    padding: var(--iight-field-padding);
-    margin: var(--iight-field-margin);
+  .sorlo-field {
+    font-family: var(--sorlo-field-font-family);
+    font-size: var(--sorlo-field-font-size);
+    font-weight: var(--sorlo-field-font-weight);
+    line-height: var(--sorlo-field-line-height);
+    color: var(--sorlo-field-color);
+    background: var(--sorlo-field-background);
+    border: var(--sorlo-field-border);
+    border-radius: var(--sorlo-field-border-radius);
+    padding: var(--sorlo-field-padding);
+    margin: var(--sorlo-field-margin);
 
-    &.iight-invalid {
-      --iight-messages-color: var(--iight-color-error);
+    &.sorlo-invalid {
+      --sorlo-messages-color: var(--sorlo-color-error);
 
-      .iight-input {
-        border-color: var(--iight-input-border-color-invalid);
+      .sorlo-input {
+        border-color: var(--sorlo-input-border-color-invalid);
       }
     }
 
-    &.iight-valid {
-      --iight-messages-color: var(--iight-color-success);
+    &.sorlo-valid {
+      --sorlo-messages-color: var(--sorlo-color-success);
 
-      .iight-input {
-        border-color: var(--iight-input-border-color-valid);
+      .sorlo-input {
+        border-color: var(--sorlo-input-border-color-valid);
       }
     }
   }
 
-  .iight-label {
-    font-family: var(--iight-label-font-family);
-    font-size: var(--iight-label-font-size);
-    font-weight: var(--iight-label-font-weight);
-    line-height: var(--iight-label-line-height);
-    color: var(--iight-label-color);
+  .sorlo-label {
+    font-family: var(--sorlo-label-font-family);
+    font-size: var(--sorlo-label-font-size);
+    font-weight: var(--sorlo-label-font-weight);
+    line-height: var(--sorlo-label-line-height);
+    color: var(--sorlo-label-color);
 
     /* The required marker */
     span {
-      color: var(--iight-required-color);
+      color: var(--sorlo-required-color);
     }
   }
 
-  .iight-instructions {
-    font-family: var(--iight-instructions-font-family);
-    font-size: var(--iight-instructions-font-size);
-    font-weight: var(--iight-instructions-font-weight);
-    line-height: var(--iight-instructions-line-height);
-    color: var(--iight-instructions-color);
+  .sorlo-instructions {
+    font-family: var(--sorlo-instructions-font-family);
+    font-size: var(--sorlo-instructions-font-size);
+    font-weight: var(--sorlo-instructions-font-weight);
+    line-height: var(--sorlo-instructions-line-height);
+    color: var(--sorlo-instructions-color);
   }
 
-  .iight-messages {
-    font-family: var(--iight-messages-font-family);
-    font-size: var(--iight-messages-font-size);
-    font-weight: var(--iight-messages-font-weight);
-    line-height: var(--iight-messages-line-height);
-    color: var(--iight-messages-color);
-    background: var(--iight-messages-background);
-    border: var(--iight-messages-border);
-    border-radius: var(--iight-messages-border-radius);
-    padding: var(--iight-messages-padding);
-    margin: var(--iight-messages-margin);
+  .sorlo-messages {
+    font-family: var(--sorlo-messages-font-family);
+    font-size: var(--sorlo-messages-font-size);
+    font-weight: var(--sorlo-messages-font-weight);
+    line-height: var(--sorlo-messages-line-height);
+    color: var(--sorlo-messages-color);
+    background: var(--sorlo-messages-background);
+    border: var(--sorlo-messages-border);
+    border-radius: var(--sorlo-messages-border-radius);
+    padding: var(--sorlo-messages-padding);
+    margin: var(--sorlo-messages-margin);
   }
 
-  .iight-input {
-    font-family: var(--iight-input-font-family);
-    font-size: var(--iight-input-font-size);
-    font-weight: var(--iight-input-font-weight);
-    line-height: var(--iight-input-line-height);
-    color: var(--iight-input-color);
-    background: var(--iight-input-background);
-    border: var(--iight-input-border);
-    border-radius: var(--iight-input-border-radius);
-    padding: var(--iight-input-padding);
-    margin: var(--iight-input-margin);
+  .sorlo-input {
+    font-family: var(--sorlo-input-font-family);
+    font-size: var(--sorlo-input-font-size);
+    font-weight: var(--sorlo-input-font-weight);
+    line-height: var(--sorlo-input-line-height);
+    color: var(--sorlo-input-color);
+    background: var(--sorlo-input-background);
+    border: var(--sorlo-input-border);
+    border-radius: var(--sorlo-input-border-radius);
+    padding: var(--sorlo-input-padding);
+    margin: var(--sorlo-input-margin);
 
     &:focus-visible {
-      border-color: var(--iight-color-focus);
-      outline: var(--iight-focus-outline);
-      outline-offset: var(--iight-focus-outline-offset);
+      border-color: var(--sorlo-color-focus);
+      outline: var(--sorlo-focus-outline);
+      outline-offset: var(--sorlo-focus-outline-offset);
     }
 
     &:disabled,
     &[readonly] {
-      color: var(--iight-input-color-disabled);
-      background: var(--iight-input-background-disabled);
+      color: var(--sorlo-input-color-disabled);
+      background: var(--sorlo-input-background-disabled);
     }
   }
 
-  .iight-button {
+  .sorlo-button {
     cursor: pointer;
-    font-family: var(--iight-button-font-family);
-    font-size: var(--iight-button-font-size);
-    font-weight: var(--iight-button-font-weight);
-    line-height: var(--iight-button-line-height);
-    color: var(--iight-button-color);
-    background: var(--iight-button-background);
-    border: var(--iight-button-border);
-    border-radius: var(--iight-button-border-radius);
-    padding: var(--iight-button-padding);
+    font-family: var(--sorlo-button-font-family);
+    font-size: var(--sorlo-button-font-size);
+    font-weight: var(--sorlo-button-font-weight);
+    line-height: var(--sorlo-button-line-height);
+    color: var(--sorlo-button-color);
+    background: var(--sorlo-button-background);
+    border: var(--sorlo-button-border);
+    border-radius: var(--sorlo-button-border-radius);
+    padding: var(--sorlo-button-padding);
 
     &:hover:not(:disabled) {
-      color: var(--iight-button-color-hover);
-      background: var(--iight-button-background-hover);
+      color: var(--sorlo-button-color-hover);
+      background: var(--sorlo-button-background-hover);
     }
 
     &:focus-visible {
-      outline: var(--iight-focus-outline);
-      outline-offset: var(--iight-focus-outline-offset);
+      outline: var(--sorlo-focus-outline);
+      outline-offset: var(--sorlo-focus-outline-offset);
     }
 
     &:disabled {
       cursor: not-allowed;
-      opacity: var(--iight-disabled-opacity);
+      opacity: var(--sorlo-disabled-opacity);
     }
   }
 
   /* A form or dialog's one main action */
-  .iight-button--primary {
-    color: var(--iight-button-primary-color);
-    background: var(--iight-button-primary-background);
-    border-color: var(--iight-button-primary-border-color);
+  .sorlo-button--primary {
+    color: var(--sorlo-button-primary-color);
+    background: var(--sorlo-button-primary-background);
+    border-color: var(--sorlo-button-primary-border-color);
 
     &:hover:not(:disabled) {
-      color: var(--iight-button-primary-color-hover);
-      background: var(--iight-button-primary-background-hover);
-      border-color: var(--iight-button-primary-background-hover);
+      color: var(--sorlo-button-primary-color-hover);
+      background: var(--sorlo-button-primary-background-hover);
+      border-color: var(--sorlo-button-primary-background-hover);
     }
   }
 
   /* An action that can't be undone */
-  .iight-button--danger {
-    color: var(--iight-button-danger-color);
-    background: var(--iight-button-danger-background);
-    border-color: var(--iight-button-danger-border-color);
+  .sorlo-button--danger {
+    color: var(--sorlo-button-danger-color);
+    background: var(--sorlo-button-danger-background);
+    border-color: var(--sorlo-button-danger-border-color);
 
     &:hover:not(:disabled) {
-      color: var(--iight-button-danger-color-hover);
-      background: var(--iight-button-danger-background-hover);
-      border-color: var(--iight-button-danger-background-hover);
+      color: var(--sorlo-button-danger-color-hover);
+      background: var(--sorlo-button-danger-background-hover);
+      border-color: var(--sorlo-button-danger-background-hover);
     }
   }
 
-  .iight-input__color .iight-input {
+  .sorlo-input__color .sorlo-input {
     padding: 0;
   }
 
-  .iight-input__content {
-    font-size: var(--iight-content-font-size);
-    color: var(--iight-content-color);
+  .sorlo-input__content {
+    font-size: var(--sorlo-content-font-size);
+    color: var(--sorlo-content-color);
   }
 
-  .iight-input__range-value {
-    color: var(--iight-instructions-color);
+  .sorlo-input__range-value {
+    color: var(--sorlo-instructions-color);
   }
 
-  .iight-input__matrix {
+  .sorlo-input__matrix {
     table,
     th,
     td {
-      border: var(--iight-matrix-border);
+      border: var(--sorlo-matrix-border);
     }
 
     th {
-      background: var(--iight-matrix-header-background);
-      color: var(--iight-matrix-header-color);
+      background: var(--sorlo-matrix-header-background);
+      color: var(--sorlo-matrix-header-color);
     }
   }
 
   /* The And and Or between a condition's rules and groups, as text that doesn't look like their buttons */
-  .iight-input__conditions-and,
-  .iight-input__conditions-or {
+  .sorlo-input__conditions-and,
+  .sorlo-input__conditions-or {
     align-items: center;
-    gap: var(--iight-size-2);
+    gap: var(--sorlo-size-2);
 
     span {
       position: relative;
-      font-size: var(--iight-instructions-font-size);
-      color: var(--iight-color-muted);
-      padding: 0 var(--iight-size-2);
+      font-size: var(--sorlo-instructions-font-size);
+      color: var(--sorlo-color-muted);
+      padding: 0 var(--sorlo-size-2);
     }
   }
 
   /* A line after Or divides the groups */
-  .iight-input__conditions-or::after {
+  .sorlo-input__conditions-or::after {
     content: '';
     flex: 1;
-    border-top: var(--iight-size-px) solid var(--iight-color-border);
+    border-top: var(--sorlo-size-px) solid var(--sorlo-color-border);
   }
 
   /* A line through And joins the rules above and below it */
-  .iight-input__conditions-and span::before,
-  .iight-input__conditions-and span::after {
+  .sorlo-input__conditions-and span::before,
+  .sorlo-input__conditions-and span::after {
     content: '';
     position: absolute;
     left: 50%;
-    height: var(--iight-fieldset-gap);
-    border-left: var(--iight-size-px) solid var(--iight-color-border);
+    height: var(--sorlo-fieldset-gap);
+    border-left: var(--sorlo-size-px) solid var(--sorlo-color-border);
   }
 
-  .iight-input__conditions-and span::before {
+  .sorlo-input__conditions-and span::before {
     bottom: 100%;
   }
 
-  .iight-input__conditions-and span::after {
+  .sorlo-input__conditions-and span::after {
     top: 100%;
   }
 
   /* Removing a rule is quieter than adding one */
-  .iight-input__conditions-remove {
+  .sorlo-input__conditions-remove {
     background: transparent;
     border-color: transparent;
   }
 
-  .iight-modal {
-    color: var(--iight-modal-color);
-    background: var(--iight-modal-background);
-    border: var(--iight-modal-border);
-    border-radius: var(--iight-modal-border-radius);
-    padding: var(--iight-modal-padding);
-    box-shadow: var(--iight-modal-shadow);
+  .sorlo-modal {
+    color: var(--sorlo-modal-color);
+    background: var(--sorlo-modal-background);
+    border: var(--sorlo-modal-border);
+    border-radius: var(--sorlo-modal-border-radius);
+    padding: var(--sorlo-modal-padding);
+    box-shadow: var(--sorlo-modal-shadow);
 
     &::backdrop {
-      background: var(--iight-modal-backdrop);
+      background: var(--sorlo-modal-backdrop);
     }
   }
 }

@@ -107,9 +107,9 @@ const Component: InputComponent = function () {
   )
 
   return (
-    <div className='iight-input__text'>
+    <div className='sorlo-input__text'>
       <input
-        className='iight-input'
+        className='sorlo-input'
         id={id}
         {...aria}
         type='text'

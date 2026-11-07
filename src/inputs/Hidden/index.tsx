@@ -64,7 +64,7 @@ const Component: InputComponent = function () {
     if (fixedValue !== undefined) setValue(fixedValue)
   }, [fixedValue, setValue])
 
-  return <input className='iight-input' id={id} type='hidden' value={fixedValue ?? ''} readOnly />
+  return <input className='sorlo-input' id={id} type='hidden' value={fixedValue ?? ''} readOnly />
 }
 
 export default Component

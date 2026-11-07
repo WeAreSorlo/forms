@@ -488,7 +488,7 @@ const Component: InputComponent = function () {
   }, [validation, cellValidity, setMessages, setValid])
 
   return (
-    <div className='iight-input__matrix'>
+    <div className='sorlo-input__matrix'>
       <table>
         <thead>
           <tr>
@@ -499,7 +499,7 @@ const Component: InputComponent = function () {
                   <span>{columnIndex + 1}</span>
                   {canRemoveColumn && (
                     <button
-                      className='iight-button'
+                      className='sorlo-button'
                       type='button'
                       disabled={locked}
                       onClick={(event) => {
@@ -525,7 +525,7 @@ const Component: InputComponent = function () {
             <td rowSpan={totalRows + 1}>
               {canAddColumn && totalRows > 0 && (
                 <button
-                  className='iight-button'
+                  className='sorlo-button'
                   type='button'
                   disabled={locked}
                   onClick={(event) => {
@@ -545,7 +545,7 @@ const Component: InputComponent = function () {
                   {rowIndex + 1}
                   {canRemoveRow && (
                     <button
-                      className='iight-button'
+                      className='sorlo-button'
                       type='button'
                       disabled={locked}
                       onClick={(event) => {
@@ -583,7 +583,7 @@ const Component: InputComponent = function () {
             <tr>
               <td colSpan={totalColumns + 2}>
                 <button
-                  className='iight-button'
+                  className='sorlo-button'
                   type='button'
                   disabled={locked}
                   onClick={(event) => {

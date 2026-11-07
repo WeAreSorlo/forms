@@ -1,6 +1,6 @@
-# iight
+# Sorlo core
 
-An advanced, schema-driven form builder library for React. Forms are described as plain data, rendered from a set of pluggable inputs, and can include infinitely repeatable and nestable groups of fields. A built-in schema builder input lets end users construct form schemas from a UI — including the options of each field, which are themselves rendered as an iight form.
+An advanced, schema-driven form builder library for React. Forms are described as plain data, rendered from a set of pluggable inputs, and can include infinitely repeatable and nestable groups of fields. A built-in schema builder input lets end users construct form schemas from a UI — including the options of each field, which are themselves rendered as a Sorlo form.
 
 > **Status:** work in progress, not yet published to npm.
 
@@ -17,7 +17,7 @@ npm run build      # build dist/ with tsup
 ## Usage
 
 ```tsx
-import Form, { FormHandle, ValidationReport } from 'iight'
+import Form, { FormHandle, ValidationReport } from '@sorlo/core'
 import { useRef, useState } from 'react'
 
 const schema = [
@@ -104,7 +104,7 @@ An `identifier` with a `source`, e.g. `title`, follows that field, found the sam
 Inputs validate on change. Calling `validate()` on the form ref validates everything at once — untouched fields included — displays the messages, and returns a `ValidationReport` with a nested breakdown per field. The same walk is available as a pure function, useful on a server:
 
 ```ts
-import { inputs, validateValues } from 'iight'
+import { inputs, validateValues } from '@sorlo/core'
 
 const report = validateValues(schema, values, inputs)
 ```
@@ -175,7 +175,7 @@ Deliberately, there is no compile time typing of individual field paths: schemas
 When a schema is known ahead of time, `schemaToTypeScript` writes that type for you, ready to save in a `.d.ts` file. For the schema in [Usage](#usage):
 
 ```ts
-import { inputs, schemaToTypeScript } from 'iight'
+import { inputs, schemaToTypeScript } from '@sorlo/core'
 
 schemaToTypeScript(schema, inputs, { name: 'profile' })
 // export type Profile = {
@@ -195,7 +195,7 @@ Required fields become required properties, while optional fields and fields tha
 The same schema validates a request body on a server. `pickValues` reduces the posted values to only the fields the schema defines, nested fields included. It keeps each value as its input's `validateValue` returns it, the way a form does, so a posted `'5'` for a number becomes `5`, and it forces hidden fields back to their fixed values. `validateServerValues` returns the same `ValidationReport` shape as the client:
 
 ```ts
-import { inputs, pickValues, validateServerValues } from 'iight'
+import { inputs, pickValues, validateServerValues } from '@sorlo/core'
 
 app.post('/submit', async (request, response) => {
   const values = pickValues(schema, request.body, inputs)
@@ -218,7 +218,7 @@ On a public endpoint, cap the body's size and the number of items in lists that 
 An input is a module implementing the `Input` interface: a default React component plus optional metadata (`name`, `description`, `category`), `validateValue` (with optional `validateClientValue`/`validateServerValue` overrides), `pickValue`, `formatValue`, `renderValue`, `coreFields`/`optionFields` describing how the schema builder should configure it, and `prepareSchema`, which finishes a field's schema when the builder saves it, as the flexible input does to give new layouts their IDs. The component reads everything it needs from `useFieldContext()`:
 
 ```tsx
-import { useFieldContext, validationSuccess } from 'iight'
+import { useFieldContext, validationSuccess } from '@sorlo/core'
 
 export const name = () => 'Shout'
 export const validateValue = (value: any) => validationSuccess(value)
@@ -240,20 +240,20 @@ For `schemaToTypeScript`, an input describes the type of its value, as `pickValu
 Styles ship in three layers so the library is unstyled scaffolding by default, with themes as an opt-in:
 
 ```ts
-import 'iight/styles/layout.scss' // scaffolding: layout and structure only
-import 'iight/styles/base.scss' // the skin: maps --iight-* tokens onto class names
-import 'iight/styles/themes/default.scss' // a theme: defines the tokens
+import '@sorlo/core/styles/layout.scss' // scaffolding: layout and structure only
+import '@sorlo/core/styles/base.scss' // the skin: maps --sorlo-* tokens onto class names
+import '@sorlo/core/styles/themes/default.scss' // a theme: defines the tokens
 ```
 
-`layout.scss` is structural (flex grids, widths, table layout) and leaves the browser's default styles intact, so an unthemed form looks like a native form that lays out correctly. `base.scss` maps every `--iight-*` token onto the library's class names, with every rule scoped to an active theme — any class starting with `iight-theme-` — so importing it without a theme changes nothing at all; the token contract lives there. Themes define the tokens under their scoping class (`.iight-theme-default`, `.iight-theme-dark`), which you attach via the `className` prop or any ancestor element:
+`layout.scss` is structural (flex grids, widths, table layout) and leaves the browser's default styles intact, so an unthemed form looks like a native form that lays out correctly. `base.scss` maps every `--sorlo-*` token onto the library's class names, with every rule scoped to an active theme — any class starting with `sorlo-theme-` — so importing it without a theme changes nothing at all; the token contract lives there. Themes define the tokens under their scoping class (`.sorlo-theme-default`, `.sorlo-theme-dark`), which you attach via the `className` prop or any ancestor element:
 
 ```tsx
-<Form className='iight-theme-default' schema={schema} />
+<Form className='sorlo-theme-default' schema={schema} />
 ```
 
-A custom theme is a copy of `themes/default.scss` with a new class name (keeping the `iight-theme-` prefix so the skin activates) and different token values — no selectors, just tokens, so plain CSS works too. Because themes are class-scoped, different forms on one page can use different themes, and single tokens can be overridden inline or in state scopes (for example `.iight-invalid` remaps `--iight-messages-color` to `--iight-color-error`).
+A custom theme is a copy of `themes/default.scss` with a new class name (keeping the `sorlo-theme-` prefix so the skin activates) and different token values — no selectors, just tokens, so plain CSS works too. Because themes are class-scoped, different forms on one page can use different themes, and single tokens can be overridden inline or in state scopes (for example `.sorlo-invalid` remaps `--sorlo-messages-color` to `--sorlo-color-error`).
 
-Buttons have two variants beside the plain `iight-button`: add `iight-button--primary` for a form's or dialog's main action, and `iight-button--danger` for one that can't be undone. Their `--iight-button-primary-*` and `--iight-button-danger-*` tokens set their colours at rest and on hover. `--iight-color-accent` colours primary buttons in both built-in themes, and every form's checkboxes, radios and ranges through `accent-color`.
+Buttons have two variants beside the plain `sorlo-button`: add `sorlo-button--primary` for a form's or dialog's main action, and `sorlo-button--danger` for one that can't be undone. Their `--sorlo-button-primary-*` and `--sorlo-button-danger-*` tokens set their colours at rest and on hover. `--sorlo-color-accent` colours primary buttons in both built-in themes, and every form's checkboxes, radios and ranges through `accent-color`.
 
 ## i18n
 

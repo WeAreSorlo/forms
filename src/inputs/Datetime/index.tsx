@@ -99,9 +99,9 @@ const Component: InputComponent = function () {
   )
 
   return (
-    <div className='iight-input__datetime'>
+    <div className='sorlo-input__datetime'>
       <input
-        className='iight-input'
+        className='sorlo-input'
         id={id}
         {...aria}
         type='datetime-local'

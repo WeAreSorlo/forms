@@ -69,9 +69,9 @@ const Component: InputComponent = function () {
   )
 
   return (
-    <div className='iight-input__boolean'>
+    <div className='sorlo-input__boolean'>
       <input
-        className='iight-input'
+        className='sorlo-input'
         id={id}
         {...aria}
         type='checkbox'

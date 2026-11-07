@@ -27,7 +27,7 @@ export default function Modal({ open, header, footer, closeButton, onOpen, onClo
   const close =
     closeButton === true ? (
       <button
-        className='iight-button'
+        className='sorlo-button'
         type='button'
         onClick={(event) => {
           event.preventDefault()
@@ -68,9 +68,9 @@ export default function Modal({ open, header, footer, closeButton, onOpen, onClo
   }, [dialogRef, onClose])
 
   return (
-    <dialog ref={dialogRef} className='iight-modal' aria-labelledby={header ? headerId : undefined}>
+    <dialog ref={dialogRef} className='sorlo-modal' aria-labelledby={header ? headerId : undefined}>
       {header && (
-        <div className='iight-modal__header' id={headerId}>
+        <div className='sorlo-modal__header' id={headerId}>
           {header}
           {close}
         </div>
@@ -78,9 +78,9 @@ export default function Modal({ open, header, footer, closeButton, onOpen, onClo
 
       {!header && close}
 
-      <div className='iight-modal__body'>{children}</div>
+      <div className='sorlo-modal__body'>{children}</div>
 
-      {footer && <div className='iight-modal__footer'>{footer}</div>}
+      {footer && <div className='sorlo-modal__footer'>{footer}</div>}
     </dialog>
   )
 }

@@ -39,7 +39,7 @@ export const typeValue: InputTypeValue = () => undefined
 const Component: InputComponent = function () {
   const { options } = useFieldContext()
 
-  return <div className='iight-input__content'>{options?.content}</div>
+  return <div className='sorlo-input__content'>{options?.content}</div>
 }
 
 export default Component

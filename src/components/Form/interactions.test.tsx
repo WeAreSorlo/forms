@@ -1148,7 +1148,7 @@ describe('conditions interactions', () => {
     })
     await waitFor(() => expect(latestMessages['conditions.0.rules.0.value']).toEqual(['This field is required.']))
     expect(control('Value', 1).getAttribute('aria-invalid')).toBe('true')
-    expect(control('Value', 1).closest('.iight-field')!.querySelector('.iight-messages')!.textContent).toBe(
+    expect(control('Value', 1).closest('.sorlo-field')!.querySelector('.sorlo-messages')!.textContent).toBe(
       'This field is required.',
     )
 

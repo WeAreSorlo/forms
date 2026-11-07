@@ -116,12 +116,12 @@ const Component: InputComponent = function () {
   const choices: Array<any> = options?.choices || []
 
   return (
-    <div className='iight-input__checkbox' role='group' aria-labelledby={labelId} {...aria}>
+    <div className='sorlo-input__checkbox' role='group' aria-labelledby={labelId} {...aria}>
       {choices.map((choice, choiceIndex) => {
         return (
           <div key={choiceIndex}>
             <input
-              className='iight-input'
+              className='sorlo-input'
               id={`${id}-${choiceIndex}`}
               type='checkbox'
               value={choice.value}

@@ -293,17 +293,17 @@ function RuleControl({
   const describedBy = [messages.length >= 1 && `${id}-messages`, hint && `${id}-hint`].filter(Boolean).join(' ')
   const control = {
     id,
-    className: 'iight-input',
+    className: 'sorlo-input',
     value,
     'aria-describedby': describedBy || undefined,
     'aria-invalid': valid === false || undefined,
   }
 
   return (
-    <div className={`iight-field ${valid === false ? 'iight-invalid' : 'iight-valid'}`}>
-      <label className='iight-label' htmlFor={id}>
+    <div className={`sorlo-field ${valid === false ? 'sorlo-invalid' : 'sorlo-valid'}`}>
+      <label className='sorlo-label' htmlFor={id}>
         {/* The space sits outside the hidden text, as some browsers trim the text inside it from the name */}
-        {column} <span className='iight-visually-hidden'>{context}</span>
+        {column} <span className='sorlo-visually-hidden'>{context}</span>
       </label>
       {choices ? (
         <select {...control} disabled={readonly || disabled} onChange={(event) => onChange(event.target.value)}>
@@ -330,12 +330,12 @@ function RuleControl({
         />
       )}
       {hint && (
-        <div className='iight-instructions' id={`${id}-hint`}>
+        <div className='sorlo-instructions' id={`${id}-hint`}>
           {hint}
         </div>
       )}
       {messages.length >= 1 && (
-        <ul className='iight-messages' id={`${id}-messages`} role='alert'>
+        <ul className='sorlo-messages' id={`${id}-messages`} role='alert'>
           {messages.map((message, messageIndex) => (
             <li key={messageIndex}>{message}</li>
           ))}
@@ -463,9 +463,9 @@ const Component: InputComponent = function () {
     if (!target || !root.current) return
     focus.current = undefined
 
-    const rules = root.current.querySelectorAll('.iight-input__conditions-rule')
+    const rules = root.current.querySelectorAll('.sorlo-input__conditions-rule')
     const rule = rules[Math.min(target.index, rules.length - 1)]
-    const selector = target.control === 'field' ? '.iight-input' : '.iight-input__conditions-remove'
+    const selector = target.control === 'field' ? '.sorlo-input' : '.sorlo-input__conditions-remove'
 
     // With no rules left, the button that adds one
     ;(rule?.querySelector<HTMLElement>(selector) ?? root.current.querySelector<HTMLElement>('button'))?.focus()
@@ -500,7 +500,7 @@ const Component: InputComponent = function () {
 
   return (
     <div
-      className='iight-input__conditions'
+      className='sorlo-input__conditions'
       ref={root}
       role='group'
       aria-labelledby={label ? labelId : undefined}
@@ -508,7 +508,7 @@ const Component: InputComponent = function () {
     >
       {groups.length === 0 && (
         <button
-          className='iight-button'
+          className='sorlo-button'
           type='button'
           disabled={locked}
           onClick={(event) => {
@@ -521,9 +521,9 @@ const Component: InputComponent = function () {
       )}
       {groups.length >= 1 && (
         // Each control's label names its column too, so screen readers skip these
-        <div className='iight-input__conditions-head' aria-hidden='true'>
+        <div className='sorlo-input__conditions-head' aria-hidden='true'>
           {columns.map((column) => (
-            <span className='iight-label' key={column}>
+            <span className='sorlo-label' key={column}>
               {t(`ui.conditions.${column}`)}
             </span>
           ))}
@@ -532,12 +532,12 @@ const Component: InputComponent = function () {
       {groups.map((rules, groupIndex) => (
         <Fragment key={groupIndex}>
           {groupIndex >= 1 && (
-            <div className='iight-input__conditions-or'>
+            <div className='sorlo-input__conditions-or'>
               <span>{t('ui.conditions.or')}</span>
             </div>
           )}
           <div
-            className='iight-input__conditions-group'
+            className='sorlo-input__conditions-group'
             role='group'
             aria-label={t('ui.conditions.group', { group: groupIndex + 1 })}
           >
@@ -549,11 +549,11 @@ const Component: InputComponent = function () {
               return (
                 <Fragment key={ruleIndex}>
                   {ruleIndex >= 1 && (
-                    <div className='iight-input__conditions-and'>
+                    <div className='sorlo-input__conditions-and'>
                       <span>{t('ui.conditions.and')}</span>
                     </div>
                   )}
-                  <div className='iight-input__conditions-rule'>
+                  <div className='sorlo-input__conditions-rule'>
                     {columns.map((column) => {
                       const part = shown[groupIndex][ruleIndex].find(({ field }) => field.name === column)
 
@@ -581,9 +581,9 @@ const Component: InputComponent = function () {
                         />
                       )
                     })}
-                    <div className='iight-input__conditions-actions'>
+                    <div className='sorlo-input__conditions-actions'>
                       <button
-                        className='iight-button'
+                        className='sorlo-button'
                         type='button'
                         disabled={locked}
                         aria-label={t('ui.conditions.addRuleAfter', place)}
@@ -596,7 +596,7 @@ const Component: InputComponent = function () {
                       </button>
                       {last && (
                         <button
-                          className='iight-button'
+                          className='sorlo-button'
                           type='button'
                           disabled={locked}
                           aria-label={t('ui.conditions.addGroup')}
@@ -609,7 +609,7 @@ const Component: InputComponent = function () {
                         </button>
                       )}
                       <button
-                        className='iight-button iight-input__conditions-remove'
+                        className='sorlo-button sorlo-input__conditions-remove'
                         type='button'
                         disabled={locked}
                         aria-label={t('ui.conditions.removeRule', place)}
