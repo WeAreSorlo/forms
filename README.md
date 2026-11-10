@@ -2,17 +2,27 @@
 
 An advanced, schema-driven form builder library for React. Forms are described as plain data, rendered from a set of pluggable inputs, and can include infinitely repeatable and nestable groups of fields. A built-in schema builder input lets end users construct form schemas from a UI — including the options of each field, which are themselves rendered as a Sorlo form.
 
-> **Status:** work in progress, not yet published to npm.
-
-## Getting started
+## Installing
 
 ```sh
-npm install
-npm run dev        # list the examples at the vite dev server address
-npm run test       # run the vitest suite
-npm run typecheck  # strict TypeScript check
-npm run build      # build dist/ with tsup
+npm install @sorlo/forms
 ```
+
+React 19 and `react-dom` are peer dependencies, so a project that doesn't have them yet installs them too:
+
+```sh
+npm install @sorlo/forms react react-dom
+```
+
+Then import the styles once, for example in the app's entry file:
+
+```ts
+import '@sorlo/forms/styles/layout.css'
+import '@sorlo/forms/styles/base.css'
+import '@sorlo/forms/styles/themes/default.css'
+```
+
+The theme applies to forms with its class, `sorlo-theme-default`, as in the example below. [Styling and theming](#styling-and-theming) explains the three files and their SCSS versions.
 
 ## Usage
 
@@ -48,7 +58,7 @@ export default function Example() {
 
   return (
     <>
-      <Form ref={formRef} schema={schema} values={values} onValuesChange={setValues} />
+      <Form ref={formRef} className='sorlo-theme-default' schema={schema} values={values} onValuesChange={setValues} />
       <button onClick={onSubmit}>Submit</button>
     </>
   )
@@ -240,21 +250,27 @@ For `schemaToTypeScript`, an input describes the type of its value, as `pickValu
 Styles ship in three layers so the library is unstyled scaffolding by default, with themes as an opt-in:
 
 ```ts
-import '@sorlo/forms/styles/layout.scss' // scaffolding: layout and structure only
-import '@sorlo/forms/styles/base.scss' // the skin: maps --sorlo-* tokens onto class names
-import '@sorlo/forms/styles/themes/default.scss' // a theme: defines the tokens
+import '@sorlo/forms/styles/layout.css' // scaffolding: layout and structure only
+import '@sorlo/forms/styles/base.css' // the skin: maps --sorlo-* tokens onto class names
+import '@sorlo/forms/styles/themes/default.css' // a theme: defines the tokens
 ```
 
-`layout.scss` is structural (flex grids, widths, table layout) and leaves the browser's default styles intact, so an unthemed form looks like a native form that lays out correctly. `base.scss` maps every `--sorlo-*` token onto the library's class names, with every rule scoped to an active theme — any class starting with `sorlo-theme-` — so importing it without a theme changes nothing at all; the token contract lives there. Themes define the tokens under their scoping class (`.sorlo-theme-default`, `.sorlo-theme-dark`), which you attach via the `className` prop or any ancestor element:
+Each file is also shipped as SCSS, at the same path ending in `.scss`, for projects that compile their own styles. With Sass's `pkg:` importer, give the extension, e.g. `@use 'pkg:@sorlo/forms/styles/base.scss'`, since both files match without it.
+
+`layout.css` is structural (flex grids, widths, table layout) and leaves the browser's default styles intact, so an unthemed form looks like a native form that lays out correctly. `base.css` maps every `--sorlo-*` token onto the library's class names, with every rule scoped to an active theme — any class starting with `sorlo-theme-` — so importing it without a theme changes nothing at all; the token contract lives there. Themes define the tokens under their scoping class (`.sorlo-theme-default`, `.sorlo-theme-dark`), which you attach via the `className` prop or any ancestor element:
 
 ```tsx
 <Form className='sorlo-theme-default' schema={schema} />
 ```
 
-A custom theme is a copy of `themes/default.scss` with a new class name (keeping the `sorlo-theme-` prefix so the skin activates) and different token values — no selectors, just tokens, so plain CSS works too. Because themes are class-scoped, different forms on one page can use different themes, and single tokens can be overridden inline or in state scopes (for example `.sorlo-invalid` remaps `--sorlo-messages-color` to `--sorlo-color-error`).
+A custom theme is a copy of `themes/default.css` with a new class name (keeping the `sorlo-theme-` prefix so the skin activates) and different token values — no selectors, just tokens. Because themes are class-scoped, different forms on one page can use different themes, and single tokens can be overridden inline or in state scopes (for example `.sorlo-invalid` remaps `--sorlo-messages-color` to `--sorlo-color-error`).
 
 Buttons have two variants beside the plain `sorlo-button`: add `sorlo-button--primary` for a form's or dialog's main action, and `sorlo-button--danger` for one that can't be undone. Their `--sorlo-button-primary-*` and `--sorlo-button-danger-*` tokens set their colours at rest and on hover. `--sorlo-color-accent` colours primary buttons in both built-in themes, and every form's checkboxes, radios and ranges through `accent-color`.
 
 ## i18n
 
 All user-facing strings run through an isolated i18next instance (`src/i18n.ts`) with translations in `src/translations`, so the host application's own i18next setup is never touched.
+
+## Contributing
+
+[CONTRIBUTING.md](CONTRIBUTING.md) covers the development commands, the conventions and how releases work. Report security issues as [SECURITY.md](SECURITY.md) describes.

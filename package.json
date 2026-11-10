@@ -1,7 +1,24 @@
 {
   "name": "@sorlo/forms",
   "version": "0.1.0",
-  "description": "",
+  "description": "Schema-driven forms for React, with nestable groups and repeaters, conditional logic, the same validation on client and server, and a schema builder",
+  "keywords": [
+    "react",
+    "form",
+    "forms",
+    "form-builder",
+    "schema",
+    "validation",
+    "conditional-logic",
+    "repeater",
+    "sorlo"
+  ],
+  "homepage": "https://github.com/WeAreSorlo/forms#readme",
+  "bugs": "https://github.com/WeAreSorlo/forms/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WeAreSorlo/forms.git"
+  },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -15,16 +32,22 @@
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
     },
-    "./styles/*": "./src/styles/*"
+    "./styles/*.css": "./dist/styles/*.css",
+    "./styles/*.scss": "./src/styles/*.scss"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && sass --no-source-map src/styles:dist/styles",
     "prepack": "npm run build",
     "dev": "vite",
     "format": "prettier ./src --check",
     "format:fix": "prettier ./src --write",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "version-packages": "changeset version && npm install --package-lock-only"
   },
   "author": "Levi Cole",
   "license": "MIT",
@@ -38,6 +61,7 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@changesets/cli": "^3.0.3",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.3",
     "@trivago/prettier-plugin-sort-imports": "^5.2.2",
@@ -55,6 +79,5 @@
     "typescript": "^5.7.3",
     "vite": "^6.1.0",
     "vitest": "^3.0.5"
-  },
-  "packageManager": "yarn@4.13.0+sha512.5c20ba010c99815433e5c8453112165e673f1c7948d8d2b267f4b5e52097538658388ebc9f9580656d9b75c5cc996f990f611f99304a2197d4c56d21eea370e7"
+  }
 }

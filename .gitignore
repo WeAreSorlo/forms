@@ -209,3 +209,6 @@ $RECYCLE.BIN/
 # Build output
 dist/
 public/dist/
+
+# Editor settings
+.idea/
