@@ -21,8 +21,8 @@
     "build": "tsup",
     "prepack": "npm run build",
     "dev": "vite",
-    "format": "prettier ./src ./examples --check",
-    "format:fix": "prettier ./src ./examples --write",
+    "format": "prettier ./src --check",
+    "format:fix": "prettier ./src --write",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
