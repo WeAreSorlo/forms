@@ -52,7 +52,7 @@
   "author": "Levi Cole",
   "license": "MIT",
   "dependencies": {
-    "i18next": "^24.2.2",
+    "i18next": "^26.7.1",
     "lodash": "^4.17.21",
     "react-i18next": "^15.4.0"
   },
