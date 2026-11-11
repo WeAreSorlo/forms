@@ -1,5 +1,5 @@
+import { t } from '@/i18n'
 import { useCallback, useEffect, useId, useRef } from 'react'
-import { useTranslation } from 'react-i18next'
 
 export interface ModalProps {
   open: React.HTMLProps<HTMLDialogElement>['open']
@@ -12,7 +12,6 @@ export interface ModalProps {
 }
 
 export default function Modal({ open, header, footer, closeButton, onOpen, onClose, children }: ModalProps) {
-  const { t } = useTranslation()
   const headerId = useId()
   const dialogRef = useRef<null | HTMLDialogElement>(null)
 

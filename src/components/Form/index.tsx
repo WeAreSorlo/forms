@@ -13,13 +13,11 @@ import {
   FormContext,
   FormStaticContext,
 } from '@/context/FormProvider'
-import i18n from '@/i18n'
 import * as coreInputs from '@/inputs'
 import { FieldMessages } from '@/types/fields'
 import { Input, ValidationReport } from '@/types/inputs'
 import { conditionScope, flattenValidationReport, ValidateValuesOptions, validateValues } from '@/utils/inputs'
 import { SetStateAction, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
-import { I18nextProvider } from 'react-i18next'
 
 export interface FormHandle {
   validate: (options?: Pick<ValidateValuesOptions, 'allowIncomplete'>) => ValidationReport
@@ -311,32 +309,30 @@ export default function Form<Values extends Record<string, any> = Record<string,
   )
 
   return (
-    <I18nextProvider i18n={i18n}>
-      <FormContext.Provider value={dataContextValue}>
-        <FormStaticContext.Provider value={staticContextValue}>
-          <FieldReportContext.Provider value={reportContextValue}>
-            <FieldInjectionContext.Provider value={injectionContextValue}>
-              <FieldScopeContext.Provider value={scopeContextValue}>
-                {/* Prevent implicit submissions from reloading the page */}
-                <form
-                  className={`sorlo-form${className ? ` ${className}` : ''}`}
-                  onSubmit={(event) => event.preventDefault()}
-                >
-                  <Fieldset
-                    schema={schema}
-                    values={values}
-                    messages={messages}
-                    validity={validity}
-                    onValuesChange={onFieldsetValuesChange}
-                    onMessagesChange={onFieldsetMessagesChange}
-                    onValidityChange={onFieldsetValidityChange}
-                  />
-                </form>
-              </FieldScopeContext.Provider>
-            </FieldInjectionContext.Provider>
-          </FieldReportContext.Provider>
-        </FormStaticContext.Provider>
-      </FormContext.Provider>
-    </I18nextProvider>
+    <FormContext.Provider value={dataContextValue}>
+      <FormStaticContext.Provider value={staticContextValue}>
+        <FieldReportContext.Provider value={reportContextValue}>
+          <FieldInjectionContext.Provider value={injectionContextValue}>
+            <FieldScopeContext.Provider value={scopeContextValue}>
+              {/* Prevent implicit submissions from reloading the page */}
+              <form
+                className={`sorlo-form${className ? ` ${className}` : ''}`}
+                onSubmit={(event) => event.preventDefault()}
+              >
+                <Fieldset
+                  schema={schema}
+                  values={values}
+                  messages={messages}
+                  validity={validity}
+                  onValuesChange={onFieldsetValuesChange}
+                  onMessagesChange={onFieldsetMessagesChange}
+                  onValidityChange={onFieldsetValidityChange}
+                />
+              </form>
+            </FieldScopeContext.Provider>
+          </FieldInjectionContext.Provider>
+        </FieldReportContext.Provider>
+      </FormStaticContext.Provider>
+    </FormContext.Provider>
   )
 }

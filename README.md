@@ -269,7 +269,7 @@ Buttons have two variants beside the plain `sorlo-button`: add `sorlo-button--pr
 
 ## i18n
 
-All user-facing strings run through an isolated i18next instance (`src/i18n.ts`) with translations in `src/translations`, so the host application's own i18next setup is never touched.
+Every string Sorlo Forms shows, validation messages included, comes from its own i18next instance, with the English translations in `src/translations`. It calls that instance directly rather than through react-i18next, so it sets no default instance, provider or defaults there. An app's own i18next and react-i18next setup stays as the app made it, inside forms too, where a custom input's `useTranslation()` gets the app's instance. A field's validation messages can be changed through `options.messages`, as [Validation](#validation) shows.
 
 ## Contributing
 

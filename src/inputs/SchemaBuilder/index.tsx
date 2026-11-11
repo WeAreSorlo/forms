@@ -6,6 +6,7 @@ import Fieldset, {
 } from '@/components/Fieldset'
 import Modal from '@/components/Modal'
 import { FieldReportContext, FieldScopeContext, FormStaticContext, useFormStaticContext } from '@/context/FormProvider'
+import { t } from '@/i18n'
 import { FieldMessages, FieldSchema } from '@/types/fields'
 import {
   Input,
@@ -25,7 +26,6 @@ import { validationMessage } from '@/utils/messages'
 import { isEmptyValue, validationError, validationSuccess } from '@/utils/validation'
 import isEqual from 'lodash/isEqual.js'
 import { Dispatch, Fragment, createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 
 export const name: InputName = () => 'Schema Builder'
 
@@ -153,7 +153,6 @@ const useEditorSchema = (input: Input, levels: Array<Array<FieldSchema>>) => {
 
 const Component: InputComponent = function () {
   const { inputs } = useFormStaticContext()
-  const { t } = useTranslation()
   const { value = [], setValue } = useFieldContext()
 
   const inputEntries = useMemo(() => {
@@ -266,7 +265,6 @@ function EditValueItem({
   input: Input
   setValue: Dispatch<any>
 }) {
-  const { t } = useTranslation()
   const { readonly, disabled } = useFieldContext()
   const locked = readonly || disabled
 
@@ -395,7 +393,6 @@ function SchemaEditor({
 }) {
   const staticContext = useFormStaticContext()
   const { inputs } = staticContext
-  const { t } = useTranslation()
   const { readonly, disabled } = useFieldContext()
   const locked = readonly || disabled
 

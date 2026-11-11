@@ -10,6 +10,7 @@ import {
   FieldScopeContext,
   useFormStaticContext,
 } from '@/context/FormProvider'
+import { t } from '@/i18n'
 import { FieldMessages, FieldSchema } from '@/types/fields'
 import {
   InputCategory,
@@ -28,7 +29,6 @@ import { conditionScope, validateSchema } from '@/utils/inputs'
 import { validationMessage } from '@/utils/messages'
 import { isEmptyValue, validationError, validationSuccess } from '@/utils/validation'
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 
 type Column = Record<string, any>
 type Row = Array<Column>
@@ -246,7 +246,6 @@ function MatrixCell({
 }
 
 const Component: InputComponent = function () {
-  const { t } = useTranslation()
   const { schema, options, readonly, disabled, value, setValue, setMessages, setValid } = useFieldContext()
   const locked = readonly || disabled
 

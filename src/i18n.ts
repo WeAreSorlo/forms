@@ -1,15 +1,15 @@
 import * as resources from '@/translations'
 import i18next from 'i18next'
-import { initReactI18next } from 'react-i18next'
 
-// Isolated instance so the host application's global i18next is left untouched
+// Its own instance, without react-i18next, whose default instance and defaults belong to a host sharing its copy
 const i18n = i18next.createInstance()
 
-i18n.use(initReactI18next).init({
+i18n.init({
   resources: resources,
   lng: 'en',
   fallbackLng: 'en',
   interpolation: { escapeValue: false },
 })
 
+export const { t } = i18n
 export default i18n

@@ -4,12 +4,12 @@ import Field, {
   OnValueChangeCallback as OnFieldValueChangeCallback,
 } from '@/components/Field'
 import { FieldScopeContext, useFormStaticContext } from '@/context/FormProvider'
+import { t } from '@/i18n'
 import { FieldMessages, FieldSchema } from '@/types/fields'
 import { InputComponent, InputValidateValue } from '@/types/inputs'
 import { evaluateConditions } from '@/utils/conditions'
 import { conditionScope, resolveValidateValue } from '@/utils/inputs'
 import { memo, useCallback, useContext } from 'react'
-import { useTranslation } from 'react-i18next'
 
 export type OnValuesChangeCallback = (field: string, value: any) => void
 export type OnMessagesChangeCallback = (field: string, messages: FieldMessages) => void
@@ -85,7 +85,6 @@ const FieldsetItem = memo(function FieldsetItem({
   onMessagesChange?: OnMessagesChangeCallback
   onValidityChange?: OnValidityChangeCallback
 }) {
-  const { t } = useTranslation()
   const { type, ...fieldProps } = schema
 
   const onValueChangeHandler: OnFieldValueChangeCallback = useCallback(

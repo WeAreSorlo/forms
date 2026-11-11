@@ -1,5 +1,6 @@
 import { useFieldContext } from '@/components/Field'
 import Fieldset, { OnValidityChangeCallback, OnValuesChangeCallback } from '@/components/Fieldset'
+import { t } from '@/i18n'
 import { FieldSchema } from '@/types/fields'
 import {
   InputCategory,
@@ -19,7 +20,6 @@ import { createId, validateSchema } from '@/utils/inputs'
 import { validationMessage } from '@/utils/messages'
 import { isEmptyValue, validationError, validationSuccess } from '@/utils/validation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 
 // A block holds its layout's field values plus _layout, the name of that layout
 type Block = Record<string, any>
@@ -189,7 +189,6 @@ function FlexibleBlock({
 }
 
 const Component: InputComponent = function () {
-  const { t } = useTranslation()
   const { schema, options, readonly, disabled, value, setValue, setMessages, setValid } = useFieldContext()
   const locked = readonly || disabled
 

@@ -1,6 +1,6 @@
 import { useFieldContext } from '@/components/Field'
 import { FieldInjectionContext, FieldPath, FieldReportContext, useFormStaticContext } from '@/context/FormProvider'
-import i18n from '@/i18n'
+import i18n, { t } from '@/i18n'
 import { ConditionOperator, FieldSchema } from '@/types/fields'
 import {
   InputCategory,
@@ -23,7 +23,6 @@ import { literalUnion } from '@/utils/typescript'
 import { isEmptyValue, validationError, validationSuccess } from '@/utils/validation'
 import isEqual from 'lodash/isEqual.js'
 import { Fragment, useContext, useEffect, useMemo, useRef } from 'react'
-import { useTranslation } from 'react-i18next'
 
 type Rule = Record<string, any>
 
@@ -288,7 +287,6 @@ function RuleControl({
   disabled?: boolean
   onChange: (value: string) => void
 }) {
-  const { t } = useTranslation()
   const choices: undefined | Array<{ value: any; label?: string }> = field.options?.choices
   const describedBy = [messages.length >= 1 && `${id}-messages`, hint && `${id}-hint`].filter(Boolean).join(' ')
   const control = {
@@ -348,7 +346,6 @@ function RuleControl({
 const columns = ['field', 'operator', 'value'] as const
 
 const Component: InputComponent = function () {
-  const { t } = useTranslation()
   const { id, labelId, label, aria, schema, options, readonly, disabled, value, setValue, setMessages, setValid } =
     useFieldContext()
   const { inputs, validationCounter } = useFormStaticContext()
