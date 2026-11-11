@@ -1,6 +1,6 @@
 {
   "name": "@sorlo/forms",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Schema-driven forms for React, with nestable groups and repeaters, conditional logic, the same validation on client and server, and a schema builder",
   "keywords": [
     "react",
