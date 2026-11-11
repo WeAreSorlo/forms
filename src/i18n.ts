@@ -1,8 +1,8 @@
 import * as resources from '@/translations'
-import i18next from 'i18next'
+import i18next, { type i18n as I18n } from 'i18next'
 
 // Its own instance, without react-i18next, whose default instance and defaults belong to a host sharing its copy
-const i18n = i18next.createInstance()
+const i18n: I18n = i18next.createInstance()
 
 i18n.init({
   resources: resources,
